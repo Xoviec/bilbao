@@ -1,0 +1,119 @@
+[
+  {
+    "slug": "bilbao",
+    "name": "Bilbao",
+    "unit": "district",
+    "units": 8,
+    "places": 1876,
+    "bbox": [
+      -2.98598,
+      43.21372,
+      -2.88026,
+      43.29013
+    ]
+  },
+  {
+    "slug": "barakaldo",
+    "name": "Barakaldo",
+    "unit": "municipality",
+    "units": 1,
+    "places": 506,
+    "bbox": [
+      -3.04906,
+      43.23788,
+      -2.97056,
+      43.30524
+    ]
+  },
+  {
+    "slug": "basauri",
+    "name": "Basauri",
+    "unit": "municipality",
+    "units": 1,
+    "places": 73,
+    "bbox": [
+      -2.91384,
+      43.21534,
+      -2.86679,
+      43.24578
+    ]
+  },
+  {
+    "slug": "erandio",
+    "name": "Erandio",
+    "unit": "municipality",
+    "units": 1,
+    "places": 125,
+    "bbox": [
+      -2.99244,
+      43.28547,
+      -2.9241,
+      43.34912
+    ]
+  },
+  {
+    "slug": "arrigorriaga",
+    "name": "Arrigorriaga",
+    "unit": "municipality",
+    "units": 1,
+    "places": 61,
+    "bbox": [
+      -2.95693,
+      43.18261,
+      -2.87809,
+      43.2457
+    ]
+  },
+  {
+    "slug": "etxebarri",
+    "name": "Etxebarri",
+    "unit": "municipality",
+    "units": 1,
+    "places": 31,
+    "bbox": [
+      -2.90526,
+      43.2399,
+      -2.86723,
+      43.26533
+    ]
+  },
+  {
+    "slug": "sondika",
+    "name": "Sondika",
+    "unit": "municipality",
+    "units": 1,
+    "places": 21,
+    "bbox": [
+      -2.94885,
+      43.27382,
+      -2.90881,
+      43.30772
+    ]
+  },
+  {
+    "slug": "zamudio",
+    "name": "Zamudio",
+    "unit": "municipality",
+    "units": 1,
+    "places": 34,
+    "bbox": [
+      -2.91043,
+      43.26031,
+      -2.8271,
+      43.31863
+    ]
+  },
+  {
+    "slug": "alonsotegi",
+    "name": "Alonsotegi",
+    "unit": "municipality",
+    "units": 1,
+    "places": 12,
+    "bbox": [
+      -3.02058,
+      43.20195,
+      -2.94623,
+      43.25643
+    ]
+  }
+]

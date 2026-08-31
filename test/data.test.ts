@@ -10,6 +10,9 @@ const districts = read("districts.geojson");
 const safety = read("safety.json");
 const poi = read("poi.geojson");
 const activities = read("activities.geojson");
+const registry = JSON.parse(
+  readFileSync(resolve(__dirname, "../etl/cities.json"), "utf8"),
+).cities as Array<{ slug: string; name: string; unit: string; minUnits: number }>;
 
 const codes = new Set<string>(districts.features.map((f: any) => f.properties.code));
 const safetyKeys = Object.keys(safety).filter((k) => !k.startsWith("_"));
@@ -48,6 +51,42 @@ describe("Integralność danych (public/data)", () => {
     for (const f of places) {
       const d = f.properties.district;
       if (d) expect(codes.has(d), `miejsce ${f.properties.name} → nieznana dzielnica ${d}`).toBe(true);
+    }
+  });
+
+  it("każda gmina z rejestru ma swoje jednostki", () => {
+    for (const city of registry) {
+      const units = districts.features.filter((f: any) => f.properties.city === city.slug);
+      expect(units.length, `${city.name}: brak jednostek`).toBeGreaterThanOrEqual(city.minUnits);
+      for (const u of units) {
+        expect(u.properties.level, `${city.name}: zły poziom`).toBe(
+          city.unit === "district" ? "district" : "municipality",
+        );
+      }
+    }
+  });
+
+  it("kody są przestrzeniowane nazwą gminy", () => {
+    // Bez prefiksu kody kolidują: Bilbao ma dzielnicę i barrio "Abando", a nazwy
+    // typu "Centro" powtarzają się między gminami.
+    for (const f of districts.features) {
+      const { code, city, level } = f.properties;
+      if (level === "municipality") expect(code).toBe(city);
+      else expect(code.startsWith(`${city}-`), `kod bez prefiksu gminy: ${code}`).toBe(true);
+    }
+  });
+
+  it("gminy bez realnych statystyk mają null, a nie zmyślone liczby", () => {
+    // Wskaźników bezpieczeństwa nie ma w OSM. Dla gmin, dla których nikt ich nie
+    // wprowadził, jedyną uczciwą wartością jest null (mapa rysuje je na szaro).
+    const estimated = new Set(
+      districts.features
+        .filter((f: any) => f.properties.city === "bilbao")
+        .map((f: any) => f.properties.code),
+    );
+    for (const k of safetyKeys) {
+      if (estimated.has(k)) continue;
+      expect(safety[k].safety_index, `${k} ma wymyślony wskaźnik`).toBeNull();
     }
   });
 

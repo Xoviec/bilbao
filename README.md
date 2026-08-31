@@ -1,7 +1,7 @@
 # Bilbao Safety Map 🗺️
 
-Interaktywna mapa **Bilbao** oparta o **OpenStreetMap** wizualizująca dane w podziale na
-dzielnice: **wskaźnik bezpieczeństwa**, **aktywności** oraz **miejsca warte zobaczenia**.
+Interaktywna mapa **Bilbao i 8 sąsiadujących gmin** oparta o **OpenStreetMap**,
+wizualizująca **wskaźnik bezpieczeństwa**, **aktywności** oraz **miejsca warte zobaczenia**.
 
 Lekki, szybki i w pełni statyczny front‑end (bez backendu w MVP) — zoptymalizowany pod
 kątem wydajności renderowania i czytelności danych.
@@ -10,12 +10,12 @@ kątem wydajności renderowania i czytelności danych.
 
 ## ✨ Co pokazuje mapa
 
-- **Choropleth bezpieczeństwa** — dzielnice Bilbao pokolorowane wg indeksu bezpieczeństwa (0–100).
+- **Choropleth bezpieczeństwa** — obszary pokolorowane wg indeksu (0–100); szary = brak danych.
 - **Tryb dzień/noc** — przełącznik pokazujący bezpieczeństwo wg pory doby.
 - **Aktywności** — sport, kultura, nocne życie, tereny zielone (ikony kategorii).
 - **POI / miejsca warte zobaczenia** — atrakcje, punkty widokowe, zabytki (clustering).
-- **Panel dzielnicy** — po kliknięciu: metryki bezpieczeństwa, opis, trend.
-- **Wyszukiwarka dzielnicy** — szybki skok do wybranej dzielnicy.
+- **Panel obszaru** — po kliknięciu: metryki bezpieczeństwa (lub jawne „brak danych"), miejsca.
+- **Wyszukiwarka** — 16 obszarów z 9 gmin; dzielnice Bilbao poprzedzone nazwą gminy.
 - **Tooltip na hover, filtry per kategoria, legenda** — pełna czytelność danych.
 - **Tryb awaryjny basemapy** — fallback rastrowy, gdy dostawca kafli jest niedostępny.
 
@@ -41,7 +41,7 @@ npm run dev      # http://localhost:5173
 npm run build    # produkcyjny build do dist/
 npm run preview  # podgląd builda
 npm test         # testy (vitest)
-npm run etl      # pobranie realnych danych z OSM (wymaga sieci → Overpass)
+npm run etl      # pobranie danych z OSM dla wszystkich gmin (wymaga sieci)
 ```
 
 ## 📁 Struktura
@@ -49,51 +49,78 @@ npm run etl      # pobranie realnych danych z OSM (wymaga sieci → Overpass)
 ```
 bilbao-safety-map/
 ├── docs/                  # PRD, ARD, ROADMAP, SAFETY_METHODOLOGY
-├── etl/                   # skrypt pobierania realnych danych z OSM (Overpass)
+├── etl/                   # ETL z OSM (Overpass) + cities.json (rejestr gmin)
 ├── test/                  # testy jednostkowe (vitest)
 ├── e2e/                   # testy e2e krytycznej ścieżki (Playwright)
-├── public/data/           # statyczne dane (GeoJSON/JSON) — placeholdery do podmiany
+├── public/data/           # statyczne dane (GeoJSON/JSON) z OSM + cities.json
 ├── src/
 │   ├── main.ts            # bootstrap aplikacji
 │   ├── map.ts             # MapLibre + fallback basemapy
 │   ├── config.ts          # konfiguracja (widok, źródła, kolory, fonty)
 │   ├── markers.ts         # ikony kategorii (kanwa)
 │   ├── data/              # loader, join (testowalny), geo (bbox)
-│   ├── layers/            # dzielnice, choropleth, places (POI+aktywności)
+│   ├── layers/            # obszary, choropleth, places (POI+aktywności)
 │   └── ui/                # legenda, sidebar, filtry, kontrolki
 └── index.html
 ```
 
 ## 🗃️ Dane
 
-Dane w `public/data/` pochodzą z **OpenStreetMap** (`npm run etl`):
+Dane w `public/data/` pochodzą z **OpenStreetMap** (`npm run etl`). Mapa obejmuje
+**Bilbao i 8 gmin z nim graniczących** — 16 jednostek, 2739 miejsc.
 
 | Zbiór | Źródło | Stan |
 |---|---|---|
-| Granice 8 dzielnic | OSM, relacja `339549`, `admin_level=9` | **realne** |
-| POI (163) + aktywności (1713) | OSM (Overpass) | **realne** |
-| Wskaźniki bezpieczeństwa | — | **szacunkowe** |
+| Granice 16 jednostek (9 gmin) | OSM, relacje z `etl/cities.json` | **realne** |
+| POI (245) + aktywności (2494) | OSM (Overpass) | **realne** |
+| Wskaźniki bezpieczeństwa | — | **tylko Bilbao, szacunkowe** |
 
-Granice pokrywają gminę Bilbao dokładnie (suma dzielnic = 40,36 km² = powierzchnia
-relacji gminy) i nie nachodzą na siebie.
+### Dwie rozdzielczości — i dlaczego
 
-> ⚠️ **Wskaźników bezpieczeństwa nie ma w OSM.** Wartości w `safety.json` są
-> demonstracyjne i oznaczone flagą `_placeholder`, przez co aplikacja pokazuje
-> ostrzeżenie. Podmień je wg [metodologii](docs/SAFETY_METHODOLOGY.md).
+W **całej prowincji Bizkaia** podział administracyjny poniżej gminy ma w OSM
+wyłącznie Bilbao (8 jednostek `admin_level=9`; wszystkie 25 jednostek `admin_level=10`
+to również barrios Bilbao). Dlatego:
 
-Odświeżenie danych z OSM:
+- **Bilbao** — choropleth po 8 dzielnicach,
+- **pozostałe 8 gmin** — jeden obszar na gminę (`unit: "municipality"` w rejestrze).
+
+Jednolity kolor gminy oznacza **brak danych szczegółowych, a nie jednorodność terenu** —
+legenda i panel metodologii mówią to wprost.
+
+| Gmina | Relacja OSM | Jednostki | km² | Miejsc |
+|---|---|---|---|---|
+| Bilbao | 339549 | 8 dzielnic | 40,4 | 1876 |
+| Barakaldo | 340585 | 1 | 25,0 | 506 |
+| Erandio | 347284 | 1 | 18,8 | 125 |
+| Basauri | 340591 | 1 | 7,1 | 73 |
+| Arrigorriaga | 340587 | 1 | 16,0 | 61 |
+| Zamudio | 347287 | 1 | 17,9 | 34 |
+| Etxebarri | 341790 | 1 | 3,3 | 31 |
+| Sondika | 340648 | 1 | 6,8 | 21 |
+| Alonsotegi | 342633 | 1 | 20,2 | 12 |
+
+Jednostki są rozłączne (0 nakładek na 2400 losowych punktów), a przypisanie potwierdza
+niezależnie reverse geocoding w Nominatim.
+
+> ⚠️ **Wskaźników bezpieczeństwa nie ma w OSM.** Ma je dziś tylko Bilbao i są
+> **szacunkowe**. Pozostałe gminy mają `null` — rysują się na szaro, bo zmyślanie
+> liczb byłoby gorsze niż ich brak. Podmień wg [metodologii](docs/SAFETY_METHODOLOGY.md).
+
+### Odświeżenie danych
 
 ```bash
-npm run etl      # districts.geojson + poi/activities z OSM + safety.template.json
+npm run etl                    # wszystkie gminy z etl/cities.json
+npm run etl -- barakaldo       # tylko wybrane
+npm run etl -- --refresh       # ignoruj cache, pobierz od nowa
 ```
 
-Skrypt jest przypięty do relacji OSM `339549` (Bilbao w Hiszpanii) — pytanie po samej
-nazwie dopasowuje **trzy** różne Bilbao (jeszcze Ekwador i Kolumbia). Nadpisać można
-zmienną `BILBAO_RELATION_ID`.
+Gminy są przypięte po **ID relacji**, nie po nazwie — samo `name="Bilbao"` dopasowuje
+trzy różne Bilbao (Hiszpania, Ekwador, Kolumbia). Nowe miasto dodajesz jednym wpisem
+w `etl/cities.json`.
 
-- **Granice dzielnic + POI/aktywności** — OpenStreetMap przez Overpass API (`npm run etl`).
-- **Bezpieczeństwo** — nie ma go w OSM; uzupełnij `safety.json` wg
-  [metodologii](docs/SAFETY_METHODOLOGY.md) (źródła: Open Data Euskadi / Eustat / miasto).
+Surowe odpowiedzi Overpass lądują w `etl/.cache/`, więc ponowny przebieg dociąga tylko
+brakujące gminy — publiczne lustra sypią się losowo (429/502/504) i bez cache'u upadek
+na ostatniej gminie kasowałby pobranie wszystkich poprzednich.
 
 Szczegóły: [`etl/README.md`](etl/README.md) i [`docs/ARD.md`](docs/ARD.md).
 

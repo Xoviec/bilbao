@@ -13,8 +13,13 @@ const CONTENT = `
   </ul>
   <p>Normalizacja min–max (z winsoryzacją), agregacja ważona, wynik skalowany do 0–100.
      <code>day_score</code>/<code>night_score</code> liczone analogicznie wg pory.</p>
-  <p class="warn">⚠️ Obecne dane są <strong>szacunkowe (placeholder)</strong> i służą demonstracji.
-     Docelowo: otwarte źródła (Open Data Euskadi / Eustat / miasto), z jawnym oznaczeniem źródła.</p>
+  <p class="warn">⚠️ Wskaźniki ma dziś <strong>wyłącznie Bilbao</strong> i są one
+     <strong>szacunkowe (demonstracyjne)</strong>. Pozostałe gminy nie mają ich wcale —
+     rysujemy je na szaro, zamiast zgadywać. Docelowo: otwarte źródła
+     (Open Data Euskadi / Eustat / miasto), z jawnym oznaczeniem pochodzenia.</p>
+  <p class="warn">⚠️ Zasięg przestrzenny też się różni: tylko Bilbao ma w OpenStreetMap
+     podział na dzielnice. Sąsiednie gminy występują jako jeden obszar, więc jednolity
+     kolor oznacza brak szczegółu, a nie jednorodność terenu.</p>
   <p>Pełna metodologia i zasady etyczne (neutralny język, unikanie stygmatyzacji):
      <a href="${REPO_DOC}" target="_blank" rel="noopener">SAFETY_METHODOLOGY.md ↗</a></p>
 `;

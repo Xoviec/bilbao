@@ -1,12 +1,13 @@
 import maplibregl, { type StyleSpecification } from "maplibre-gl";
-import { BILBAO, BASEMAP_STYLE, FALLBACK_STYLE } from "./config";
+import { VIEW, BASEMAP_STYLE, FALLBACK_STYLE } from "./config";
+import type { Bounds } from "./data/geo";
 
 /**
  * Wybiera styl mapy: próbuje pobrać podstawowy (wektorowy OSM),
  * a przy niedostępności dostawcy używa awaryjnego stylu rastrowego.
  * Dzięki temu brak basemapy nie kończy się pustą, cichą mapą.
  */
-async function resolveStyle(): Promise<string | StyleSpecification> {
+export async function resolveStyle(): Promise<string | StyleSpecification> {
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 6000);
@@ -21,18 +22,24 @@ async function resolveStyle(): Promise<string | StyleSpecification> {
   return FALLBACK_STYLE as StyleSpecification;
 }
 
-/** Tworzy i zwraca instancję mapy MapLibre wycentrowaną na Bilbao. */
-export async function createMap(container: string | HTMLElement): Promise<maplibregl.Map> {
-  const style = await resolveStyle();
-
+/**
+ * Tworzy instancję mapy dopasowaną do zakresu danych.
+ * `style` przyjmujemy z zewnątrz, żeby sondowanie dostawcy kafli mogło biec
+ * równolegle z pobieraniem danych — inaczej czekalibyśmy szeregowo na oba.
+ */
+export function createMap(
+  container: string | HTMLElement,
+  style: string | StyleSpecification,
+  view: { bounds: Bounds; maxBounds: Bounds },
+): maplibregl.Map {
   const map = new maplibregl.Map({
     container,
     style,
-    center: BILBAO.center,
-    zoom: BILBAO.zoom,
-    minZoom: BILBAO.minZoom,
-    maxZoom: BILBAO.maxZoom,
-    maxBounds: BILBAO.maxBounds,
+    bounds: view.bounds,
+    fitBoundsOptions: { padding: VIEW.fitPadding },
+    minZoom: VIEW.minZoom,
+    maxZoom: VIEW.maxZoom,
+    maxBounds: view.maxBounds,
     attributionControl: false,
   });
 

@@ -10,3 +10,5 @@ playwright-report/
 .playwright/
 # Artefakt ETL — roboczy szablon do ręcznego przepisania w safety.json.
 public/data/safety.template.json
+# Cache surowych odpowiedzi Overpass (odtwarzalny: npm run etl -- --refresh).
+etl/.cache/

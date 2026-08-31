@@ -72,6 +72,10 @@ body { color: var(--text); background: var(--bg); }
 }
 .legend-sep { margin-top: 12px; }
 .legend-cat { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+.legend-missing { margin-top: 8px; }
+.legend-note {
+  margin: 8px 0 0; color: var(--muted); font-size: 0.7rem; line-height: 1.35;
+}
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 
 .filter-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; }

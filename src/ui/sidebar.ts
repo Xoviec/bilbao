@@ -26,8 +26,10 @@ export function showDistrict(
   const rec = safety[code];
   sidebar.classList.remove("hidden");
 
-  const safetyHtml = !rec
-    ? `<p class="muted">Brak danych o bezpieczeństwie.</p>`
+  // Rekord z samymi nullami (gmina bez statystyk) to nadal BRAK danych — bez tego
+  // panel rysowałby pusty licznik "—/100", sugerujący, że pomiar istnieje.
+  const safetyHtml = !rec || rec.safety_index == null
+    ? `<p class="muted">Brak danych o bezpieczeństwie dla tego obszaru.</p>`
     : `
       <div class="score" style="--v:${rec.safety_index}">
         <span class="score-num">${rec.safety_index ?? "—"}</span>
@@ -41,7 +43,7 @@ export function showDistrict(
       <p class="summary">${esc(rec.summary)}</p>`;
 
   const placesHtml = places.length
-    ? `<h3 class="places-title">Miejsca w dzielnicy (${places.length})</h3>
+    ? `<h3 class="places-title">Miejsca w tym obszarze (${places.length})</h3>
        <ul class="places-list">
          ${places
            .map(
@@ -53,14 +55,21 @@ export function showDistrict(
            )
            .join("")}
        </ul>`
-    : `<p class="muted">Brak miejsc w danych dla tej dzielnicy.</p>`;
+    : `<p class="muted">Brak miejsc w danych dla tego obszaru.</p>`;
+
+  // Stopka opisuje stan TEGO obszaru. "Dane szacunkowe" przy obszarze bez
+  // żadnych wskaźników byłoby nieprawdą — tam nie ma czego szacować.
+  const hasSafety = Boolean(rec && rec.safety_index != null);
+  const sourceHtml = hasSafety
+    ? `<p class="source muted">Wskaźniki szacunkowe · miejsca i granice: OpenStreetMap</p>`
+    : `<p class="source muted">Brak wskaźników dla tego obszaru · miejsca i granice: OpenStreetMap</p>`;
 
   sidebar.innerHTML = `
     <button class="close" aria-label="Zamknij">×</button>
     <h2 tabindex="-1">${esc(name)}</h2>
     ${safetyHtml}
     ${placesHtml}
-    <p class="source muted">Dane szacunkowe · źródło do podmiany (OSM / Open Data Euskadi)</p>
+    ${sourceHtml}
   `;
 
   const close = () => {

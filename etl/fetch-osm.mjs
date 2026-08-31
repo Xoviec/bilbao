@@ -1,16 +1,24 @@
 #!/usr/bin/env node
 /**
- * ETL: pobiera realne dane Bilbao z OpenStreetMap (Overpass API) i generuje
- * pliki do public/data/. Wymaga otwartego dostępu sieciowego do Overpass.
+ * ETL: pobiera realne dane z OpenStreetMap (Overpass API) dla wszystkich gmin
+ * z `etl/cities.json` i generuje pliki do public/data/.
  *
- * Uruchomienie:  node etl/fetch-osm.mjs
- * Konfiguracja:  zmienne env OVERPASS_URL, DISTRICT_ADMIN_LEVEL (domyślnie 9).
+ * Uruchomienie:  node etl/fetch-osm.mjs [slug ...]   (bez argumentów = wszystkie)
+ * Konfiguracja:  OVERPASS_URL, DISTRICT_ADMIN_LEVEL (domyślnie 9).
+ *
+ * JEDNOSTKA choroplethu zależy od gminy (pole `unit` w rejestrze):
+ *   - "district"     — podział na dzielnice (admin_level=9). W całej prowincji
+ *                      Bizkaia ma go WYŁĄCZNIE Bilbao.
+ *   - "municipality" — brak podziału w OSM, więc jednostką jest cała gmina.
+ * Dzięki temu mapa jest w dwóch rozdzielczościach i musi to jawnie komunikować —
+ * stąd `properties.level` na każdym featerze.
  *
  * Uwaga: dane o BEZPIECZEŃSTWIE nie pochodzą z OSM — skrypt tworzy jedynie
- * szablon safety.template.json (kody dzielnic + null), do wypełnienia realnymi
+ * szablon safety.template.json (kody + null), do wypełnienia realnymi
  * statystykami wg docs/SAFETY_METHODOLOGY.md.
  */
-import { writeFile } from "node:fs/promises";
+import { writeFile, readFile, mkdir } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import osmtogeojson from "osmtogeojson";
@@ -21,14 +29,11 @@ const OUT = resolve(__dirname, "../public/data");
 // Bez OVERPASS_URL przechodzimy po wbudowanej liście luster (patrz lib.mjs).
 const ENDPOINT = process.env.OVERPASS_URL;
 const ADMIN_LEVEL = process.env.DISTRICT_ADMIN_LEVEL || "9";
+// Przerwa między gminami — bez niej sami wywołujemy dławienie (429) na lustrach.
+const PAUSE_MS = 3000;
 
-// Relacja OSM gminy Bilbao (Biskaja, Hiszpania). Przypięta po ID, NIE po nazwie:
-// `["name"="Bilbao"]["admin_level"="8"]` dopasowuje na świecie trzy różne Bilbao
-// (Hiszpania 339549, Ekwador 3728518, Kolumbia 4052108), przez co do danych trafiały
-// POI z Ameryki Południowej — łapał to dopiero test zakresu współrzędnych.
-const BILBAO_RELATION = process.env.BILBAO_RELATION_ID || "339549";
 // Overpass adresuje obszary jako 3600000000 + id relacji.
-const AREA = `area(${3600000000 + Number(BILBAO_RELATION)})->.b;`;
+const areaOf = (relation) => `area(${3600000000 + Number(relation)})->.a;`;
 
 // Mapowanie tagów OSM → kategorie aplikacji.
 const CATEGORY_RULES = [
@@ -49,39 +54,93 @@ function categoryFor(tags = {}) {
   return null;
 }
 
-async function fetchDistricts() {
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Cache per gmina. Publiczne lustra Overpass sypią się losowo (429/502/504), a bez
+// cache'u upadek na dziewiątej gminie kasuje pobranie ośmiu poprzednich i każde
+// ponowienie zaczyna od zera — czyli dokłada ruchu, przez który sypią się dalej.
+// Ponowny przebieg dociąga tylko to, czego brakuje. `npm run etl -- --refresh`
+// wymusza pobranie od nowa.
+const CACHE = resolve(__dirname, ".cache");
+const REFRESH = process.argv.includes("--refresh");
+
+async function cached(key, produce) {
+  const file = resolve(CACHE, `${key}.json`);
+  if (!REFRESH && existsSync(file)) {
+    console.log(`  (cache) ${key}`);
+    return JSON.parse(await readFile(file, "utf8"));
+  }
+  const value = await produce();
+  await mkdir(CACHE, { recursive: true });
+  await writeFile(file, JSON.stringify(value));
+  return value;
+}
+
+/**
+ * Jednostki choroplethu dla jednej gminy.
+ * Kod jest przestrzeniowany nazwą gminy (`bilbao-abando`, `barakaldo`), bo same
+ * slugi nazw kolidują — Bilbao ma dzielnicę i barrio "Abando", a nazwy typu
+ * "Centro" powtarzają się między gminami.
+ */
+async function fetchUnits(city) {
+  if (city.unit === "municipality") {
+    const q = `[out:json][timeout:180];relation(${city.relation});out geom;`;
+    const geo = osmtogeojson(await overpass(q, ENDPOINT, { log: console.log, minElements: 1 }));
+    const poly = geo.features.find((f) => /Polygon/.test(f.geometry?.type || ""));
+    if (!poly) throw new Error(`${city.name}: relacja ${city.relation} nie dała poligonu`);
+    return [{
+      type: "Feature",
+      properties: {
+        code: city.slug,
+        name: city.name,
+        city: city.slug,
+        cityName: city.name,
+        level: "municipality",
+      },
+      geometry: poly.geometry,
+    }];
+  }
+
   const q = `[out:json][timeout:180];
-    ${AREA}
-    (relation(area.b)["boundary"="administrative"]["admin_level"="${ADMIN_LEVEL}"];);
+    ${areaOf(city.relation)}
+    (relation(area.a)["boundary"="administrative"]["admin_level"="${ADMIN_LEVEL}"];);
     out geom;`;
-  // Bilbao ma 8 dzielnic — pusta odpowiedź zawsze oznacza błąd lustra, nie brak danych.
-  const geo = osmtogeojson(await overpass(q, ENDPOINT, { log: console.log, minElements: 8 }));
-  const features = geo.features
+  const geo = osmtogeojson(
+    await overpass(q, ENDPOINT, { log: console.log, minElements: city.minUnits }),
+  );
+  const feats = geo.features
     .filter((f) => f.geometry && /Polygon/.test(f.geometry.type))
-    .map((f, i) => {
-      const name = f.properties?.name || `Dzielnica ${i + 1}`;
+    .map((f) => {
+      const name = f.properties?.name || "?";
       return {
         type: "Feature",
-        id: i + 1,
-        properties: { id: i + 1, name, code: slug(name) },
+        properties: {
+          code: `${city.slug}-${slug(name)}`,
+          name,
+          city: city.slug,
+          cityName: city.name,
+          level: "district",
+        },
         geometry: f.geometry,
       };
     });
-  if (!features.length) throw new Error(`Brak dzielnic dla admin_level=${ADMIN_LEVEL}. Spróbuj 10.`);
-  return { type: "FeatureCollection", features };
+  if (feats.length < city.minUnits) {
+    throw new Error(`${city.name}: ${feats.length} jednostek, oczekiwano ≥${city.minUnits}`);
+  }
+  return feats;
 }
 
-async function fetchPlaces(districts) {
+/** POI + aktywności w granicach jednej gminy, przypisane do jej jednostek. */
+async function fetchPlaces(city, units) {
   const q = `[out:json][timeout:180];
-    ${AREA}
-    ( nwr(area.b)["tourism"];
-      nwr(area.b)["historic"];
-      nwr(area.b)["leisure"~"park|garden|nature_reserve|pitch|sports_centre|stadium|fitness_centre"];
-      nwr(area.b)["amenity"~"theatre|arts_centre|cinema|bar|pub|nightclub|restaurant|cafe"];
+    ${areaOf(city.relation)}
+    ( nwr(area.a)["tourism"];
+      nwr(area.a)["historic"];
+      nwr(area.a)["leisure"~"park|garden|nature_reserve|pitch|sports_centre|stadium|fitness_centre"];
+      nwr(area.a)["amenity"~"theatre|arts_centre|cinema|bar|pub|nightclub|restaurant|cafe"];
     );
     out center tags;`;
-  const raw = await overpass(q, ENDPOINT, { log: console.log, minElements: 100 });
-  const dfeat = districts.features;
+  const raw = await overpass(q, ENDPOINT, { log: console.log, minElements: city.minPlaces });
   const seen = new Set();
   const features = [];
   for (const el of raw.elements) {
@@ -98,8 +157,13 @@ async function fetchPlaces(districts) {
     features.push({
       type: "Feature",
       properties: {
-        id, name, category,
-        district: assignDistrict([lng, lat], dfeat),
+        id,
+        name,
+        category,
+        city: city.slug,
+        // Dla gmin bez podziału to po prostu kod gminy — punkt i tak leży w jej
+        // jedynej jednostce, więc join po `district` działa tak samo jak w Bilbao.
+        district: assignDistrict([lng, lat], units),
       },
       geometry: { type: "Point", coordinates: [Number(lng.toFixed(6)), Number(lat.toFixed(6))] },
     });
@@ -108,34 +172,75 @@ async function fetchPlaces(districts) {
 }
 
 async function main() {
-  console.log(`ETL: Overpass=${ENDPOINT || "lustra domyślne"}, admin_level=${ADMIN_LEVEL}`);
+  const registry = JSON.parse(await readFile(resolve(__dirname, "cities.json"), "utf8"));
+  const only = process.argv.slice(2);
+  const cities = only.length
+    ? registry.cities.filter((c) => only.includes(c.slug))
+    : registry.cities;
+  if (!cities.length) throw new Error(`Brak gmin do pobrania (podano: ${only.join(", ")})`);
 
-  console.log("→ Pobieram granice dzielnic…");
-  const districts = await fetchDistricts();
-  console.log(`  ${districts.features.length} dzielnic.`);
+  console.log(`ETL: Overpass=${ENDPOINT || "lustra domyślne"}, gmin=${cities.length}\n`);
 
-  console.log("→ Pobieram miejsca (POI + aktywności)…");
-  const places = await fetchPlaces(districts);
-  const poi = places.filter((f) => f.properties.category === "sight");
-  const activities = places.filter((f) => f.properties.category !== "sight");
-  console.log(`  ${poi.length} POI, ${activities.length} aktywności.`);
+  const allUnits = [];
+  const allPlaces = [];
+  const manifest = [];
+
+  for (const city of cities) {
+    console.log(`→ ${city.name} (${city.unit})`);
+    const units = await cached(`${city.slug}-units`, async () => {
+      const u = await fetchUnits(city);
+      await sleep(PAUSE_MS);
+      return u;
+    });
+    console.log(`  jednostek: ${units.length}`);
+
+    const places = await cached(`${city.slug}-places`, async () => {
+      const p = await fetchPlaces(city, units);
+      await sleep(PAUSE_MS);
+      return p;
+    });
+    console.log(`  miejsc: ${places.length}`);
+
+    allUnits.push(...units);
+    allPlaces.push(...places);
+    manifest.push({
+      slug: city.slug,
+      name: city.name,
+      unit: city.unit,
+      units: units.length,
+      places: places.length,
+      bbox: units
+        .map((u) => bbox(u.geometry))
+        .reduce((a, b) => [
+          Math.min(a[0], b[0]), Math.min(a[1], b[1]),
+          Math.max(a[2], b[2]), Math.max(a[3], b[3]),
+        ])
+        .map((n) => Number(n.toFixed(5))),
+    });
+  }
+
+  const districts = { type: "FeatureCollection", features: allUnits };
+  const poi = allPlaces.filter((f) => f.properties.category === "sight");
+  const activities = allPlaces.filter((f) => f.properties.category !== "sight");
 
   // Szablon danych bezpieczeństwa (do wypełnienia realnymi statystykami).
   const safetyTemplate = {};
-  for (const d of districts.features) {
-    safetyTemplate[d.properties.code] = {
+  for (const u of allUnits) {
+    safetyTemplate[u.properties.code] = {
       safety_index: null, day_score: null, night_score: null,
       incidents_per_1k: null, trend: "flat", summary: "",
-      _bbox: bbox(d.geometry).map((n) => Number(n.toFixed(5))),
+      _bbox: bbox(u.geometry).map((n) => Number(n.toFixed(5))),
     };
   }
 
   await writeFile(`${OUT}/districts.geojson`, JSON.stringify(districts));
   await writeFile(`${OUT}/poi.geojson`, JSON.stringify({ type: "FeatureCollection", features: poi }));
   await writeFile(`${OUT}/activities.geojson`, JSON.stringify({ type: "FeatureCollection", features: activities }));
+  await writeFile(`${OUT}/cities.json`, JSON.stringify(manifest, null, 2));
   await writeFile(`${OUT}/safety.template.json`, JSON.stringify(safetyTemplate, null, 2));
 
-  console.log("✓ Zapisano do public/data/. Uzupełnij safety.template.json → safety.json.");
+  console.log(`\n✓ ${allUnits.length} jednostek, ${poi.length} POI, ${activities.length} aktywności.`);
+  console.log("  Zapisano do public/data/. Uzupełnij safety.template.json → safety.json.");
 }
 
 main().catch((e) => {

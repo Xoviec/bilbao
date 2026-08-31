@@ -1,15 +1,15 @@
 // Centralna konfiguracja aplikacji.
 
-export const BILBAO = {
-  center: [-2.934, 43.263] as [number, number],
-  zoom: 12.2,
-  minZoom: 10,
+// Widok mapy. Centrum i maxBounds NIE są tu wpisane na sztywno — wyliczamy je
+// z zakresu wczytanych danych (patrz `collectionBounds` w data/geo.ts), bo zbiór
+// gmin się zmienia i zaszyty bbox Bilbao przyciąłby sąsiadów poza kadr.
+export const VIEW = {
+  minZoom: 9,
   maxZoom: 18,
-  // Ograniczenie widoku do okolic Bilbao (SW, NE).
-  maxBounds: [
-    [-3.05, 43.18],
-    [-2.80, 43.34],
-  ] as [[number, number], [number, number]],
+  /** Margines wokół danych przy ustalaniu maxBounds (ułamek rozmiaru zakresu). */
+  boundsPadding: 0.08,
+  /** Margines w pikselach przy początkowym dopasowaniu kamery do danych. */
+  fitPadding: 24,
 };
 
 // Darmowy styl kafli wektorowych OSM (bez klucza API).
@@ -41,6 +41,7 @@ export const DATA = {
   safety: "data/safety.json",
   activities: "data/activities.geojson",
   poi: "data/poi.geojson",
+  cities: "data/cities.json",
 };
 
 // Choropleth bezpieczeństwa (0–100). Paleta diverging, color-blind safe.

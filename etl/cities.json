@@ -1,0 +1,80 @@
+{
+  "_note": "Rejestr gmin pobieranych przez ETL. Jedyne miejsce z wiedzą 'co jest jednostką dla którego miasta'.",
+  "_unit": "district = choropleth po dzielnicach (admin_level=9). municipality = cała gmina jako jeden poligon.",
+  "_relation": "ID relacji OSM. Przypinamy po ID, nie po nazwie — samo 'Bilbao' dopasowuje też Ekwador i Kolumbię.",
+  "_minPlaces": "Dolny próg wiarygodności odpowiedzi Overpass. Publiczne lustra oddają HTTP 200 z pustą listą; dla małych gmin próg musi być niski, inaczej poprawny wynik uznamy za błąd.",
+  "cities": [
+    {
+      "slug": "bilbao",
+      "name": "Bilbao",
+      "relation": 339549,
+      "unit": "district",
+      "minUnits": 8,
+      "minPlaces": 1000
+    },
+    {
+      "slug": "barakaldo",
+      "name": "Barakaldo",
+      "relation": 340585,
+      "unit": "municipality",
+      "minUnits": 1,
+      "minPlaces": 300
+    },
+    {
+      "slug": "basauri",
+      "name": "Basauri",
+      "relation": 340591,
+      "unit": "municipality",
+      "minUnits": 1,
+      "minPlaces": 40
+    },
+    {
+      "slug": "erandio",
+      "name": "Erandio",
+      "relation": 347284,
+      "unit": "municipality",
+      "minUnits": 1,
+      "minPlaces": 60
+    },
+    {
+      "slug": "arrigorriaga",
+      "name": "Arrigorriaga",
+      "relation": 340587,
+      "unit": "municipality",
+      "minUnits": 1,
+      "minPlaces": 30
+    },
+    {
+      "slug": "etxebarri",
+      "name": "Etxebarri",
+      "relation": 341790,
+      "unit": "municipality",
+      "minUnits": 1,
+      "minPlaces": 15
+    },
+    {
+      "slug": "sondika",
+      "name": "Sondika",
+      "relation": 340648,
+      "unit": "municipality",
+      "minUnits": 1,
+      "minPlaces": 10
+    },
+    {
+      "slug": "zamudio",
+      "name": "Zamudio",
+      "relation": 347287,
+      "unit": "municipality",
+      "minUnits": 1,
+      "minPlaces": 15
+    },
+    {
+      "slug": "alonsotegi",
+      "name": "Alonsotegi",
+      "relation": 342633,
+      "unit": "municipality",
+      "minUnits": 1,
+      "minPlaces": 8
+    }
+  ]
+}

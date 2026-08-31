@@ -1,7 +1,7 @@
 {
-  "_note": "Granice dzielnic: OpenStreetMap (relacja 339549, admin_level=9). Wskaźniki bezpieczeństwa: SZACUNKOWE/demonstracyjne — nie pochodzą z OSM. Podmień na realne statystyki wg docs/SAFETY_METHODOLOGY.md.",
+  "_note": "Granice: OpenStreetMap. Bilbao ma podział na dzielnice (admin_level=9); pozostałe gminy nie mają go w OSM, więc występują jako jeden obszar. Wskaźniki bezpieczeństwa dla Bilbao są SZACUNKOWE/demonstracyjne; dla pozostałych gmin są puste (null) — nie zmyślamy ich. Realne dane: docs/SAFETY_METHODOLOGY.md.",
   "_placeholder": true,
-  "otxarkoaga-txurdinaga": {
+  "bilbao-otxarkoaga-txurdinaga": {
     "safety_index": 61,
     "day_score": 68,
     "night_score": 52,
@@ -9,7 +9,7 @@
     "trend": "up",
     "summary": "Dzielnica mieszkalna, w rewitalizacji, poprawiający się wskaźnik."
   },
-  "uribarri": {
+  "bilbao-uribarri": {
     "safety_index": 70,
     "day_score": 76,
     "night_score": 62,
@@ -17,7 +17,7 @@
     "trend": "flat",
     "summary": "Spokojna, wzgórzowa część miasta z panoramami."
   },
-  "deusto": {
+  "bilbao-deusto": {
     "safety_index": 74,
     "day_score": 80,
     "night_score": 66,
@@ -25,7 +25,7 @@
     "trend": "flat",
     "summary": "Dzielnica studencka z uniwersytetem, żywa i ogólnie bezpieczna."
   },
-  "abando": {
+  "bilbao-abando": {
     "safety_index": 86,
     "day_score": 92,
     "night_score": 78,
@@ -33,7 +33,7 @@
     "trend": "up",
     "summary": "Reprezentacyjne centrum miasta, bardzo bezpieczne, zwłaszcza w dzień."
   },
-  "ibaiondo": {
+  "bilbao-ibaiondo": {
     "safety_index": 63,
     "day_score": 72,
     "night_score": 52,
@@ -41,7 +41,7 @@
     "trend": "down",
     "summary": "Casco Viejo i okolice — tętniące życiem, ostrożność nocą."
   },
-  "begona": {
+  "bilbao-begona": {
     "safety_index": 72,
     "day_score": 78,
     "night_score": 64,
@@ -49,7 +49,7 @@
     "trend": "up",
     "summary": "Rejon bazyliki Begoña, zielony i cichy."
   },
-  "basurtu-zorrotza": {
+  "bilbao-basurtu-zorrotza": {
     "safety_index": 69,
     "day_score": 75,
     "night_score": 60,
@@ -57,12 +57,76 @@
     "trend": "flat",
     "summary": "Rejon szpitala i parku, dobrze skomunikowany."
   },
-  "errekalde": {
+  "bilbao-errekalde": {
     "safety_index": 64,
     "day_score": 70,
     "night_score": 55,
     "incidents_per_1k": 20.9,
     "trend": "flat",
     "summary": "Gęsto zaludniona, robotnicza, z lokalnym charakterem."
+  },
+  "barakaldo": {
+    "safety_index": null,
+    "day_score": null,
+    "night_score": null,
+    "incidents_per_1k": null,
+    "trend": "flat",
+    "summary": ""
+  },
+  "basauri": {
+    "safety_index": null,
+    "day_score": null,
+    "night_score": null,
+    "incidents_per_1k": null,
+    "trend": "flat",
+    "summary": ""
+  },
+  "erandio": {
+    "safety_index": null,
+    "day_score": null,
+    "night_score": null,
+    "incidents_per_1k": null,
+    "trend": "flat",
+    "summary": ""
+  },
+  "arrigorriaga": {
+    "safety_index": null,
+    "day_score": null,
+    "night_score": null,
+    "incidents_per_1k": null,
+    "trend": "flat",
+    "summary": ""
+  },
+  "etxebarri": {
+    "safety_index": null,
+    "day_score": null,
+    "night_score": null,
+    "incidents_per_1k": null,
+    "trend": "flat",
+    "summary": ""
+  },
+  "sondika": {
+    "safety_index": null,
+    "day_score": null,
+    "night_score": null,
+    "incidents_per_1k": null,
+    "trend": "flat",
+    "summary": ""
+  },
+  "zamudio": {
+    "safety_index": null,
+    "day_score": null,
+    "night_score": null,
+    "incidents_per_1k": null,
+    "trend": "flat",
+    "summary": ""
+  },
+  "alonsotegi": {
+    "safety_index": null,
+    "day_score": null,
+    "night_score": null,
+    "incidents_per_1k": null,
+    "trend": "flat",
+    "summary": ""
   }
 }

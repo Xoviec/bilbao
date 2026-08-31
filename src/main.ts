@@ -1,9 +1,9 @@
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./style.css";
 
-import { createMap } from "./map";
+import { createMap, resolveStyle } from "./map";
 import { loadAllData } from "./data/loader";
-import { bounds } from "./data/geo";
+import { bounds, collectionBounds, padBounds } from "./data/geo";
 import { addDistrictLayers, setSafetyField } from "./layers/districts";
 import { addPlacesLayer } from "./layers/places";
 import { renderLegend } from "./ui/legend";
@@ -11,22 +11,36 @@ import { showDistrict, type PlaceItem } from "./ui/sidebar";
 import { renderFilters, type FilterItem } from "./ui/filters";
 import { renderControls } from "./ui/controls";
 import { openMethodology } from "./ui/methodology";
-import { CATEGORY_COLORS, CATEGORY_LABELS } from "./config";
+import { CATEGORY_COLORS, CATEGORY_LABELS, VIEW } from "./config";
 
 const el = (id: string) => document.getElementById(id) as HTMLElement;
 
 async function bootstrap(): Promise<void> {
-  const map = await createMap("map");
-  const data = await loadAllData();
+  // Sondowanie dostawcy kafli i pobieranie danych biegną równolegle — oba są
+  // sieciowe i niezależne, więc szeregowanie ich podwajałoby czas startu.
+  const [style, data] = await Promise.all([resolveStyle(), loadAllData()]);
+
+  // Kadr wynika z danych, nie ze stałej: zbiór gmin bywa różny (patrz
+  // etl/cities.json), a zaszyty bbox Bilbao ucinałby sąsiadów.
+  const dataBounds = collectionBounds(data.districts);
+  const map = createMap("map", style, {
+    bounds: dataBounds,
+    maxBounds: padBounds(dataBounds, VIEW.boundsPadding),
+  });
 
   const districtByCode = new Map(
     data.districts.features.map((f) => [f.properties?.code as string, f]),
   );
+  // Etykieta jednostki. Dzielnicę poprzedzamy nazwą gminy, bo lista miesza dwa
+  // poziomy (dzielnice Bilbao + całe gminy) i samo "Abando" nie mówi, gdzie to jest.
+  const labelOf = (f: GeoJSON.Feature): string => {
+    const name = f.properties?.name as string;
+    const cityName = f.properties?.cityName as string | undefined;
+    return f.properties?.level === "district" && cityName ? `${cityName} — ${name}` : name;
+  };
+
   const nameByCode = new Map(
-    data.districts.features.map((f) => [
-      f.properties?.code as string,
-      f.properties?.name as string,
-    ]),
+    data.districts.features.map((f) => [f.properties?.code as string, labelOf(f)]),
   );
 
   // Wspólne źródło miejsc: POI + aktywności.
@@ -69,7 +83,14 @@ async function bootstrap(): Promise<void> {
   else map.once("load", addLayers);
 
   // --- UI renderujemy NATYCHMIAST po danych (niezależnie od gotowości mapy) ---
-  renderLegend(el("legend"), categories);
+  const missing = data.districts.features.filter(
+    (f) => f.properties?.safety_index == null,
+  ).length;
+  const levels = new Set(data.districts.features.map((f) => f.properties?.level));
+  renderLegend(el("legend"), categories, {
+    missing,
+    mixedResolution: levels.size > 1,
+  });
   el("legend").querySelector("#methodology-btn")?.addEventListener("click", openMethodology);
 
   const active = new Set(categories);
@@ -94,11 +115,11 @@ async function bootstrap(): Promise<void> {
     badge.className = "demo-badge";
     badge.textContent = data.geometryPlaceholder
       ? "⚠ Dane demonstracyjne (placeholder)"
-      : "⚠ Wskaźniki bezpieczeństwa są szacunkowe";
+      : `⚠ Wskaźniki szacunkowe · ${missing} z ${data.districts.features.length} obszarów bez danych`;
     badge.title = data.geometryPlaceholder
       ? "Uruchom `npm run etl`, aby wgrać realne dane z OpenStreetMap"
-      : "Granice dzielnic pochodzą z OpenStreetMap. Wskaźniki bezpieczeństwa to " +
-        "szacunki demonstracyjne — patrz panel metodologii.";
+      : "Granice i miejsca pochodzą z OpenStreetMap. Wskaźniki bezpieczeństwa ma tylko " +
+        "Bilbao i są szacunkowe; pozostałe gminy nie mają ich wcale — patrz panel metodologii.";
     document.getElementById("app")?.appendChild(badge);
   }
 
@@ -106,7 +127,7 @@ async function bootstrap(): Promise<void> {
     el("controls"),
     data.districts.features.map((f) => ({
       code: f.properties?.code as string,
-      name: f.properties?.name as string,
+      name: labelOf(f),
     })),
     {
       onSearch: (code) => {

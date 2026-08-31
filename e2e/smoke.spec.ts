@@ -16,7 +16,8 @@ test.describe("Bilbao Safety Map — smoke", () => {
   });
 
   test("wyszukiwarka dzielnicy otwiera panel", async ({ page }) => {
-    await page.selectOption("#district-search", "abando");
+    // Kody są przestrzeniowane nazwą gminy — mapa obejmuje 9 gmin.
+    await page.selectOption("#district-search", "bilbao-abando");
     const sidebar = page.locator("#sidebar");
     await expect(sidebar).toBeVisible();
     await expect(sidebar.locator("h2")).toContainText("Abando");
@@ -25,6 +26,24 @@ test.describe("Bilbao Safety Map — smoke", () => {
     // Panel zamyka się klawiszem Escape (dostępność).
     await page.keyboard.press("Escape");
     await expect(sidebar).toBeHidden();
+  });
+
+  test("sąsiednia gmina otwiera się i jawnie nie ma danych o bezpieczeństwie", async ({ page }) => {
+    // Barakaldo nie ma podziału w OSM ani realnych statystyk — panel musi to
+    // powiedzieć wprost, zamiast rysować pusty licznik "—/100".
+    await page.selectOption("#district-search", "barakaldo");
+    const sidebar = page.locator("#sidebar");
+    await expect(sidebar).toBeVisible();
+    await expect(sidebar.locator("h2")).toContainText("Barakaldo");
+    await expect(sidebar.locator("p.muted").first()).toContainText("Brak danych o bezpieczeństwie");
+    await expect(sidebar.locator(".source")).toContainText("Brak wskaźników");
+    await expect(sidebar.locator(".score")).toHaveCount(0);
+    await expect(sidebar.locator(".places-list li")).not.toHaveCount(0);
+  });
+
+  test("legenda tłumaczy szare obszary i mieszaną rozdzielczość", async ({ page }) => {
+    await expect(page.locator("#legend .legend-missing")).toBeVisible();
+    await expect(page.locator("#legend .legend-note")).toContainText("nie mają go w OpenStreetMap");
   });
 
   test("modal metodologii otwiera się i zamyka", async ({ page }) => {

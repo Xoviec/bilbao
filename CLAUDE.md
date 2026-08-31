@@ -34,11 +34,19 @@ npm run etl      # pobranie realnych danych z OSM (wymaga sieci → Overpass)
 ## Zasady
 - **Dane bezpieczeństwa są wrażliwe** — trzymaj się `docs/SAFETY_METHODOLOGY.md`
   (jawność, neutralny język, oznaczanie danych szacunkowych).
-- Granice dzielnic i POI w `public/data/` są **realne** (OSM, `npm run etl`).
-  Wskaźniki bezpieczeństwa **nadal są szacunkowe** — flaga `_placeholder` w
-  `safety.json` steruje ostrzeżeniem w UI, nie usuwaj jej bez realnych danych.
-- ETL jest przypięty do relacji OSM `339549`. Nie wracaj do wyszukiwania po
-  `name="Bilbao"` — dopasowuje też Bilbao w Ekwadorze i Kolumbii.
+- Granice i POI w `public/data/` są **realne** (OSM, `npm run etl`).
+  Wskaźniki bezpieczeństwa **ma tylko Bilbao i są szacunkowe**; pozostałe gminy
+  mają `null`. Flaga `_placeholder` w `safety.json` steruje ostrzeżeniem w UI —
+  nie usuwaj jej bez realnych danych i **nie wypełniaj nulli zmyślonymi liczbami**.
+- Gminy są przypięte po **ID relacji** w `etl/cities.json`. Nie wracaj do
+  wyszukiwania po nazwie — `name="Bilbao"` dopasowuje też Ekwador i Kolumbię.
+- **Dwie rozdzielczości są zamierzone.** W całej Bizkaia tylko Bilbao ma w OSM
+  podział poniżej gminy, więc sąsiedzi to pojedyncze poligony (`level` na featerze).
+  Legenda, panel i sidebar muszą o tym mówić — jednolity kolor to brak danych,
+  nie jednorodność terenu.
+- Kody jednostek są przestrzeniowane gminą (`bilbao-abando`, `barakaldo`), bo same
+  slugi kolidują. Zmiana kodów wymaga migracji kluczy `safety.json` — inaczej join
+  po cichu gubi jednostki (łapie to test integralności).
 - Atrybucja **© OpenStreetMap contributors** jest wymagana na mapie (ODbL).
 - Zmiany waliduj: `npm test && npm run build` (a dla UI również `npm run e2e`).
 

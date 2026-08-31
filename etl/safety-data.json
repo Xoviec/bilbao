@@ -1,6 +1,5 @@
 {
   "_README": "Ręcznie wprowadzone dane o bezpieczeństwie wraz z pochodzeniem. To JEDYNE miejsce, gdzie wolno je zmieniać — public/data/safety.json jest generowane przez etl/build-safety.mjs. Każda liczba musi mieć źródło w `sources`. Czego nie ma w źródle, zostaje null.",
-
   "sources": {
     "ikerfel2025": {
       "title": "Estudio de Percepción de Seguridad y Victimización 2025",
@@ -22,10 +21,18 @@
       "publisher": "Eustat / Ertzaintza",
       "method": "Przestępstwa zgłoszone policji, I kwartał 2026 (porównanie: I kwartał 2025). Publikowane WYŁĄCZNIE dla gmin powyżej 20 000 mieszkańców.",
       "url": "https://es.eustat.eus/elementos/ele0025700/ti_infracciones-penales-conocidas-por-la-ertzaintza-en-la-cade-euskadi-por-tipos-segun-municipios-de-mas-de-20000-habitantes-i2026/tbl0025729_c.html",
-      "scale": "liczba przestępstw na 1000 mieszkańców, kwartalnie; WYŻSZA = gorzej"
+      "scale": "liczba przestępstw na 1000 mieszkańców, kwartalnie; WYŻSZA = gorzej",
+      "role": "Źródło kontrolne. Kwartalne i tylko dla gmin >20 tys. — użyte do weryfikacji rzędu wielkości Udalmap (Bilbao 16,3/kw. ≈ 66,6/rok)."
+    },
+    "udalmap2024": {
+      "title": "Udalmap — Indicadores municipales de sostenibilidad: Índice de delitos (‰ habitantes), 2024",
+      "publisher": "Gobierno Vasco / Eusko Jaurlaritza (Udalmap)",
+      "method": "Roczny indeks przestępstw na 1000 mieszkańców. Obejmuje WSZYSTKIE 251 gmin Kraju Basków — bez progu ludnościowego. Szereg czasowy 2003–2024.",
+      "url": "https://www.euskadi.eus/indicadores-municipales-de-sostenibilidad-indice-de-delitos-x2030-habitantes/web01-a2nekabe/es/",
+      "api": "https://api.euskadi.eus/udalmap/indicators/110",
+      "scale": "‰ (na 1000 mieszkańców), rocznie; WYŻSZA = gorzej"
     }
   },
-
   "cityWide": {
     "bilbao": {
       "perception": 5.58,
@@ -35,36 +42,91 @@
       "note": "Percepcja nocna jest publikowana tylko dla całego miasta, nie per dzielnica."
     }
   },
-
   "perception": {
     "_source": "ikerfel2025",
     "_prevSource": "ikerfel2024",
     "_year": 2025,
     "_prevYear": 2024,
-    "bilbao-deusto": { "value": 5.83, "prev": 6.02 },
-    "bilbao-uribarri": { "value": 5.79, "prev": 5.77 },
-    "bilbao-otxarkoaga-txurdinaga": { "value": 5.66, "prev": 5.76 },
-    "bilbao-errekalde": { "value": 5.56, "prev": 5.52 },
-    "bilbao-basurtu-zorrotza": { "value": 5.50, "prev": 5.72 },
-    "bilbao-ibaiondo": { "value": 5.48, "prev": 5.65 },
-    "bilbao-begona": { "value": 5.47, "prev": 5.72 },
-    "bilbao-abando": { "value": 5.44, "prev": 5.72 }
-  },
-
-  "crime": {
-    "_source": "eustat2026q1",
-    "_period": "I kw. 2026",
-    "_prevPeriod": "I kw. 2025",
-    "_note": "Wartość dotyczy CAŁEJ gminy. Dzielnice Bilbao dziedziczą ją z adnotacją `scope: municipality` — statystyk w rozbiciu na dzielnice nikt nie publikuje.",
-    "byMunicipality": {
-      "bilbao": { "rate": 16.3, "prev": 16.3, "changePct": 0.5 },
-      "barakaldo": { "rate": 12.2, "prev": 13.3, "changePct": -7.9 },
-      "basauri": { "rate": 12.4, "prev": 9.2, "changePct": 35.4 },
-      "erandio": { "rate": 12.1, "prev": 13.9, "changePct": -12.5 }
+    "bilbao-deusto": {
+      "value": 5.83,
+      "prev": 6.02
     },
-    "unpublished": {
-      "_reason": "Gminy poniżej 20 000 mieszkańców — Eustat/Ertzaintza nie publikuje dla nich rozbicia.",
-      "municipalities": ["arrigorriaga", "etxebarri", "sondika", "zamudio", "alonsotegi"]
+    "bilbao-uribarri": {
+      "value": 5.79,
+      "prev": 5.77
+    },
+    "bilbao-otxarkoaga-txurdinaga": {
+      "value": 5.66,
+      "prev": 5.76
+    },
+    "bilbao-errekalde": {
+      "value": 5.56,
+      "prev": 5.52
+    },
+    "bilbao-basurtu-zorrotza": {
+      "value": 5.5,
+      "prev": 5.72
+    },
+    "bilbao-ibaiondo": {
+      "value": 5.48,
+      "prev": 5.65
+    },
+    "bilbao-begona": {
+      "value": 5.47,
+      "prev": 5.72
+    },
+    "bilbao-abando": {
+      "value": 5.44,
+      "prev": 5.72
+    }
+  },
+  "crime": {
+    "_source": "udalmap2024",
+    "_period": "2024",
+    "_prevPeriod": "2023",
+    "_note": "Wartość dotyczy CAŁEJ gminy. Dzielnice Bilbao dziedziczą ją z adnotacją `scope: municipality` — statystyk w rozbiciu na dzielnice nikt nie publikuje.",
+    "_reference": {
+      "name": "Bizkaia (cała prowincja)",
+      "rate": 49.56,
+      "prev": 49.89
+    },
+    "byMunicipality": {
+      "bilbao": {
+        "rate": 66.58,
+        "prev": 65.58
+      },
+      "zamudio": {
+        "rate": 74.79,
+        "prev": 67.39
+      },
+      "erandio": {
+        "rate": 60.08,
+        "prev": 58.27
+      },
+      "barakaldo": {
+        "rate": 52.15,
+        "prev": 55.59
+      },
+      "alonsotegi": {
+        "rate": 50.62,
+        "prev": 47.03
+      },
+      "sondika": {
+        "rate": 48.23,
+        "prev": 61.24
+      },
+      "basauri": {
+        "rate": 46.65,
+        "prev": 49.3
+      },
+      "arrigorriaga": {
+        "rate": 37.27,
+        "prev": 36.11
+      },
+      "etxebarri": {
+        "rate": 28.67,
+        "prev": 29.39
+      }
     }
   }
 }

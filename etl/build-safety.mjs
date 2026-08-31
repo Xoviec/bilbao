@@ -39,6 +39,7 @@ const main = async () => {
       "Dane i źródła: etl/safety-data.json.",
     _sources: src.sources,
     _cityWide: src.cityWide,
+    _reference: src.crime._reference,
     _units: {},
   };
 
@@ -72,14 +73,16 @@ const main = async () => {
       crime_prev: c ? c.prev : null,
       // Dla przestępczości "up" znaczy WIĘCEJ przestępstw, czyli gorzej.
       crime_trend: c ? trendOf(c.rate, c.prev) : "flat",
-      crime_change_pct: c ? c.changePct : null,
+      // Liczone tutaj, nie przepisywane — dwie liczby ze źródła są jedyną prawdą.
+      crime_change_pct: c ? Number((((c.rate - c.prev) / c.prev) * 100).toFixed(1)) : null,
       crime_scope: crime == null ? null : level === "district" ? "municipality" : "unit",
       crime_source: crime != null ? src.crime._source : null,
       crime_period: crime != null ? src.crime._period : null,
 
+      // Percepcję bada tylko Ratusz Bilbao i tylko u siebie.
       no_data_reason:
-        perception == null && crime == null
-          ? "Gmina poniżej 20 000 mieszkańców — brak publikowanych statystyk."
+        perception == null
+          ? "Percepcji bezpieczeństwa nie bada się poza Bilbao."
           : null,
     };
   }

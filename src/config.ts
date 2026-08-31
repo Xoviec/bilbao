@@ -82,8 +82,9 @@ export const METRICS: Record<MetricId, Metric> = {
     id: "crime_rate",
     field: "crime_rate",
     label: "Przestępstwa na 1000 mieszkańców",
-    unit: "/1000",
-    domain: [5, 20],
+    unit: "‰",
+    // Zakres obejmuje wszystkie 9 gmin (28,7–74,8) ze średnią Bizkaia 49,6 pośrodku.
+    domain: [20, 80],
     higherIsBetter: false,
     short: "Przestępczość",
   },

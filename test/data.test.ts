@@ -114,18 +114,40 @@ describe("Integralność danych (public/data)", () => {
     }
   });
 
-  it("gminy poniżej progu publikacji nie mają żadnych liczb", () => {
-    // Eustat publikuje tylko dla gmin >20 000 mieszkańców. Dla reszty jedyną
-    // uczciwą wartością jest null — mapa rysuje je na szaro.
-    for (const city of sourceData.crime.unpublished.municipalities) {
-      const units = districts.features.filter((f: any) => f.properties.city === city);
-      expect(units.length, `${city}: brak jednostek`).toBeGreaterThan(0);
+  it("każda gmina z rejestru ma dane o przestępczości", () => {
+    // Udalmap obejmuje wszystkie 251 gmin Kraju Basków, bez progu ludnościowego —
+    // więc żaden obszar nie może zostać bez tej metryki.
+    for (const city of registry) {
+      const units = districts.features.filter((f: any) => f.properties.city === city.slug);
       for (const u of units) {
-        const rec = safetyUnits[u.properties.code];
-        expect(rec.crime_rate, `${u.properties.code} ma wymyśloną przestępczość`).toBeNull();
-        expect(rec.perception, `${u.properties.code} ma wymyśloną percepcję`).toBeNull();
-        expect(rec.no_data_reason, `${u.properties.code}: brak wyjaśnienia`).toBeTruthy();
+        expect(
+          safetyUnits[u.properties.code].crime_rate,
+          `${u.properties.code}: brak przestępczości`,
+        ).not.toBeNull();
       }
+    }
+  });
+
+  it("percepcja istnieje tylko tam, gdzie ją zbadano", () => {
+    // Ratusz Bilbao bada percepcję u siebie. Poza Bilbao nikt tego nie robi,
+    // więc jedyną uczciwą wartością jest null + podany powód.
+    for (const f of districts.features) {
+      const rec = safetyUnits[f.properties.code];
+      if (f.properties.city === "bilbao") {
+        expect(rec.perception, `${f.properties.code}: brak percepcji`).not.toBeNull();
+      } else {
+        expect(rec.perception, `${f.properties.code} ma wymyśloną percepcję`).toBeNull();
+        expect(rec.no_data_reason, `${f.properties.code}: brak wyjaśnienia`).toBeTruthy();
+      }
+    }
+  });
+
+  it("zmiana procentowa zgadza się z dwiema liczbami ze źródła", () => {
+    for (const f of districts.features) {
+      const rec = safetyUnits[f.properties.code];
+      if (rec.crime_rate == null) continue;
+      const expected = ((rec.crime_rate - rec.crime_prev) / rec.crime_prev) * 100;
+      expect(rec.crime_change_pct, f.properties.code).toBeCloseTo(expected, 1);
     }
   });
 

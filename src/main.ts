@@ -67,6 +67,7 @@ async function bootstrap(): Promise<void> {
       data.safety,
       placesByDistrict.get(code) ?? [],
       data.sources,
+      data.reference,
     );
 
   const categories = [

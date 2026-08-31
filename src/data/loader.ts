@@ -38,6 +38,12 @@ export interface SourceRef {
   published?: string;
 }
 
+export interface Reference {
+  name: string;
+  rate: number;
+  prev: number;
+}
+
 export interface CityWide {
   perception: number;
   perceptionNight: number;
@@ -51,6 +57,7 @@ export type SafetyMap = Record<string, SafetyRecord>;
 interface SafetyFile {
   _sources: Record<string, SourceRef>;
   _cityWide: Record<string, CityWide>;
+  _reference?: Reference;
   _units: SafetyMap;
 }
 
@@ -59,6 +66,8 @@ export interface LoadedData {
   safety: SafetyMap;
   sources: Record<string, SourceRef>;
   cityWide: Record<string, CityWide>;
+  /** Odniesienie (średnia prowincji) — sama stopa niewiele mówi bez punktu odniesienia. */
+  reference: Reference | null;
   activities: GeoJSON.FeatureCollection;
   poi: GeoJSON.FeatureCollection;
   /** Czy GEOMETRIA obszarów to placeholder (znika po `npm run etl`). */
@@ -93,6 +102,7 @@ export async function loadAllData(): Promise<LoadedData> {
     safety,
     sources: safetyFile._sources ?? {},
     cityWide: safetyFile._cityWide ?? {},
+    reference: safetyFile._reference ?? null,
     activities,
     poi,
     geometryPlaceholder,

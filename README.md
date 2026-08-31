@@ -75,7 +75,7 @@ Dane w `public/data/` pochodzą z **OpenStreetMap** (`npm run etl`). Mapa obejmu
 | Granice 16 jednostek (9 gmin) | OSM, relacje z `etl/cities.json` | **realne** |
 | POI (245) + aktywności (2494) | OSM (Overpass) | **realne** |
 | Percepcja bezpieczeństwa | Ikerfel / Ratusz Bilbao 2025 | **realne, 8 dzielnic Bilbao** |
-| Przestępstwa / 1000 mieszk. | Eustat / Ertzaintza, I kw. 2026 | **realne, 4 gminy** |
+| Przestępstwa / 1000 mieszk. | Udalmap (Rząd Kraju Basków), 2024 | **realne, wszystkie 9 gmin** |
 
 ### Dane o bezpieczeństwie
 
@@ -102,19 +102,33 @@ Całe miasto 5,58; nocą 5,24. **Percepcja nocna jest publikowana tylko zbiorczo
 nie per dzielnica — dlatego nie ma trybu „dzień/noc". Rozpiętość między
 dzielnicami to 0,39 pkt; skala kolorów jest stała, żeby jej nie wyolbrzymiać.
 
-**2. Przestępstwa na 1000 mieszkańców** — [Eustat / Ertzaintza, I kw. 2026](https://es.eustat.eus/elementos/ele0025700/ti_infracciones-penales-conocidas-por-la-ertzaintza-en-la-cade-euskadi-por-tipos-segun-municipios-de-mas-de-20000-habitantes-i2026/tbl0025729_c.html).
+**2. Przestępstwa na 1000 mieszkańców (‰), 2024** — [Udalmap, Rząd Kraju Basków](https://www.euskadi.eus/indicadores-municipales-de-sostenibilidad-indice-de-delitos-x2030-habitantes/web01-a2nekabe/es/)
+([API](https://api.euskadi.eus/udalmap/indicators/110)). Obejmuje **wszystkie 251 gmin**
+— bez progu ludnościowego, więc także te najmniejsze.
 
-| Gmina | I kw. 2026 | I kw. 2025 | Zmiana |
+| Gmina | 2024 | 2023 | Zmiana |
 |---|---|---|---|
-| Bilbao | 16,3 | 16,3 | +0,5% |
-| Basauri | 12,4 | 9,2 | +35,4% |
-| Barakaldo | 12,2 | 13,3 | −7,9% |
-| Erandio | 12,1 | 13,9 | −12,5% |
+| Zamudio | 74,8 | 67,4 | +11,0% |
+| Bilbao | 66,6 | 65,6 | +1,5% |
+| Erandio | 60,1 | 58,3 | +3,1% |
+| Barakaldo | 52,2 | 55,6 | −6,2% |
+| Alonsotegi | 50,6 | 47,0 | +7,6% |
+| Sondika | 48,2 | 61,2 | −21,2% |
+| Basauri | 46,7 | 49,3 | −5,4% |
+| Arrigorriaga | 37,3 | 36,1 | +3,2% |
+| Etxebarri | 28,7 | 29,4 | −2,4% |
+| *Bizkaia (odniesienie)* | *49,6* | *49,9* | *−0,7%* |
 
-Publikowane **tylko dla gmin powyżej 20 000 mieszkańców**. Arrigorriaga, Etxebarri,
-Sondika, Zamudio i Alonsotegi są poniżej progu — zostają szare. Wartość dotyczy
-całej gminy; dzielnice Bilbao dziedziczą liczbę miejską z jawnym ostrzeżeniem
-w panelu, bo rozbicia na dzielnice nikt nie publikuje.
+Wartość dotyczy całej gminy; dzielnice Bilbao dziedziczą liczbę miejską z jawnym
+ostrzeżeniem w panelu, bo rozbicia na dzielnice nikt nie publikuje. Rząd wielkości
+potwierdzony niezależnie kwartalnymi danymi Eustat/Ertzaintza (Bilbao 16,3‰ za
+I kw. 2026 ≈ 66,6‰ rocznie).
+
+> **Uwaga interpretacyjna:** to przestępstwa *zgłoszone*, dzielone przez liczbę
+> *mieszkańców*. Gminy z dużym ruchem przyjezdnych — Zamudio ma park technologiczny,
+> Sondika lotnisko — mają wskaźnik zawyżony, bo zdarzenia generują też osoby
+> spoza gminy. Wysoka pozycja Zamudio to w dużej mierze ten efekt, a nie
+> „niebezpieczna dzielnica".
 
 > ⚠️ **Szary kolor to brak pomiaru, nie „bezpiecznie".** Nie wypełniamy go
 > szacunkami. Dane i cytowania: [`etl/safety-data.json`](etl/safety-data.json);

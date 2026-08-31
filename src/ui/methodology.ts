@@ -22,19 +22,22 @@ const CONTENT = `
     <li>To <strong>odczucie mieszkańców</strong>, nie pomiar przestępczości.</li>
   </ul>
 
-  <h3>2. Przestępstwa na 1000 mieszkańców</h3>
-  <p><em>Infracciones penales conocidas por la Ertzaintza</em>, Eustat / policja baskijska,
-     I kwartał 2026 (porównanie: I kwartał 2025).</p>
+  <h3>2. Przestępstwa na 1000 mieszkańców (‰)</h3>
+  <p><em>Udalmap — Indicadores municipales de sostenibilidad: Índice de delitos</em>,
+     Rząd Kraju Basków. Dane <strong>roczne za 2024</strong> (porównanie: 2023).</p>
   <ul>
-    <li>Publikowane <strong>wyłącznie dla gmin powyżej 20 000 mieszkańców</strong>,
-        czyli dla Bilbao, Barakaldo, Basauri i Erandio.</li>
-    <li>Arrigorriaga, Etxebarri, Sondika, Zamudio i Alonsotegi są poniżej progu —
-        zostają szare.</li>
+    <li>Obejmuje <strong>wszystkie 251 gmin</strong> Kraju Basków — bez progu
+        ludnościowego, więc także te najmniejsze jak Sondika czy Alonsotegi.</li>
+    <li>Odniesienie: cała prowincja <strong>Bizkaia 49,6‰</strong>.</li>
     <li>Wartość dotyczy <strong>całej gminy</strong>. Dzielnice Bilbao dziedziczą
         liczbę miejską, bo rozbicia na dzielnice nikt nie publikuje — panel
         obszaru zaznacza to ostrzeżeniem.</li>
     <li>To przestępstwa <strong>zgłoszone</strong>. Wyższa zgłaszalność potrafi
-        podnieść wskaźnik bez wzrostu realnej przestępczości.</li>
+        podnieść wskaźnik bez wzrostu realnej przestępczości. Gminy z dużym ruchem
+        przyjezdnych (praca, zakupy, lotnisko) mają wskaźnik zawyżony, bo dzieli się
+        zdarzenia przez samych mieszkańców.</li>
+    <li>Rząd wielkości potwierdzony niezależnie danymi kwartalnymi Eustat/Ertzaintza
+        (Bilbao 16,3‰ za I kw. 2026 ≈ 66,6‰ rocznie).</li>
   </ul>
 
   <p class="warn">⚠️ Szary kolor to <strong>brak pomiaru</strong>, nie „bezpiecznie".

@@ -37,24 +37,26 @@ test.describe("Bilbao Safety Map — smoke", () => {
     await expect(sidebar.locator(".metric-warn")).toContainText("całej gminy");
   });
 
-  test("gmina bez publikowanych statystyk jawnie nie ma danych", async ({ page }) => {
-    // Sondika < 20 000 mieszkańców, więc Eustat nic dla niej nie publikuje.
+  test("najmniejsza gmina też ma przestępczość, ale nie percepcję", async ({ page }) => {
+    // Sondika ma 4,9 tys. mieszkańców. Udalmap obejmuje wszystkie gminy bez progu,
+    // więc stopa przestępczości jest — brakuje tylko badania percepcji.
     await page.selectOption("#district-search", "sondika");
     const sidebar = page.locator("#sidebar");
     await expect(sidebar).toBeVisible();
     await expect(sidebar.locator("h2")).toContainText("Sondika");
-    await expect(sidebar.locator("p.muted").first()).toContainText("Brak danych");
-    await expect(sidebar.locator("p.muted").first()).toContainText("20 000");
-    await expect(sidebar.locator(".metric")).toHaveCount(0);
+    await expect(sidebar.locator(".metric")).toHaveCount(1);
+    await expect(sidebar.locator(".metric-label")).toContainText("Przestępstwa");
+    await expect(sidebar.locator(".metric-value")).toContainText("48,2");
   });
 
-  test("Barakaldo ma realną przestępczość, ale nie percepcję", async ({ page }) => {
+  test("Barakaldo ma realną przestępczość z odniesieniem do prowincji", async ({ page }) => {
     await page.selectOption("#district-search", "barakaldo");
     const sidebar = page.locator("#sidebar");
     await expect(sidebar).toBeVisible();
     await expect(sidebar.locator(".metric")).toHaveCount(1);
-    await expect(sidebar.locator(".metric-label")).toContainText("Przestępstwa");
-    await expect(sidebar.locator(".metric-value")).toContainText("12,2");
+    await expect(sidebar.locator(".metric-value")).toContainText("52,1");
+    // Sama stopa niewiele mówi bez punktu odniesienia.
+    await expect(sidebar.locator(".metric-meta")).toContainText("Bizkaia");
   });
 
   test("panel źródeł otwiera się i zamyka", async ({ page }) => {
@@ -63,7 +65,7 @@ test.describe("Bilbao Safety Map — smoke", () => {
     await expect(modal).toBeVisible();
     await expect(modal.locator("h2")).toContainText("Skąd te dane");
     await expect(modal).toContainText("Ikerfel");
-    await expect(modal).toContainText("Eustat");
+    await expect(modal).toContainText("Udalmap");
     await page.keyboard.press("Escape");
     await expect(modal).toBeHidden();
   });
@@ -80,6 +82,8 @@ test.describe("Bilbao Safety Map — smoke", () => {
     await expect(legendTitle).toContainText("Przestępstwa");
     // Przy przestępczości kierunek skali jest odwrotny.
     await expect(page.locator("#legend .legend-scale")).toContainText("gorzej");
+    // Udalmap pokrywa wszystkie gminy — w tym trybie nie ma szarych obszarów.
+    await expect(page.locator("#legend .legend-missing")).toHaveCount(0);
   });
 
   test("legenda tłumaczy szare obszary i mieszaną rozdzielczość", async ({ page }) => {

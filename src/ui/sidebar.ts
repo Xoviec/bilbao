@@ -1,4 +1,4 @@
-import type { SafetyMap, SourceRef } from "../data/loader";
+import type { SafetyMap, SourceRef, Reference } from "../data/loader";
 import { CATEGORY_COLORS, CATEGORY_LABELS } from "../config";
 
 const TREND_ICON: Record<string, string> = { up: "▲", flat: "▬", down: "▼" };
@@ -26,6 +26,7 @@ export function showDistrict(
   safety: SafetyMap,
   places: PlaceItem[] = [],
   sources: Record<string, SourceRef> = {},
+  reference: Reference | null = null,
 ): void {
   const rec = safety[code];
   sidebar.classList.remove("hidden");
@@ -66,7 +67,11 @@ export function showDistrict(
           <span class="metric-value">${fmt(rec.crime_rate, 1)}
             ${TREND_ICON[rec.crime_trend] ?? ""}</span>
         </div>
-        <p class="metric-meta">${esc(rec.crime_period ?? "")} ${pctTxt ? `· ${pctTxt}` : ""}</p>
+        <p class="metric-meta">${esc(rec.crime_period ?? "")} ${pctTxt ? `· ${pctTxt}` : ""}${
+          reference
+            ? ` · ${esc(reference.name)}: ${fmt(reference.rate, 1)}`
+            : ""
+        }</p>
         ${scopeNote}
         ${src ? `<p class="metric-src">${esc(src.publisher)}</p>` : ""}
       </div>`);

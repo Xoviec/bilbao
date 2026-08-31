@@ -42,7 +42,7 @@ npm run etl      # pobranie realnych danych z OSM (wymaga sieci → Overpass)
   nie opublikował, zostaje `null` i rysuje się na szaro.
 - **Dwie metryki, nigdy nie łączone w jeden indeks**: `perception` (0–10,
   ankieta, tylko 8 dzielnic Bilbao) i `crime_rate` (na 1000 mieszk., policja,
-  tylko gminy >20 tys.). Mierzą co innego — zważenie ich byłoby wymysłem.
+  wszystkie gminy, Udalmap). Mierzą co innego — zważenie ich byłoby wymysłem.
   Mają też przeciwne kierunki, więc skala kolorów `crime_rate` jest odwrócona.
 - Percepcja nocna istnieje tylko zbiorczo dla Bilbao — nie rób z niej trybu
   „noc" per obszar.

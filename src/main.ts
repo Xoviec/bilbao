@@ -7,7 +7,7 @@ import { bounds } from "./data/geo";
 import { addDistrictLayers, setSafetyField } from "./layers/districts";
 import { addPlacesLayer } from "./layers/places";
 import { renderLegend } from "./ui/legend";
-import { showDistrict } from "./ui/sidebar";
+import { showDistrict, type PlaceItem } from "./ui/sidebar";
 import { renderFilters, type FilterItem } from "./ui/filters";
 import { renderControls } from "./ui/controls";
 import { CATEGORY_COLORS, CATEGORY_LABELS } from "./config";
@@ -28,14 +28,31 @@ async function bootstrap(): Promise<void> {
     ]),
   );
 
-  const openDistrict = (code: string) =>
-    showDistrict(el("sidebar"), code, nameByCode.get(code) ?? code, data.safety);
-
   // Wspólne źródło miejsc: POI + aktywności.
   const places: GeoJSON.FeatureCollection = {
     type: "FeatureCollection",
     features: [...data.poi.features, ...data.activities.features],
   };
+
+  // Miejsca pogrupowane wg dzielnicy (do panelu).
+  const placesByDistrict = new Map<string, PlaceItem[]>();
+  for (const f of places.features) {
+    const d = f.properties?.district as string | undefined;
+    if (!d) continue;
+    const arr = placesByDistrict.get(d) ?? [];
+    arr.push({ name: f.properties?.name as string, category: f.properties?.category as string });
+    placesByDistrict.set(d, arr);
+  }
+
+  const openDistrict = (code: string) =>
+    showDistrict(
+      el("sidebar"),
+      code,
+      nameByCode.get(code) ?? code,
+      data.safety,
+      placesByDistrict.get(code) ?? [],
+    );
+
   const categories = [
     ...new Set(places.features.map((f) => f.properties?.category as string)),
   ].filter(Boolean);

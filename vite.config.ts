@@ -7,5 +7,12 @@ export default defineConfig({
     target: "es2021",
     sourcemap: false,
     chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        // MapLibre w osobnym chunku — kod aplikacji cache'uje się niezależnie
+        // od silnika mapy (ładują się równolegle).
+        manualChunks: { maplibre: ["maplibre-gl"] },
+      },
+    },
   },
 });

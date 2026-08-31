@@ -102,6 +102,15 @@ body { color: var(--text); background: var(--bg); }
 .metrics span { color: var(--muted); }
 
 .summary { line-height: 1.5; }
+
+.places-title { font-size: 0.9rem; margin: 16px 0 8px; }
+.places-list { list-style: none; padding: 0; margin: 0; }
+.places-list li {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 0; border-bottom: 1px solid #eee; font-size: 0.85rem;
+}
+.place-name { flex: 1; }
+.place-cat { color: var(--muted); font-size: 0.72rem; }
 .muted { color: var(--muted); font-size: 0.78rem; }
 .source { margin-top: 10px; }
 
@@ -123,7 +132,8 @@ body { color: var(--text); background: var(--bg); }
     --bg: #14161a; --panel: rgba(24, 27, 32, 0.96);
     --text: #e7e9ee; --muted: #9aa3b2;
   }
-  .metrics li { border-bottom-color: #2a2e36; }
+  .metrics li, .places-list li { border-bottom-color: #2a2e36; }
+  #district-search, .ctrl-modes, .mode-btn { border-color: #2a2e36; }
 }
 
 @media (max-width: 640px) {

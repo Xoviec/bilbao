@@ -18,6 +18,8 @@ test.describe("Bilbao Safety Map — smoke", () => {
     const sidebar = page.locator("#sidebar");
     await expect(sidebar).toBeVisible();
     await expect(sidebar.locator("h2")).toContainText("Abando");
+    // Panel listuje miejsca w dzielnicy.
+    await expect(sidebar.locator(".places-list li")).not.toHaveCount(0);
     // Panel zamyka się przyciskiem.
     await sidebar.locator(".close").click();
     await expect(sidebar).toBeHidden();

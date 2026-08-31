@@ -20,9 +20,18 @@ test.describe("Bilbao Safety Map — smoke", () => {
     await expect(sidebar.locator("h2")).toContainText("Abando");
     // Panel listuje miejsca w dzielnicy.
     await expect(sidebar.locator(".places-list li")).not.toHaveCount(0);
-    // Panel zamyka się przyciskiem.
-    await sidebar.locator(".close").click();
+    // Panel zamyka się klawiszem Escape (dostępność).
+    await page.keyboard.press("Escape");
     await expect(sidebar).toBeHidden();
+  });
+
+  test("modal metodologii otwiera się i zamyka", async ({ page }) => {
+    await page.locator("#methodology-btn").click();
+    const modal = page.locator("#methodology-modal");
+    await expect(modal).toBeVisible();
+    await expect(modal.locator("h2")).toContainText("Jak liczymy");
+    await page.keyboard.press("Escape");
+    await expect(modal).toBeHidden();
   });
 
   test("przełącznik dzień/noc zmienia aktywny tryb", async ({ page }) => {

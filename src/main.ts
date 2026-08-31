@@ -10,6 +10,7 @@ import { renderLegend } from "./ui/legend";
 import { showDistrict, type PlaceItem } from "./ui/sidebar";
 import { renderFilters, type FilterItem } from "./ui/filters";
 import { renderControls } from "./ui/controls";
+import { openMethodology } from "./ui/methodology";
 import { CATEGORY_COLORS, CATEGORY_LABELS } from "./config";
 
 const el = (id: string) => document.getElementById(id) as HTMLElement;
@@ -69,6 +70,7 @@ async function bootstrap(): Promise<void> {
 
   // --- UI renderujemy NATYCHMIAST po danych (niezależnie od gotowości mapy) ---
   renderLegend(el("legend"), categories);
+  el("legend").querySelector("#methodology-btn")?.addEventListener("click", openMethodology);
 
   const active = new Set(categories);
   const items: FilterItem[] = categories.map((c) => ({

@@ -20,6 +20,7 @@ export function renderLegend(container: HTMLElement, categories: string[]): void
     <div class="legend-title">Wskaźnik bezpieczeństwa</div>
     <div class="legend-bar" style="background: linear-gradient(90deg, ${gradient});"></div>
     <div class="legend-scale"><span>0 · niższe</span><span>100 · wyższe</span></div>
+    <button id="methodology-btn" class="link-btn" type="button">ⓘ Jak to liczymy?</button>
     ${catRows ? `<div class="legend-title legend-sep">Kategorie miejsc</div>${catRows}` : ""}
   `;
 }

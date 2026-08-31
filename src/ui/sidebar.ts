@@ -57,13 +57,23 @@ export function showDistrict(
 
   sidebar.innerHTML = `
     <button class="close" aria-label="Zamknij">×</button>
-    <h2>${esc(name)}</h2>
+    <h2 tabindex="-1">${esc(name)}</h2>
     ${safetyHtml}
     ${placesHtml}
     <p class="source muted">Dane szacunkowe · źródło do podmiany (OSM / Open Data Euskadi)</p>
   `;
 
-  sidebar.querySelector(".close")?.addEventListener("click", () => {
+  const close = () => {
     sidebar.classList.add("hidden");
-  });
+    document.removeEventListener("keydown", onKey);
+  };
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === "Escape") close();
+  };
+
+  sidebar.querySelector(".close")?.addEventListener("click", close);
+  document.addEventListener("keydown", onKey);
+
+  // Focus na nagłówku — czytniki ekranu ogłoszą otwarty panel.
+  (sidebar.querySelector("h2") as HTMLElement)?.focus();
 }

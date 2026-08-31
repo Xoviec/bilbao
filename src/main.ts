@@ -87,6 +87,15 @@ async function bootstrap(): Promise<void> {
 
   el("loading")?.remove();
 
+  // Badge znika automatycznie, gdy ETL wgra realne dane (brak meta.placeholder).
+  if (data.placeholder) {
+    const badge = document.createElement("div");
+    badge.className = "demo-badge";
+    badge.textContent = "⚠ Dane demonstracyjne (placeholder)";
+    badge.title = "Uruchom `npm run etl`, aby wgrać realne dane z OpenStreetMap";
+    document.getElementById("app")?.appendChild(badge);
+  }
+
   renderControls(
     el("controls"),
     data.districts.features.map((f) => ({

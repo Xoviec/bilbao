@@ -1,6 +1,7 @@
 {
   "type": "FeatureCollection",
   "note": "PLACEHOLDER: uproszczone prostokąty. Podmień na realne granice dzielnic z OSM / Open Data Euskadi.",
+  "meta": { "placeholder": true },
   "features": [
     {
       "type": "Feature",

@@ -17,6 +17,8 @@ export interface LoadedData {
   safety: SafetyMap;
   activities: GeoJSON.FeatureCollection;
   poi: GeoJSON.FeatureCollection;
+  /** true, gdy dane dzielnic to placeholder (znika po uruchomieniu ETL). */
+  placeholder: boolean;
 }
 
 async function fetchJSON<T>(url: string): Promise<T> {
@@ -37,5 +39,6 @@ export async function loadAllData(): Promise<LoadedData> {
     fetchJSON<GeoJSON.FeatureCollection>(DATA.poi),
   ]);
 
-  return { districts: joinSafety(districts, safety), safety, activities, poi };
+  const placeholder = Boolean((districts as { meta?: { placeholder?: boolean } }).meta?.placeholder);
+  return { districts: joinSafety(districts, safety), safety, activities, poi, placeholder };
 }

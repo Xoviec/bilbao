@@ -11,6 +11,8 @@ test.describe("Bilbao Safety Map — smoke", () => {
     await expect(page.locator("#legend .legend-title").first()).toBeVisible();
     await expect(page.locator("#filters .filter-row")).not.toHaveCount(0);
     await expect(page.locator(".mode-btn")).toHaveCount(3);
+    // Badge danych demonstracyjnych (placeholder).
+    await expect(page.locator(".demo-badge")).toBeVisible();
   });
 
   test("wyszukiwarka dzielnicy otwiera panel", async ({ page }) => {

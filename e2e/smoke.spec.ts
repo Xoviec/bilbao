@@ -1,0 +1,39 @@
+import { test, expect } from "@playwright/test";
+
+test.describe("Bilbao Safety Map — smoke", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    // Kontrolki renderują się po załadowaniu danych i stylu mapy.
+    await expect(page.locator("#district-search")).toBeVisible({ timeout: 20000 });
+  });
+
+  test("renderuje legendę, filtry i kontrolki", async ({ page }) => {
+    await expect(page.locator("#legend .legend-title").first()).toBeVisible();
+    await expect(page.locator("#filters .filter-row")).not.toHaveCount(0);
+    await expect(page.locator(".mode-btn")).toHaveCount(3);
+  });
+
+  test("wyszukiwarka dzielnicy otwiera panel", async ({ page }) => {
+    await page.selectOption("#district-search", "abando");
+    const sidebar = page.locator("#sidebar");
+    await expect(sidebar).toBeVisible();
+    await expect(sidebar.locator("h2")).toContainText("Abando");
+    // Panel zamyka się przyciskiem.
+    await sidebar.locator(".close").click();
+    await expect(sidebar).toBeHidden();
+  });
+
+  test("przełącznik dzień/noc zmienia aktywny tryb", async ({ page }) => {
+    const night = page.locator('.mode-btn[data-field="night_score"]');
+    await night.click();
+    await expect(night).toHaveClass(/active/);
+    await expect(night).toHaveAttribute("aria-pressed", "true");
+  });
+
+  test("filtr kategorii można odznaczyć", async ({ page }) => {
+    const first = page.locator("#filters .filter-row input").first();
+    await expect(first).toBeChecked();
+    await first.uncheck();
+    await expect(first).not.toBeChecked();
+  });
+});

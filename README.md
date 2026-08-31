@@ -51,6 +51,7 @@ bilbao-safety-map/
 ├── docs/                  # PRD, ARD, ROADMAP, SAFETY_METHODOLOGY
 ├── etl/                   # skrypt pobierania realnych danych z OSM (Overpass)
 ├── test/                  # testy jednostkowe (vitest)
+├── e2e/                   # testy e2e krytycznej ścieżki (Playwright)
 ├── public/data/           # statyczne dane (GeoJSON/JSON) — placeholdery do podmiany
 ├── src/
 │   ├── main.ts            # bootstrap aplikacji

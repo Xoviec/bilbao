@@ -6,6 +6,7 @@ const SRC = "districts";
 
 /** Przełącza pole choroplethu (ogólny wskaźnik / dzień / noc). */
 export function setSafetyField(map: maplibregl.Map, field: SafetyField): void {
+  if (!map.getLayer("districts-fill")) return; // warstwa jeszcze nie dodana
   map.setPaintProperty(
     "districts-fill",
     "fill-color",

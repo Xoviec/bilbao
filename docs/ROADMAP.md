@@ -91,7 +91,7 @@ Uruchamiany **równolegle do Faz 1–3**, przed pełną Fazą 4.
 
 ## Faza 5 — Optymalizacja i jakość 🟡
 - [x] Testy jednostkowe (join, choropleth, geo, ETL lib) — `vitest`, uruchamiane w CI.
-- [ ] Testy e2e krytycznej ścieżki (np. Playwright).
+- [x] Testy e2e krytycznej ścieżki (Playwright: legenda, filtry, wyszukiwarka, dzień/noc).
 - [ ] Lazy loading warstw, code splitting, cache z hashami.
 - [ ] Lighthouse ≥ 90 (Performance/Accessibility/SEO) — **zmierzone**, nie założone.
 - [ ] Przegląd `npm audit` (podatności w zależnościach dev).

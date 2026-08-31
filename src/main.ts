@@ -16,12 +16,7 @@ const el = (id: string) => document.getElementById(id) as HTMLElement;
 
 async function bootstrap(): Promise<void> {
   const map = await createMap("map");
-
-  // Dane i mapa ładują się równolegle; łączymy po 'load'.
-  const [data] = await Promise.all([
-    loadAllData(),
-    new Promise<void>((resolve) => map.on("load", () => resolve())),
-  ]);
+  const data = await loadAllData();
 
   const districtByCode = new Map(
     data.districts.features.map((f) => [f.properties?.code as string, f]),
@@ -36,22 +31,28 @@ async function bootstrap(): Promise<void> {
   const openDistrict = (code: string) =>
     showDistrict(el("sidebar"), code, nameByCode.get(code) ?? code, data.safety);
 
-  addDistrictLayers(map, data.districts, openDistrict);
-
   // Wspólne źródło miejsc: POI + aktywności.
   const places: GeoJSON.FeatureCollection = {
     type: "FeatureCollection",
     features: [...data.poi.features, ...data.activities.features],
   };
-  const { setActiveCategories } = addPlacesLayer(map, places);
-
   const categories = [
     ...new Set(places.features.map((f) => f.properties?.category as string)),
   ].filter(Boolean);
 
+  // Warstwy mapy zależą od WebGL/stylu — dołączamy je, gdy mapa jest gotowa.
+  // Kontroler filtra kategorii jest dostępny dopiero po dodaniu warstwy.
+  let setCategories: ((active: Set<string>) => void) | undefined;
+  const addLayers = () => {
+    addDistrictLayers(map, data.districts, openDistrict);
+    setCategories = addPlacesLayer(map, places).setActiveCategories;
+  };
+  if (map.isStyleLoaded()) addLayers();
+  else map.once("load", addLayers);
+
+  // --- UI renderujemy NATYCHMIAST po danych (niezależnie od gotowości mapy) ---
   renderLegend(el("legend"), categories);
 
-  // Filtry per kategoria (współdzielony, mutowalny zbiór aktywnych).
   const active = new Set(categories);
   const items: FilterItem[] = categories.map((c) => ({
     id: c,
@@ -62,10 +63,9 @@ async function bootstrap(): Promise<void> {
   renderFilters(el("filters"), items, (id, visible) => {
     if (visible) active.add(id);
     else active.delete(id);
-    setActiveCategories(active);
+    setCategories?.(active);
   });
 
-  // Kontrolki: wyszukiwarka dzielnicy + tryb dzień/noc.
   renderControls(
     el("controls"),
     data.districts.features.map((f) => ({

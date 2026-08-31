@@ -8,14 +8,23 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "e2e": "playwright test",
     "etl": "node etl/fetch-osm.mjs"
   },
-  "keywords": ["bilbao", "map", "osm", "maplibre", "safety", "visualization"],
+  "keywords": [
+    "bilbao",
+    "map",
+    "osm",
+    "maplibre",
+    "safety",
+    "visualization"
+  ],
   "license": "MIT",
   "dependencies": {
     "maplibre-gl": "^4.7.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/geojson": "^7946.0.14",
     "osmtogeojson": "^3.0.0-beta.5",
     "typescript": "^5.6.3",

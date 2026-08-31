@@ -61,13 +61,68 @@ export function bbox(geometry) {
   return [minX, minY, maxX, maxY];
 }
 
-/** Zapytanie do Overpass API (zwraca surowy JSON). */
-export async function overpass(query, endpoint = "https://overpass-api.de/api/interpreter") {
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: "data=" + encodeURIComponent(query),
-  });
-  if (!res.ok) throw new Error(`Overpass HTTP ${res.status}: ${await res.text()}`);
-  return res.json();
+// Lustra próbowane po kolei — publiczne overpass-api.de zwraca 429/504 pod obciążeniem
+// zamiast czekać, więc pojedyncza próba na jednym serwerze to za mało.
+//
+// WAŻNE: tylko instancje z danymi CAŁEJ planety. overpass.osm.ch (Szwajcaria) był tu
+// wcześniej i na zapytanie o Bilbao zwracał HTTP 200 z PUSTĄ listą — odpowiedź nie do
+// odróżnienia od „obszar nie istnieje", przez co ETL cicho uznawał, że dzielnic nie ma.
+export const OVERPASS_MIRRORS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+];
+
+// Overpass odrzuca (406) requesty bez identyfikującego się User-Agenta — wymaga tego
+// polityka użycia API.
+const HEADERS = {
+  "Content-Type": "application/x-www-form-urlencoded",
+  "User-Agent": "bilbao-safety-map/0.1 (+https://github.com/Xoviec/bilbao)",
+};
+
+/**
+ * Zapytanie do Overpass API (zwraca surowy JSON). Przechodzi po lustrach aż któreś odpowie.
+ *
+ * `minElements` — ile elementów MUSI wrócić, żeby uznać odpowiedź za wiarygodną.
+ * Publiczne instancje pod obciążeniem potrafią oddać HTTP 200 z pustą listą i BEZ pola
+ * `remark` — nie do odróżnienia od obszaru, w którym faktycznie nic nie ma. Dla zapytań,
+ * o których wiemy, że wynik nie może być pusty (granice dzielnic), taka odpowiedź to błąd.
+ */
+export async function overpass(query, endpoint, { log = () => {}, minElements = 0, attempts = 3 } = {}) {
+  // Jawny endpoint (np. z OVERPASS_URL) idzie pierwszy, reszta jako zapas.
+  const urls = endpoint
+    ? [endpoint, ...OVERPASS_MIRRORS.filter((u) => u !== endpoint)]
+    : OVERPASS_MIRRORS;
+
+  let last;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    for (const url of urls) {
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: HEADERS,
+          body: "data=" + encodeURIComponent(query),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        // Overpass sygnalizuje błąd wykonania (timeout, limit pamięci) w polu `remark`
+        // przy statusie 200 i pustej liście elementów. Bez tego sprawdzenia taka
+        // odpowiedź przechodzi jako poprawna i po cichu gubi dane.
+        if (data.remark) throw new Error(`remark: ${data.remark}`);
+        const n = data.elements?.length ?? 0;
+        if (n < minElements) throw new Error(`pusta odpowiedź (${n} < ${minElements})`);
+        return data;
+      } catch (e) {
+        last = e;
+        log(`  [overpass] ${new URL(url).host}: ${e.message} — próbuję dalej`);
+      }
+    }
+    // Backoff rośnie: lustra są przeciążone, natychmiastowe ponowienie tylko dokłada ruchu.
+    if (attempt + 1 < attempts) {
+      const wait = 10000 * (attempt + 1);
+      log(`  [overpass] wszystkie lustra odmówiły — czekam ${wait / 1000}s`);
+      await new Promise((r) => setTimeout(r, wait));
+    }
+  }
+  throw new Error(`wszystkie lustra Overpass odmówiły: ${last?.message}`);
 }

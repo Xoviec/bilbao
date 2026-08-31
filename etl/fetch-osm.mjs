@@ -18,8 +18,17 @@ import { overpass, slug, assignDistrict, bbox } from "./lib.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(__dirname, "../public/data");
-const ENDPOINT = process.env.OVERPASS_URL || "https://overpass-api.de/api/interpreter";
+// Bez OVERPASS_URL przechodzimy po wbudowanej liście luster (patrz lib.mjs).
+const ENDPOINT = process.env.OVERPASS_URL;
 const ADMIN_LEVEL = process.env.DISTRICT_ADMIN_LEVEL || "9";
+
+// Relacja OSM gminy Bilbao (Biskaja, Hiszpania). Przypięta po ID, NIE po nazwie:
+// `["name"="Bilbao"]["admin_level"="8"]` dopasowuje na świecie trzy różne Bilbao
+// (Hiszpania 339549, Ekwador 3728518, Kolumbia 4052108), przez co do danych trafiały
+// POI z Ameryki Południowej — łapał to dopiero test zakresu współrzędnych.
+const BILBAO_RELATION = process.env.BILBAO_RELATION_ID || "339549";
+// Overpass adresuje obszary jako 3600000000 + id relacji.
+const AREA = `area(${3600000000 + Number(BILBAO_RELATION)})->.b;`;
 
 // Mapowanie tagów OSM → kategorie aplikacji.
 const CATEGORY_RULES = [
@@ -41,11 +50,12 @@ function categoryFor(tags = {}) {
 }
 
 async function fetchDistricts() {
-  const q = `[out:json][timeout:120];
-    area["boundary"="administrative"]["name"="Bilbao"]["admin_level"="8"]->.b;
+  const q = `[out:json][timeout:180];
+    ${AREA}
     (relation(area.b)["boundary"="administrative"]["admin_level"="${ADMIN_LEVEL}"];);
     out geom;`;
-  const geo = osmtogeojson(await overpass(q, ENDPOINT));
+  // Bilbao ma 8 dzielnic — pusta odpowiedź zawsze oznacza błąd lustra, nie brak danych.
+  const geo = osmtogeojson(await overpass(q, ENDPOINT, { log: console.log, minElements: 8 }));
   const features = geo.features
     .filter((f) => f.geometry && /Polygon/.test(f.geometry.type))
     .map((f, i) => {
@@ -62,15 +72,15 @@ async function fetchDistricts() {
 }
 
 async function fetchPlaces(districts) {
-  const q = `[out:json][timeout:120];
-    area["boundary"="administrative"]["name"="Bilbao"]["admin_level"="8"]->.b;
+  const q = `[out:json][timeout:180];
+    ${AREA}
     ( nwr(area.b)["tourism"];
       nwr(area.b)["historic"];
       nwr(area.b)["leisure"~"park|garden|nature_reserve|pitch|sports_centre|stadium|fitness_centre"];
       nwr(area.b)["amenity"~"theatre|arts_centre|cinema|bar|pub|nightclub|restaurant|cafe"];
     );
     out center tags;`;
-  const raw = await overpass(q, ENDPOINT);
+  const raw = await overpass(q, ENDPOINT, { log: console.log, minElements: 100 });
   const dfeat = districts.features;
   const seen = new Set();
   const features = [];
@@ -98,7 +108,7 @@ async function fetchPlaces(districts) {
 }
 
 async function main() {
-  console.log(`ETL: Overpass=${ENDPOINT}, admin_level=${ADMIN_LEVEL}`);
+  console.log(`ETL: Overpass=${ENDPOINT || "lustra domyślne"}, admin_level=${ADMIN_LEVEL}`);
 
   console.log("→ Pobieram granice dzielnic…");
   const districts = await fetchDistricts();

@@ -17,8 +17,20 @@ export interface LoadedData {
   safety: SafetyMap;
   activities: GeoJSON.FeatureCollection;
   poi: GeoJSON.FeatureCollection;
-  /** true, gdy dane dzielnic to placeholder (znika po uruchomieniu ETL). */
-  placeholder: boolean;
+  /**
+   * Czy GEOMETRIA dzielnic to placeholder. Znika po `npm run etl`, bo granice
+   * pochodzą wtedy wprost z OSM.
+   */
+  geometryPlaceholder: boolean;
+  /**
+   * Czy WSKAŹNIKI BEZPIECZEŃSTWA są szacunkowe. Niezależne od geometrii: ETL
+   * pobiera granice z OSM, ale statystyk przestępczości w OSM nie ma, więc
+   * `safety.json` zostaje szacunkowy aż ktoś wgra realne dane (patrz
+   * docs/SAFETY_METHODOLOGY.md). Rozdzielenie tych dwóch flag jest istotne —
+   * wcześniej ostrzeżenie znikało po ETL razem z placeholderową geometrią,
+   * przez co zmyślone indeksy prezentowały się jak dane rzeczywiste.
+   */
+  safetyPlaceholder: boolean;
 }
 
 async function fetchJSON<T>(url: string): Promise<T> {
@@ -39,6 +51,16 @@ export async function loadAllData(): Promise<LoadedData> {
     fetchJSON<GeoJSON.FeatureCollection>(DATA.poi),
   ]);
 
-  const placeholder = Boolean((districts as { meta?: { placeholder?: boolean } }).meta?.placeholder);
-  return { districts: joinSafety(districts, safety), safety, activities, poi, placeholder };
+  const geometryPlaceholder = Boolean(
+    (districts as { meta?: { placeholder?: boolean } }).meta?.placeholder,
+  );
+  const safetyPlaceholder = Boolean((safety as { _placeholder?: boolean })._placeholder);
+  return {
+    districts: joinSafety(districts, safety),
+    safety,
+    activities,
+    poi,
+    geometryPlaceholder,
+    safetyPlaceholder,
+  };
 }

@@ -87,12 +87,18 @@ async function bootstrap(): Promise<void> {
 
   el("loading")?.remove();
 
-  // Badge znika automatycznie, gdy ETL wgra realne dane (brak meta.placeholder).
-  if (data.placeholder) {
+  // Ostrzeżenie opisuje ODDZIELNIE geometrię i wskaźniki, bo ETL naprawia tylko
+  // to pierwsze — granice pochodzą z OSM, ale statystyk bezpieczeństwa w OSM nie ma.
+  if (data.geometryPlaceholder || data.safetyPlaceholder) {
     const badge = document.createElement("div");
     badge.className = "demo-badge";
-    badge.textContent = "⚠ Dane demonstracyjne (placeholder)";
-    badge.title = "Uruchom `npm run etl`, aby wgrać realne dane z OpenStreetMap";
+    badge.textContent = data.geometryPlaceholder
+      ? "⚠ Dane demonstracyjne (placeholder)"
+      : "⚠ Wskaźniki bezpieczeństwa są szacunkowe";
+    badge.title = data.geometryPlaceholder
+      ? "Uruchom `npm run etl`, aby wgrać realne dane z OpenStreetMap"
+      : "Granice dzielnic pochodzą z OpenStreetMap. Wskaźniki bezpieczeństwa to " +
+        "szacunki demonstracyjne — patrz panel metodologii.";
     document.getElementById("app")?.appendChild(badge);
   }
 

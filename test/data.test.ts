@@ -51,6 +51,24 @@ describe("Integralność danych (public/data)", () => {
     }
   });
 
+  it("granice dzielnic to realne poligony, nie prostokąty", () => {
+    // Placeholdery miały po 5 punktów (4 rogi + domknięcie) i były zwykłym bboxem.
+    // Realna granica administracyjna z OSM ma ich dziesiątki.
+    for (const f of districts.features) {
+      const ring = f.geometry.type === "Polygon"
+        ? f.geometry.coordinates[0]
+        : f.geometry.coordinates[0][0];
+      expect(ring.length, `${f.properties.code} ma tylko ${ring.length} punktów`).toBeGreaterThan(20);
+    }
+  });
+
+  it("szacunkowe dane bezpieczeństwa są jawnie oznaczone", () => {
+    // Ostrzeżenie w UI zależy od tej flagi. Bez niej zmyślone wskaźniki
+    // prezentowałyby się jak dane rzeczywiste.
+    const anyEstimated = safetyKeys.some((k) => safety[k].safety_index !== null);
+    if (anyEstimated) expect(safety._placeholder, "brak flagi _placeholder").toBe(true);
+  });
+
   it("geometrie punktów mają poprawne współrzędne [lng,lat]", () => {
     for (const f of places) {
       const [lng, lat] = f.geometry.coordinates;

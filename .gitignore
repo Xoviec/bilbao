@@ -8,3 +8,5 @@ dist/
 test-results/
 playwright-report/
 .playwright/
+# Artefakt ETL — roboczy szablon do ręcznego przepisania w safety.json.
+public/data/safety.template.json

@@ -66,12 +66,30 @@ bilbao-safety-map/
 
 ## 🗃️ Dane
 
-Dane w `public/data/` są **placeholderami** (8 dzielnic, przykładowe POI). Realne dane
-pobierzesz skryptem ETL:
+Dane w `public/data/` pochodzą z **OpenStreetMap** (`npm run etl`):
+
+| Zbiór | Źródło | Stan |
+|---|---|---|
+| Granice 8 dzielnic | OSM, relacja `339549`, `admin_level=9` | **realne** |
+| POI (163) + aktywności (1713) | OSM (Overpass) | **realne** |
+| Wskaźniki bezpieczeństwa | — | **szacunkowe** |
+
+Granice pokrywają gminę Bilbao dokładnie (suma dzielnic = 40,36 km² = powierzchnia
+relacji gminy) i nie nachodzą na siebie.
+
+> ⚠️ **Wskaźników bezpieczeństwa nie ma w OSM.** Wartości w `safety.json` są
+> demonstracyjne i oznaczone flagą `_placeholder`, przez co aplikacja pokazuje
+> ostrzeżenie. Podmień je wg [metodologii](docs/SAFETY_METHODOLOGY.md).
+
+Odświeżenie danych z OSM:
 
 ```bash
 npm run etl      # districts.geojson + poi/activities z OSM + safety.template.json
 ```
+
+Skrypt jest przypięty do relacji OSM `339549` (Bilbao w Hiszpanii) — pytanie po samej
+nazwie dopasowuje **trzy** różne Bilbao (jeszcze Ekwador i Kolumbia). Nadpisać można
+zmienną `BILBAO_RELATION_ID`.
 
 - **Granice dzielnic + POI/aktywności** — OpenStreetMap przez Overpass API (`npm run etl`).
 - **Bezpieczeństwo** — nie ma go w OSM; uzupełnij `safety.json` wg

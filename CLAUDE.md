@@ -34,7 +34,11 @@ npm run etl      # pobranie realnych danych z OSM (wymaga sieci → Overpass)
 ## Zasady
 - **Dane bezpieczeństwa są wrażliwe** — trzymaj się `docs/SAFETY_METHODOLOGY.md`
   (jawność, neutralny język, oznaczanie danych szacunkowych).
-- Placeholdery w `public/data/` zastępuje `npm run etl` (patrz `etl/README.md`).
+- Granice dzielnic i POI w `public/data/` są **realne** (OSM, `npm run etl`).
+  Wskaźniki bezpieczeństwa **nadal są szacunkowe** — flaga `_placeholder` w
+  `safety.json` steruje ostrzeżeniem w UI, nie usuwaj jej bez realnych danych.
+- ETL jest przypięty do relacji OSM `339549`. Nie wracaj do wyszukiwania po
+  `name="Bilbao"` — dopasowuje też Bilbao w Ekwadorze i Kolumbii.
 - Atrybucja **© OpenStreetMap contributors** jest wymagana na mapie (ODbL).
 - Zmiany waliduj: `npm test && npm run build` (a dla UI również `npm run e2e`).
 

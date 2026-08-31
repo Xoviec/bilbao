@@ -1,0 +1,11 @@
+{
+  "_note": "PLACEHOLDER: dane szacunkowe/demonstracyjne. Podmień na realne statystyki (ETL).",
+  "abando": { "safety_index": 86, "day_score": 92, "night_score": 78, "incidents_per_1k": 9.4, "trend": "up", "summary": "Reprezentacyjne centrum miasta, bardzo bezpieczne, zwłaszcza w dzień." },
+  "deusto": { "safety_index": 74, "day_score": 80, "night_score": 66, "incidents_per_1k": 15.1, "trend": "flat", "summary": "Dzielnica studencka z uniwersytetem, żywa i ogólnie bezpieczna." },
+  "uribarri": { "safety_index": 70, "day_score": 76, "night_score": 62, "incidents_per_1k": 17.8, "trend": "flat", "summary": "Spokojna, wzgórzowa część miasta z panoramami." },
+  "begona": { "safety_index": 72, "day_score": 78, "night_score": 64, "incidents_per_1k": 16.3, "trend": "up", "summary": "Rejon bazyliki Begoña, zielony i cichy." },
+  "otxarkoaga": { "safety_index": 61, "day_score": 68, "night_score": 52, "incidents_per_1k": 22.5, "trend": "up", "summary": "Dzielnica mieszkalna, w rewitalizacji, poprawiający się wskaźnik." },
+  "errekalde": { "safety_index": 64, "day_score": 70, "night_score": 55, "incidents_per_1k": 20.9, "trend": "flat", "summary": "Gęsto zaludniona, robotnicza, z lokalnym charakterem." },
+  "basurto": { "safety_index": 69, "day_score": 75, "night_score": 60, "incidents_per_1k": 18.2, "trend": "flat", "summary": "Rejon szpitala i parku, dobrze skomunikowany." },
+  "ibaiondo": { "safety_index": 63, "day_score": 72, "night_score": 52, "incidents_per_1k": 21.7, "trend": "down", "summary": "Casco Viejo i okolice — tętniące życiem, ostrożność nocą." }
+}

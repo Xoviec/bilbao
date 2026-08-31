@@ -1,0 +1,54 @@
+{
+  "type": "FeatureCollection",
+  "note": "PLACEHOLDER: uproszczone prostokąty. Podmień na realne granice dzielnic z OSM / Open Data Euskadi.",
+  "features": [
+    {
+      "type": "Feature",
+      "id": 1,
+      "properties": { "id": 1, "name": "Deusto", "code": "deusto" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-3.0000,43.265],[-2.9675,43.265],[-2.9675,43.295],[-3.0000,43.295],[-3.0000,43.265]]] }
+    },
+    {
+      "type": "Feature",
+      "id": 2,
+      "properties": { "id": 2, "name": "Uribarri", "code": "uribarri" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-2.9675,43.265],[-2.9350,43.265],[-2.9350,43.295],[-2.9675,43.295],[-2.9675,43.265]]] }
+    },
+    {
+      "type": "Feature",
+      "id": 3,
+      "properties": { "id": 3, "name": "Begoña", "code": "begona" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-2.9350,43.265],[-2.9025,43.265],[-2.9025,43.295],[-2.9350,43.295],[-2.9350,43.265]]] }
+    },
+    {
+      "type": "Feature",
+      "id": 4,
+      "properties": { "id": 4, "name": "Otxarkoaga-Txurdinaga", "code": "otxarkoaga" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-2.9025,43.265],[-2.8700,43.265],[-2.8700,43.295],[-2.9025,43.295],[-2.9025,43.265]]] }
+    },
+    {
+      "type": "Feature",
+      "id": 5,
+      "properties": { "id": 5, "name": "Basurto-Zorrotza", "code": "basurto" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-3.0000,43.235],[-2.9675,43.235],[-2.9675,43.265],[-3.0000,43.265],[-3.0000,43.235]]] }
+    },
+    {
+      "type": "Feature",
+      "id": 6,
+      "properties": { "id": 6, "name": "Errekalde", "code": "errekalde" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-2.9675,43.235],[-2.9350,43.235],[-2.9350,43.265],[-2.9675,43.265],[-2.9675,43.235]]] }
+    },
+    {
+      "type": "Feature",
+      "id": 7,
+      "properties": { "id": 7, "name": "Abando", "code": "abando" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-2.9350,43.235],[-2.9025,43.235],[-2.9025,43.265],[-2.9350,43.265],[-2.9350,43.235]]] }
+    },
+    {
+      "type": "Feature",
+      "id": 8,
+      "properties": { "id": 8, "name": "Ibaiondo", "code": "ibaiondo" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-2.9025,43.235],[-2.8700,43.235],[-2.8700,43.265],[-2.9025,43.265],[-2.9025,43.235]]] }
+    }
+  ]
+}

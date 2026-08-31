@@ -1,0 +1,12 @@
+{
+  "type": "FeatureCollection",
+  "note": "PLACEHOLDER: przykładowe aktywności. Podmień na dane z OSM (leisure=*, amenity=*).",
+  "features": [
+    { "type": "Feature", "properties": { "id": "a1", "name": "Parque Etxebarria", "category": "green", "district": "ibaiondo" }, "geometry": { "type": "Point", "coordinates": [-2.9210, 43.2604] } },
+    { "type": "Feature", "properties": { "id": "a2", "name": "Parque de Doña Casilda", "category": "green", "district": "abando" }, "geometry": { "type": "Point", "coordinates": [-2.9430, 43.2660] } },
+    { "type": "Feature", "properties": { "id": "a3", "name": "Estadio San Mamés", "category": "sport", "district": "basurto" }, "geometry": { "type": "Point", "coordinates": [-2.9494, 43.2642] } },
+    { "type": "Feature", "properties": { "id": "a4", "name": "Azkuna Zentroa", "category": "culture", "district": "abando" }, "geometry": { "type": "Point", "coordinates": [-2.9366, 43.2621] } },
+    { "type": "Feature", "properties": { "id": "a5", "name": "Zona de pintxos - Ledesma", "category": "food", "district": "abando" }, "geometry": { "type": "Point", "coordinates": [-2.9320, 43.2632] } },
+    { "type": "Feature", "properties": { "id": "a6", "name": "Bares Casco Viejo", "category": "nightlife", "district": "ibaiondo" }, "geometry": { "type": "Point", "coordinates": [-2.9230, 43.2560] } }
+  ]
+}

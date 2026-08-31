@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bilbao Safety Map</title>
+    <meta name="description" content="Interaktywna mapa Bilbao: bezpieczeństwo dzielnic, aktywności i miejsca warte zobaczenia." />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header id="topbar">
+        <h1>Bilbao Safety Map</h1>
+        <p id="subtitle">Bezpieczeństwo dzielnic · aktywności · miejsca warte zobaczenia</p>
+      </header>
+      <div id="map"></div>
+      <aside id="sidebar" class="hidden" aria-live="polite"></aside>
+      <div id="legend"></div>
+      <div id="filters"></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

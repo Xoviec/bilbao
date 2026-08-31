@@ -46,6 +46,9 @@ body { color: var(--text); background: var(--bg); }
   display: flex; justify-content: space-between;
   margin-top: 4px; color: var(--muted); font-size: 0.72rem;
 }
+.legend-sep { margin-top: 12px; }
+.legend-cat { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 
 .filter-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; }
 .filter-row .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
@@ -83,6 +86,17 @@ body { color: var(--text); background: var(--bg); }
 .source { margin-top: 10px; }
 
 .error { padding: 24px; color: #b91c1c; font-weight: 600; }
+
+.district-tooltip .maplibregl-popup-content {
+  padding: 6px 10px; font-size: 0.78rem; border-radius: 8px; box-shadow: var(--shadow);
+}
+
+.map-notice {
+  position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+  z-index: 8; max-width: 90vw;
+  background: #b45309; color: #fff;
+  padding: 8px 14px; border-radius: 10px; font-size: 0.8rem; box-shadow: var(--shadow);
+}
 
 @media (prefers-color-scheme: dark) {
   :root {

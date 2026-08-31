@@ -15,6 +15,27 @@ export const BILBAO = {
 // Darmowy styl kafli wektorowych OSM (bez klucza API).
 export const BASEMAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 
+// Fonty etykiet. Muszą istnieć w glyphs aktywnego stylu.
+// Styl Liberty (i raster fallback poniżej) dostarczają "Noto Sans Regular".
+export const LABEL_FONT = ["Noto Sans Regular"];
+
+// Awaryjny styl rastrowy (gdy podstawowy dostawca kafli jest niedostępny).
+// Etykiety miejsc są wtopione w rastr; glyphs zapewniają nasze warstwy symboli.
+export const FALLBACK_STYLE = {
+  version: 8 as const,
+  glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+  sources: {
+    osm: {
+      type: "raster" as const,
+      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+      tileSize: 256,
+      attribution: "© OpenStreetMap contributors",
+      maxzoom: 19,
+    },
+  },
+  layers: [{ id: "osm", type: "raster" as const, source: "osm" }],
+};
+
 export const DATA = {
   districts: "data/districts.geojson",
   safety: "data/safety.json",

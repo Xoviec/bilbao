@@ -1,5 +1,6 @@
 import maplibregl from "maplibre-gl";
 import { safetyFillColor } from "./safety";
+import { LABEL_FONT } from "../config";
 
 const SRC = "districts";
 
@@ -53,7 +54,7 @@ export function addDistrictLayers(
     layout: {
       "text-field": ["get", "name"],
       "text-size": 12,
-      "text-font": ["Noto Sans Regular"],
+      "text-font": LABEL_FONT,
     },
     paint: {
       "text-color": "#1b1b1b",
@@ -69,6 +70,13 @@ function wireInteractions(map: maplibregl.Map, onSelect: (code: string) => void)
   let hovered: string | number | undefined;
   let selected: string | number | undefined;
 
+  const tooltip = new maplibregl.Popup({
+    closeButton: false,
+    closeOnClick: false,
+    offset: 8,
+    className: "district-tooltip",
+  });
+
   const setState = (id: string | number | undefined, state: Record<string, boolean>) => {
     if (id === undefined) return;
     map.setFeatureState({ source: SRC, id }, state);
@@ -76,7 +84,17 @@ function wireInteractions(map: maplibregl.Map, onSelect: (code: string) => void)
 
   map.on("mousemove", "districts-fill", (e) => {
     map.getCanvas().style.cursor = "pointer";
-    const id = e.features?.[0]?.id;
+    const feature = e.features?.[0];
+    const id = feature?.id;
+
+    // Tooltip: nazwa + wskaźnik bezpieczeństwa.
+    const name = feature?.properties?.name ?? "—";
+    const idx = feature?.properties?.safety_index;
+    tooltip
+      .setLngLat(e.lngLat)
+      .setHTML(`<strong>${name}</strong><br/>Bezpieczeństwo: ${idx ?? "brak danych"}`)
+      .addTo(map);
+
     if (id === hovered) return;
     setState(hovered, { hover: false });
     hovered = id;
@@ -85,6 +103,7 @@ function wireInteractions(map: maplibregl.Map, onSelect: (code: string) => void)
 
   map.on("mouseleave", "districts-fill", () => {
     map.getCanvas().style.cursor = "";
+    tooltip.remove();
     setState(hovered, { hover: false });
     hovered = undefined;
   });

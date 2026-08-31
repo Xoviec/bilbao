@@ -105,9 +105,14 @@ wpisując `safety_index` do `feature properties` przed dodaniem źródła do map
 |---|---|---|---|
 | `districts-fill` | `fill` | districts | choropleth wg `safety_index` (interpolacja koloru) |
 | `districts-outline` | `line` | districts | obrys, pogrubienie na hover/select via `feature-state` |
-| `districts-label` | `symbol` | centroids | nazwa dzielnicy |
-| `poi` | `circle`/`symbol` | poi | ikony wg `type`, klaster przy oddaleniu |
-| `activities` | `circle`/`symbol` | activities | kolor wg `category`, filtrowalne |
+| `districts-label` | `symbol` | districts | nazwa dzielnicy |
+| `places-clusters` | `circle` | places | klastry punktów (POI + aktywności) |
+| `places-cluster-count` | `symbol` | places | liczność klastra |
+| `places-points` | `symbol` | places | ikony (pinezki) wg `category`, filtrowalne |
+
+> POI i aktywności są łączone w **jedno źródło `places`** — dzięki temu clustering i
+> filtr kategorii działają spójnie (filtr przez podmianę danych źródła, respektowaną
+> przez klastry). Kolory/ikony kategorii z `config.CATEGORY_COLORS`.
 
 **Data‑driven color** (choropleth):
 ```
@@ -123,16 +128,18 @@ Paleta diverging, sprawdzona pod kątem daltonizmu.
 ```
 src/
 ├── main.ts            # bootstrap: init mapy + załaduj dane + zamontuj UI
-├── map.ts             # tworzenie instancji MapLibre, basemap, kontrolki
-├── config.ts          # centrum/zoom, źródła danych, paleta, kategorie
+├── map.ts             # MapLibre + wybór stylu z fallbackiem rastrowym
+├── config.ts          # centrum/zoom, źródła, paleta, kategorie, fonty, fallback
+├── markers.ts         # generowanie ikon kategorii (pinezki na kanwie)
 ├── data/loader.ts     # fetch + join geometrii z metrykami
 ├── layers/
-│   ├── districts.ts   # dodanie warstw dzielnic + interakcje (hover/click)
-│   └── safety.ts      # logika choropleth / przełącznik dzień‑noc
+│   ├── districts.ts   # warstwy dzielnic + hover/tooltip/click
+│   ├── safety.ts      # wyrażenie koloru choropleth
+│   └── places.ts      # POI + aktywności (klastry, ikony, filtr kategorii)
 └── ui/
-    ├── legend.ts      # legenda choropleth + kategorii
+    ├── legend.ts      # legenda: bezpieczeństwo + kategorie
     ├── sidebar.ts     # panel szczegółów dzielnicy
-    └── filters.ts     # przełączanie warstw i kategorii
+    └── filters.ts     # przełączniki (per kategoria)
 ```
 
 ## 7. Przepływ interakcji

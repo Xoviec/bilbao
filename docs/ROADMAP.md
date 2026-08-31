@@ -1,7 +1,14 @@
 # Roadmap — Bilbao Safety Map
 
-Podejście iteracyjne: najpierw działająca mapa z podziałem na dzielnice i bezpieczeństwem,
-potem kolejne warstwy i realne dane. Każda faza kończy się wdrażalnym stanem.
+Podejście iteracyjne: najpierw działający **pionowy plaster** (mapa + dzielnice +
+bezpieczeństwo) na danych placeholder, potem realne dane i dopracowanie. Każda faza
+kończy się wdrażalnym stanem.
+
+**Legenda statusu:** ✅ zrobione · 🟡 częściowe / na danych placeholder · ⬜ do zrobienia
+
+> ⚠️ **Kluczowe rozróżnienie:** Fazy 1–3 są zaimplementowane **na danych placeholder**.
+> „Zrobione" oznacza działającą funkcję w UI — wiarygodność produktu zależy od **Fazy 4
+> (realne dane + metodologia indeksu)**. Dlatego wprowadzono wczesny **Spike danych**.
 
 ---
 
@@ -13,78 +20,105 @@ gantt
     dateFormat  X
     axisFormat %s
     section Fundament
-    Faza 0 Setup            :0, 1
-    section MVP
-    Faza 1 Mapa + dzielnice :1, 2
-    Faza 2 Aktywności + POI :2, 2
-    section Rozbudowa
-    Faza 3 Filtry + UX      :4, 1
-    Faza 4 Realne dane/ETL  :5, 2
-    Faza 5 Optymalizacja    :7, 1
-    section Opcjonalnie
-    Faza 6 Backend/Community :8, 2
+    Faza 0 Setup + vertical slice :done, 0, 2
+    section Ryzyko
+    Spike danych (ETL/metodologia) :crit, 1, 2
+    section MVP (placeholder)
+    Faza 1 Dzielnice + bezpieczeństwo :done, 2, 2
+    Faza 2 Aktywności + POI :done, 2, 2
+    Faza 3 Filtry + UX :active, 4, 2
+    section Realne dane
+    Faza 4 ETL + realne dane :6, 3
+    section Jakość / rozwój
+    Faza 5 Optymalizacja :9, 2
+    Faza 6 Backend/Community :11, 2
 ```
 
 ---
 
-## Faza 0 — Setup (fundament) ✅ *(scaffold w tym repo)*
-- [x] Struktura repo, Vite + TS, MapLibre.
+## Faza 0 — Setup + pionowy plaster ✅ *(w tym repo)*
+Nie sam szkielet — działający, wdrażalny plaster funkcjonalny na danych placeholder.
+- [x] Struktura repo, Vite + TS, MapLibre GL.
 - [x] Dokumentacja: PRD, ARD, ROADMAP.
-- [x] Placeholder danych (8 dzielnic, przykładowe POI).
-- [ ] CI (GitHub Actions) + deploy na GitHub Pages.
-- **Rezultat:** uruchamialny szkielet z mapą Bilbao.
+- [x] Placeholder danych (8 dzielnic + POI + aktywności).
+- [x] CI (GitHub Actions) + workflow deploy na GitHub Pages.
+- **DoD:** `npm run build` przechodzi; mapa Bilbao renderuje się lokalnie. ✅
+- **Pozostaje:** włączyć Pages w `Settings → Pages → Source: GitHub Actions`.
 
-## Faza 1 — MVP: mapa + dzielnice + bezpieczeństwo 🎯
-- [ ] Warstwa granic dzielnic (choropleth wg `safety_index`).
-- [ ] Interaktywna legenda bezpieczeństwa.
-- [ ] Hover‑podświetlenie + tooltip (nazwa, indeks).
-- [ ] Klik → panel dzielnicy (metryki + opis).
-- [ ] Responsywność (desktop/mobile).
-- **Rezultat:** użytkownik rozumie bezpieczeństwo każdej dzielnicy.
+## Spike danych — ETL / metodologia 🟡 *(nowy, priorytet)*
+Największe ryzyko produktu (PRD: „brak/niska jakość danych" = ryzyko wysokie).
+Uruchamiany **równolegle do Faz 1–3**, przed pełną Fazą 4.
+- [ ] Potwierdzić źródło danych o bezpieczeństwie dla Bilbao (Open Data Euskadi / miasto / Eustat).
+- [ ] Ustalić schemat i pokrycie (dzielnice? barrios? okres?).
+- [ ] Zarys metodologii indeksu (normalizacja + wagi) — z góry jawnej i neutralnej.
+- **DoD:** decyzja „są dane / zastępujemy proxy" + udokumentowana metodologia.
 
-## Faza 2 — Aktywności i miejsca warte zobaczenia
-- [ ] Warstwa POI (atrakcje, punkty widokowe, zabytki) z ikonami.
-- [ ] Warstwa aktywności (sport, kultura, zieleń, nocne życie).
-- [ ] Clustering punktów przy oddaleniu.
-- [ ] Popupy POI (nazwa, kategoria, dzielnica).
-- **Rezultat:** mapa łączy bezpieczeństwo z „co robić / co zobaczyć”.
+## Faza 1 — Dzielnice + bezpieczeństwo ✅ *(placeholder)*
+- [x] Warstwa granic dzielnic (choropleth wg `safety_index`).
+- [x] Interaktywna legenda bezpieczeństwa.
+- [x] Hover‑podświetlenie + **tooltip** (nazwa, indeks).
+- [x] Klik → panel dzielnicy (metryki + opis).
+- [x] Responsywność (desktop/mobile).
+- **DoD:** każda dzielnica klikalna, panel + choropleth czytelne na mobile. ✅
+- **Zależność:** realne wartości indeksu → Faza 4.
 
-## Faza 3 — Filtry, warstwy i UX
-- [ ] Przełączanie warstw i kategorii (panel filtrów).
+## Faza 2 — Aktywności i miejsca warte zobaczenia ✅ *(placeholder)*
+- [x] Warstwa POI + aktywności (wspólne źródło, kolor/ikona wg kategorii).
+- [x] Ikony kategorii (pinezki generowane na kanwie).
+- [x] Clustering punktów + rozwijanie klastra.
+- [x] Popupy miejsc (nazwa, kategoria).
+- [x] Legenda kategorii.
+- **DoD:** punkty widoczne, klastrują się, mają legendę i popup. ✅
+- **Zależność:** realne POI z OSM → Faza 4.
+
+## Faza 3 — Filtry, warstwy i UX 🟡
+- [x] Filtry per kategoria (zieleń/sport/kultura/nocne życie/gastronomia/warte zobaczenia).
+- [x] Tryb ciemny (`prefers-color-scheme`).
 - [ ] Wyszukiwarka dzielnicy.
-- [ ] Przełącznik dzień/noc (bezpieczeństwo wg pory).
-- [ ] Tryb ciemny + dopracowanie dostępności (WCAG AA, color‑blind safe).
-- **Rezultat:** pełna kontrola nad tym, co widać na mapie.
+- [ ] Przełącznik dzień/noc (bezpieczeństwo wg pory — dane `day_score`/`night_score` już są).
+- [ ] Audyt dostępności (kontrast choropleth na mapie, nawigacja klawiaturą, ARIA).
+- **DoD:** użytkownik kontroluje warstwy; Lighthouse Accessibility ≥ 90.
 
-## Faza 4 — Realne dane i ETL
-- [ ] Skrypt ETL: granice + POI z OSM (Overpass).
-- [ ] Import statystyk bezpieczeństwa z otwartych źródeł (Open Data Euskadi / miasto).
-- [ ] Metodologia indeksu (normalizacja + wagi) — jawna w UI.
-- [ ] Uproszczenie geometrii (mapshaper) + wersjonowanie danych.
-- **Rezultat:** mapa oparta o rzeczywiste, cytowalne dane.
+## Faza 4 — Realne dane i ETL ⬜
+- [ ] Skrypt ETL: granice + POI z OSM (Overpass API).
+- [ ] Import statystyk bezpieczeństwa (wynik Spike'u danych).
+- [ ] Wyliczenie `safety_index` wg metodologii — jawnej w UI (transparentność).
+- [ ] Uproszczenie geometrii (mapshaper) + wersjonowanie danych w repo.
+- **DoD:** placeholdery zastąpione realnymi, cytowalnymi danymi; źródło widoczne w UI.
 
-## Faza 5 — Optymalizacja i jakość
+## Faza 5 — Optymalizacja i jakość ⬜
 - [ ] Lazy loading warstw, code splitting, cache z hashami.
-- [ ] Lighthouse ≥ 90 (Performance/Accessibility/SEO).
-- [ ] Testy (jednostkowe loaderów, e2e krytycznej ścieżki).
-- [ ] Kafle PMTiles/Protomaps (opcjonalnie, offline‑friendly).
-- **Rezultat:** szybka, dopracowana, produkcyjna aplikacja.
+- [ ] Lighthouse ≥ 90 (Performance/Accessibility/SEO) — **zmierzone**, nie założone.
+- [ ] Przegląd `npm audit` (obecnie 2 podatności, 1 high).
+- [ ] Testy (jednostkowe loaderów/joinu, e2e krytycznej ścieżki).
+- [ ] Kafle PMTiles/Protomaps (opcjonalnie, offline‑friendly, uniezależnienie od dostawcy).
+- **DoD:** metryki potwierdzone, testy w CI, brak krytycznych podatności.
 
-## Faza 6 — Opcjonalnie: backend / społeczność
+## Faza 6 — Opcjonalnie: backend / społeczność ⬜
 - [ ] API / backend dla danych na żywo.
 - [ ] Crowdsourcing (zgłaszanie/ocena miejsc) — z moderacją.
 - [ ] i18n (ES/EU/EN/PL).
 - [ ] Głębszy podział (barrios) i warstwa czasowa.
-- **Rezultat:** rozwój z MVP w pełny produkt.
+- **DoD:** wg potrzeb produktu.
 
 ---
 
 ## Kamienie milowe
 
-| Milestone | Zakres | Kryterium ukończenia |
-|---|---|---|
-| **M0 — Scaffold** | Faza 0 | Mapa Bilbao renderuje się lokalnie |
-| **M1 — MVP publiczny** | Fazy 1–2 | Deploy z dzielnicami, bezpieczeństwem, POI |
-| **M2 — Dane realne** | Fazy 3–4 | Rzeczywiste dane + filtry + metodologia |
-| **M3 — Produkcja** | Faza 5 | Lighthouse ≥ 90, testy, dokumentacja |
-| **M4 — Rozwój** | Faza 6 | Wg potrzeb produktu |
+| Milestone | Zakres | Kryterium ukończenia | Status |
+|---|---|---|---|
+| **M0 — Vertical slice** | Faza 0 | Build przechodzi, mapa renderuje się lokalnie | ✅ |
+| **M1 — MVP (placeholder)** | Fazy 1–2 | Dzielnice + bezpieczeństwo + POI działają w UI | ✅ |
+| **M1.5 — Deploy** | Pages | Mapa dostępna publicznie (GitHub Pages) | ⬜ |
+| **M2 — Dane realne** | Spike + Fazy 3–4 | Rzeczywiste dane + metodologia + filtry | ⬜ |
+| **M3 — Produkcja** | Faza 5 | Lighthouse ≥ 90 (zmierzone), testy, brak krytycznych CVE | ⬜ |
+| **M4 — Rozwój** | Faza 6 | Wg potrzeb produktu | ⬜ |
+
+---
+
+## Znane ryzyka (z weryfikacji)
+- **Zależność od zewnętrznego dostawcy kafli** (OpenFreeMap, bez SLA) — złagodzone
+  fallbackiem rastrowym; docelowo własne PMTiles (Faza 5).
+- **Dostępność danych o bezpieczeństwie** — adresowane przez wczesny Spike danych.
+- **Placeholder geograficznie uproszczony** — jawnie oznaczony; zastępowany w Fazie 4.
+- **Temat wrażliwy (stygmatyzacja dzielnic)** — neutralny język, jawna metodologia, źródła.

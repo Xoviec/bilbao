@@ -94,7 +94,8 @@ Uruchamiany **równolegle do Faz 1–3**, przed pełną Fazą 4.
 - [x] Testy e2e krytycznej ścieżki (Playwright: legenda, filtry, wyszukiwarka, dzień/noc).
 - [ ] Lazy loading warstw, code splitting, cache z hashami.
 - [ ] Lighthouse ≥ 90 (Performance/Accessibility/SEO) — **zmierzone**, nie założone.
-- [ ] Przegląd `npm audit` (podatności w zależnościach dev).
+- [ ] Przegląd `npm audit`: obecne podatności są **tylko w dev-deps** (esbuild/vite dev-server,
+      GHSA-67mh-4wv8-2f99) — **nie w produkcyjnym buildzie**. Fix = `vite@8` (breaking); zaplanować major.
 - [ ] Kafle PMTiles/Protomaps (opcjonalnie, offline‑friendly, uniezależnienie od dostawcy).
 - **DoD:** metryki potwierdzone, testy w CI, brak krytycznych podatności.
 

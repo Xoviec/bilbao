@@ -83,6 +83,8 @@ async function bootstrap(): Promise<void> {
     setCategories?.(active);
   });
 
+  el("loading")?.remove();
+
   renderControls(
     el("controls"),
     data.districts.features.map((f) => ({
@@ -102,5 +104,6 @@ async function bootstrap(): Promise<void> {
 
 bootstrap().catch((err) => {
   console.error(err);
+  el("loading")?.remove();
   el("map").innerHTML = `<div class="error">Błąd ładowania danych: ${err.message}</div>`;
 });

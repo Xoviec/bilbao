@@ -11,10 +11,13 @@ kątem wydajności renderowania i czytelności danych.
 ## ✨ Co pokazuje mapa
 
 - **Choropleth bezpieczeństwa** — dzielnice Bilbao pokolorowane wg indeksu bezpieczeństwa (0–100).
-- **Aktywności** — sport, kultura, nocne życie, tereny zielone (warstwy przełączane).
-- **POI / miejsca warte zobaczenia** — atrakcje, punkty widokowe, zabytki.
-- **Panel dzielnicy** — po kliknięciu: metryki bezpieczeństwa, opis, top miejsca.
-- **Filtry i legenda** — przełączanie warstw, filtrowanie kategorii, interaktywna legenda.
+- **Tryb dzień/noc** — przełącznik pokazujący bezpieczeństwo wg pory doby.
+- **Aktywności** — sport, kultura, nocne życie, tereny zielone (ikony kategorii).
+- **POI / miejsca warte zobaczenia** — atrakcje, punkty widokowe, zabytki (clustering).
+- **Panel dzielnicy** — po kliknięciu: metryki bezpieczeństwa, opis, trend.
+- **Wyszukiwarka dzielnicy** — szybki skok do wybranej dzielnicy.
+- **Tooltip na hover, filtry per kategoria, legenda** — pełna czytelność danych.
+- **Tryb awaryjny basemapy** — fallback rastrowy, gdy dostawca kafli jest niedostępny.
 
 ## 🧱 Stack (lekki)
 
@@ -37,39 +40,50 @@ npm install
 npm run dev      # http://localhost:5173
 npm run build    # produkcyjny build do dist/
 npm run preview  # podgląd builda
+npm test         # testy (vitest)
+npm run etl      # pobranie realnych danych z OSM (wymaga sieci → Overpass)
 ```
 
 ## 📁 Struktura
 
 ```
 bilbao-safety-map/
-├── docs/                  # PRD, ARD, ROADMAP
+├── docs/                  # PRD, ARD, ROADMAP, SAFETY_METHODOLOGY
+├── etl/                   # skrypt pobierania realnych danych z OSM (Overpass)
+├── test/                  # testy jednostkowe (vitest)
 ├── public/data/           # statyczne dane (GeoJSON/JSON) — placeholdery do podmiany
 ├── src/
 │   ├── main.ts            # bootstrap aplikacji
-│   ├── map.ts             # inicjalizacja MapLibre
-│   ├── config.ts          # konfiguracja (widok, źródła, kolory)
-│   ├── data/loader.ts     # ładowanie i łączenie danych
-│   ├── layers/            # warstwy: dzielnice, bezpieczeństwo, POI
-│   └── ui/                # legenda, sidebar, filtry
+│   ├── map.ts             # MapLibre + fallback basemapy
+│   ├── config.ts          # konfiguracja (widok, źródła, kolory, fonty)
+│   ├── markers.ts         # ikony kategorii (kanwa)
+│   ├── data/              # loader, join (testowalny), geo (bbox)
+│   ├── layers/            # dzielnice, choropleth, places (POI+aktywności)
+│   └── ui/                # legenda, sidebar, filtry, kontrolki
 └── index.html
 ```
 
 ## 🗃️ Dane
 
-Dane w `public/data/` są **placeholderami**. Docelowe źródła (otwarte, darmowe):
+Dane w `public/data/` są **placeholderami** (8 dzielnic, przykładowe POI). Realne dane
+pobierzesz skryptem ETL:
 
-- **Granice dzielnic** — OpenStreetMap (`boundary=administrative`) / Open Data Euskadi / Ayuntamiento de Bilbao.
-- **Bezpieczeństwo** — otwarte statystyki policyjne / Eustat / dane miejskie (indeks liczony w ETL).
-- **Aktywności / POI** — OSM (Overpass API), kategorie `amenity`, `leisure`, `tourism`.
+```bash
+npm run etl      # districts.geojson + poi/activities z OSM + safety.template.json
+```
 
-Szczegóły modelu danych i pipeline’u w [`docs/ARD.md`](docs/ARD.md).
+- **Granice dzielnic + POI/aktywności** — OpenStreetMap przez Overpass API (`npm run etl`).
+- **Bezpieczeństwo** — nie ma go w OSM; uzupełnij `safety.json` wg
+  [metodologii](docs/SAFETY_METHODOLOGY.md) (źródła: Open Data Euskadi / Eustat / miasto).
+
+Szczegóły: [`etl/README.md`](etl/README.md) i [`docs/ARD.md`](docs/ARD.md).
 
 ## 📄 Dokumentacja
 
 - [Product Requirements (PRD)](docs/PRD.md)
 - [Architecture (ARD)](docs/ARD.md)
 - [Roadmap](docs/ROADMAP.md)
+- [Metodologia bezpieczeństwa](docs/SAFETY_METHODOLOGY.md)
 
 ## ⚖️ Licencja i atrybucja
 

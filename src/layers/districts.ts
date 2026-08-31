@@ -1,8 +1,17 @@
 import maplibregl from "maplibre-gl";
-import { safetyFillColor } from "./safety";
+import { safetyFillColor, type SafetyField } from "./safety";
 import { LABEL_FONT } from "../config";
 
 const SRC = "districts";
+
+/** Przełącza pole choroplethu (ogólny wskaźnik / dzień / noc). */
+export function setSafetyField(map: maplibregl.Map, field: SafetyField): void {
+  map.setPaintProperty(
+    "districts-fill",
+    "fill-color",
+    safetyFillColor(field) as maplibregl.ExpressionSpecification,
+  );
+}
 
 /**
  * Dodaje warstwy dzielnic (wypełnienie choropleth, obrys, etykiety)

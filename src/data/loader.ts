@@ -1,4 +1,5 @@
 import { DATA } from "../config";
+import { joinSafety } from "./join";
 
 export interface SafetyRecord {
   safety_index: number;
@@ -36,15 +37,5 @@ export async function loadAllData(): Promise<LoadedData> {
     fetchJSON<GeoJSON.FeatureCollection>(DATA.poi),
   ]);
 
-  for (const feature of districts.features) {
-    const code = feature.properties?.code as string | undefined;
-    const record = code ? safety[code] : undefined;
-    feature.properties = {
-      ...feature.properties,
-      safety_index: record?.safety_index ?? null,
-      trend: record?.trend ?? "flat",
-    };
-  }
-
-  return { districts, safety, activities, poi };
+  return { districts: joinSafety(districts, safety), safety, activities, poi };
 }

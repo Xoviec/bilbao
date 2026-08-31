@@ -48,10 +48,11 @@ Nie sam szkielet — działający, wdrażalny plaster funkcjonalny na danych pla
 ## Spike danych — ETL / metodologia 🟡 *(nowy, priorytet)*
 Największe ryzyko produktu (PRD: „brak/niska jakość danych" = ryzyko wysokie).
 Uruchamiany **równolegle do Faz 1–3**, przed pełną Fazą 4.
-- [ ] Potwierdzić źródło danych o bezpieczeństwie dla Bilbao (Open Data Euskadi / miasto / Eustat).
-- [ ] Ustalić schemat i pokrycie (dzielnice? barrios? okres?).
-- [ ] Zarys metodologii indeksu (normalizacja + wagi) — z góry jawnej i neutralnej.
-- **DoD:** decyzja „są dane / zastępujemy proxy" + udokumentowana metodologia.
+- [x] Skrypt ETL (Overpass → GeoJSON) gotowy i przetestowany (`etl/`, `npm run etl`).
+- [x] Zarys metodologii indeksu (normalizacja + wagi) — jawnej i neutralnej (`docs/SAFETY_METHODOLOGY.md`).
+- [ ] Potwierdzić realne źródło danych o bezpieczeństwie dla Bilbao (Open Data Euskadi / miasto / Eustat).
+- [ ] Uruchomić ETL w środowisku z siecią i potwierdzić schemat/pokrycie (dzielnice vs barrios).
+- **DoD:** decyzja „są dane / zastępujemy proxy" + udokumentowana metodologia. *(metodologia ✅; źródło do potwierdzenia)*
 
 ## Faza 1 — Dzielnice + bezpieczeństwo ✅ *(placeholder)*
 - [x] Warstwa granic dzielnic (choropleth wg `safety_index`).
@@ -74,23 +75,26 @@ Uruchamiany **równolegle do Faz 1–3**, przed pełną Fazą 4.
 ## Faza 3 — Filtry, warstwy i UX 🟡
 - [x] Filtry per kategoria (zieleń/sport/kultura/nocne życie/gastronomia/warte zobaczenia).
 - [x] Tryb ciemny (`prefers-color-scheme`).
-- [ ] Wyszukiwarka dzielnicy.
-- [ ] Przełącznik dzień/noc (bezpieczeństwo wg pory — dane `day_score`/`night_score` już są).
-- [ ] Audyt dostępności (kontrast choropleth na mapie, nawigacja klawiaturą, ARIA).
+- [x] Wyszukiwarka dzielnicy (skok `fitBounds` + panel).
+- [x] Przełącznik dzień/noc (choropleth wg `day_score`/`night_score`).
+- [x] Podstawy dostępności (ARIA, `:focus-visible`, `sr-only`, semantyka kontrolek).
+- [ ] Pełny audyt dostępności (kontrast choropleth na mapie, pełna nawigacja klawiaturą).
 - **DoD:** użytkownik kontroluje warstwy; Lighthouse Accessibility ≥ 90.
 
-## Faza 4 — Realne dane i ETL ⬜
-- [ ] Skrypt ETL: granice + POI z OSM (Overpass API).
-- [ ] Import statystyk bezpieczeństwa (wynik Spike'u danych).
+## Faza 4 — Realne dane i ETL 🟡
+- [x] Skrypt ETL: granice + POI z OSM (Overpass API) — `etl/fetch-osm.mjs`.
+- [ ] Uruchomić ETL i podmienić placeholdery na realne dane (wymaga sieci → Overpass).
+- [ ] Import statystyk bezpieczeństwa (wynik Spike'u danych) → `safety.json`.
 - [ ] Wyliczenie `safety_index` wg metodologii — jawnej w UI (transparentność).
 - [ ] Uproszczenie geometrii (mapshaper) + wersjonowanie danych w repo.
 - **DoD:** placeholdery zastąpione realnymi, cytowalnymi danymi; źródło widoczne w UI.
 
-## Faza 5 — Optymalizacja i jakość ⬜
+## Faza 5 — Optymalizacja i jakość 🟡
+- [x] Testy jednostkowe (join, choropleth, geo, ETL lib) — `vitest`, uruchamiane w CI.
+- [ ] Testy e2e krytycznej ścieżki (np. Playwright).
 - [ ] Lazy loading warstw, code splitting, cache z hashami.
 - [ ] Lighthouse ≥ 90 (Performance/Accessibility/SEO) — **zmierzone**, nie założone.
-- [ ] Przegląd `npm audit` (obecnie 2 podatności, 1 high).
-- [ ] Testy (jednostkowe loaderów/joinu, e2e krytycznej ścieżki).
+- [ ] Przegląd `npm audit` (podatności w zależnościach dev).
 - [ ] Kafle PMTiles/Protomaps (opcjonalnie, offline‑friendly, uniezależnienie od dostawcy).
 - **DoD:** metryki potwierdzone, testy w CI, brak krytycznych podatności.
 

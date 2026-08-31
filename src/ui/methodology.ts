@@ -2,25 +2,45 @@ const REPO_DOC =
   "https://github.com/Xoviec/bilbao/blob/main/docs/SAFETY_METHODOLOGY.md";
 
 const CONTENT = `
-  <h2>Jak liczymy bezpieczeństwo?</h2>
-  <p>Indeks <strong>0–100</strong> (100 = najbezpieczniej) to ważona kombinacja wskaźników,
-     znormalizowanych między dzielnicami, aby były porównywalne.</p>
+  <h2>Skąd te dane?</h2>
+  <p>Mapa pokazuje <strong>dwie niezależne metryki</strong>. Celowo nie są zlane
+     w jeden „indeks bezpieczeństwa" — mierzą co innego, pochodzą z innych źródeł
+     i obejmują inny obszar. Zważenie ich w jedną liczbę wyglądałoby precyzyjnie,
+     a byłoby wymysłem.</p>
+
+  <h3>1. Percepcja bezpieczeństwa (0–10)</h3>
+  <p><em>Estudio de Percepción de Seguridad y Victimización 2025</em>, Ratusz Bilbao,
+     badanie wykonane przez Ikerfel: <strong>8580 wywiadów telefonicznych</strong>
+     z osobami 16+, praca terenowa marzec–grudzień 2025.</p>
   <ul>
-    <li><strong>Incydenty / 1000 mieszkańców</strong> — waga 50%</li>
-    <li><strong>Pora doby</strong> (udział nocnych) — 15%</li>
-    <li><strong>Ciężkość</strong> zdarzeń — 20%</li>
-    <li><strong>Percepcja</strong> (ankiety, jeśli dostępne) — 15%</li>
+    <li>Dostępne dla <strong>8 dzielnic Bilbao</strong>. Pozostałe gminy nie prowadzą takiego badania.</li>
+    <li>Całe miasto: <strong>5,58</strong>; nocą <strong>5,24</strong>
+        (percepcja nocna publikowana jest tylko zbiorczo, nie per dzielnica —
+        dlatego nie ma trybu „noc").</li>
+    <li>Rozpiętość między dzielnicami to <strong>0,39 pkt</strong> (5,44–5,83).
+        Skala kolorów jest stała, żeby tej różnicy nie wyolbrzymiać.</li>
+    <li>To <strong>odczucie mieszkańców</strong>, nie pomiar przestępczości.</li>
   </ul>
-  <p>Normalizacja min–max (z winsoryzacją), agregacja ważona, wynik skalowany do 0–100.
-     <code>day_score</code>/<code>night_score</code> liczone analogicznie wg pory.</p>
-  <p class="warn">⚠️ Wskaźniki ma dziś <strong>wyłącznie Bilbao</strong> i są one
-     <strong>szacunkowe (demonstracyjne)</strong>. Pozostałe gminy nie mają ich wcale —
-     rysujemy je na szaro, zamiast zgadywać. Docelowo: otwarte źródła
-     (Open Data Euskadi / Eustat / miasto), z jawnym oznaczeniem pochodzenia.</p>
-  <p class="warn">⚠️ Zasięg przestrzenny też się różni: tylko Bilbao ma w OpenStreetMap
-     podział na dzielnice. Sąsiednie gminy występują jako jeden obszar, więc jednolity
-     kolor oznacza brak szczegółu, a nie jednorodność terenu.</p>
-  <p>Pełna metodologia i zasady etyczne (neutralny język, unikanie stygmatyzacji):
+
+  <h3>2. Przestępstwa na 1000 mieszkańców</h3>
+  <p><em>Infracciones penales conocidas por la Ertzaintza</em>, Eustat / policja baskijska,
+     I kwartał 2026 (porównanie: I kwartał 2025).</p>
+  <ul>
+    <li>Publikowane <strong>wyłącznie dla gmin powyżej 20 000 mieszkańców</strong>,
+        czyli dla Bilbao, Barakaldo, Basauri i Erandio.</li>
+    <li>Arrigorriaga, Etxebarri, Sondika, Zamudio i Alonsotegi są poniżej progu —
+        zostają szare.</li>
+    <li>Wartość dotyczy <strong>całej gminy</strong>. Dzielnice Bilbao dziedziczą
+        liczbę miejską, bo rozbicia na dzielnice nikt nie publikuje — panel
+        obszaru zaznacza to ostrzeżeniem.</li>
+    <li>To przestępstwa <strong>zgłoszone</strong>. Wyższa zgłaszalność potrafi
+        podnieść wskaźnik bez wzrostu realnej przestępczości.</li>
+  </ul>
+
+  <p class="warn">⚠️ Szary kolor to <strong>brak pomiaru</strong>, nie „bezpiecznie".
+     Nie wypełniamy go szacunkami.</p>
+
+  <p>Zasady etyczne (neutralny język, unikanie stygmatyzacji) i pełny opis:
      <a href="${REPO_DOC}" target="_blank" rel="noopener">SAFETY_METHODOLOGY.md ↗</a></p>
 `;
 

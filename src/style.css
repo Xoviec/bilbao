@@ -109,6 +109,17 @@ body { color: var(--text); background: var(--bg); }
 }
 .metrics span { color: var(--muted); }
 
+/* Blok pojedynczej metryki w panelu obszaru. */
+.metric { padding: 10px 0; border-bottom: 1px solid #eee; }
+.metric:first-of-type { padding-top: 0; }
+.metric-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.metric-label { font-size: 0.85rem; color: var(--muted); }
+.metric-value { font-size: 1.5rem; font-weight: 700; white-space: nowrap; }
+.metric-value small { font-size: 0.8rem; font-weight: 400; color: var(--muted); }
+.metric-meta { margin: 4px 0 0; font-size: 0.75rem; color: var(--muted); }
+.metric-src { margin: 2px 0 0; font-size: 0.72rem; color: var(--muted); font-style: italic; }
+.metric-warn { margin: 6px 0 0; font-size: 0.72rem; line-height: 1.35; color: #a8580a; }
+
 .summary { line-height: 1.5; }
 
 .places-title { font-size: 0.9rem; margin: 16px 0 8px; }
@@ -179,7 +190,8 @@ body { color: var(--text); background: var(--bg); }
     --bg: #14161a; --panel: rgba(24, 27, 32, 0.96);
     --text: #e7e9ee; --muted: #9aa3b2;
   }
-  .metrics li, .places-list li { border-bottom-color: #2a2e36; }
+  .metrics li, .places-list li, .metric { border-bottom-color: #2a2e36; }
+  .metric-warn { color: #e0a266; }
   #district-search, .ctrl-modes, .mode-btn { border-color: #2a2e36; }
 }
 

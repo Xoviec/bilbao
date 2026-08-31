@@ -44,14 +44,52 @@ export const DATA = {
   cities: "data/cities.json",
 };
 
-// Choropleth bezpieczeństwa (0–100). Paleta diverging, color-blind safe.
-export const SAFETY_STOPS: Array<[number, string]> = [
-  [0, "#d73027"],
-  [25, "#fc8d59"],
-  [50, "#fee08b"],
-  [75, "#91cf60"],
-  [100, "#1a9850"],
-];
+// Paleta choroplethu: od gorszego (czerwień) do lepszego (zieleń).
+// Diverging, bezpieczna dla daltonistów.
+export const RAMP = ["#d73027", "#fc8d59", "#fee08b", "#91cf60", "#1a9850"];
+
+export type MetricId = "perception" | "crime_rate";
+
+export interface Metric {
+  id: MetricId;
+  /** Pole w properties featera. */
+  field: string;
+  label: string;
+  unit: string;
+  /**
+   * Zakres skali kolorów. USTALONY, nie rozciągany do min–max danych.
+   * Rozciągnięcie sprawiłoby, że różnica 0,39 pkt między dzielnicami Bilbao
+   * wygląda jak przepaść — a samo źródło pisze, że jest "ledwie dostrzegalna".
+   * Stały zakres pokazuje ją taką, jaka jest.
+   */
+  domain: [number, number];
+  /** Czy wyższa wartość znaczy bezpieczniej. */
+  higherIsBetter: boolean;
+  short: string;
+}
+
+export const METRICS: Record<MetricId, Metric> = {
+  perception: {
+    id: "perception",
+    field: "perception",
+    label: "Percepcja bezpieczeństwa",
+    unit: "/10",
+    domain: [4, 8],
+    higherIsBetter: true,
+    short: "Percepcja",
+  },
+  crime_rate: {
+    id: "crime_rate",
+    field: "crime_rate",
+    label: "Przestępstwa na 1000 mieszkańców",
+    unit: "/1000",
+    domain: [5, 20],
+    higherIsBetter: false,
+    short: "Przestępczość",
+  },
+};
+
+export const DEFAULT_METRIC: MetricId = "perception";
 
 // Kolory kategorii aktywności / POI.
 export const CATEGORY_COLORS: Record<string, string> = {

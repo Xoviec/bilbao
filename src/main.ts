@@ -11,7 +11,7 @@ import { showDistrict, type PlaceItem } from "./ui/sidebar";
 import { renderFilters, type FilterItem } from "./ui/filters";
 import { renderControls } from "./ui/controls";
 import { openMethodology } from "./ui/methodology";
-import { CATEGORY_COLORS, CATEGORY_LABELS, VIEW } from "./config";
+import { CATEGORY_COLORS, CATEGORY_LABELS, VIEW, METRICS, DEFAULT_METRIC, type MetricId } from "./config";
 
 const el = (id: string) => document.getElementById(id) as HTMLElement;
 
@@ -66,6 +66,7 @@ async function bootstrap(): Promise<void> {
       nameByCode.get(code) ?? code,
       data.safety,
       placesByDistrict.get(code) ?? [],
+      data.sources,
     );
 
   const categories = [
@@ -83,16 +84,22 @@ async function bootstrap(): Promise<void> {
   else map.once("load", addLayers);
 
   // --- UI renderujemy NATYCHMIAST po danych (niezależnie od gotowości mapy) ---
-  const missing = data.districts.features.filter(
-    (f) => f.properties?.safety_index == null,
-  ).length;
   const levels = new Set(data.districts.features.map((f) => f.properties?.level));
-  renderLegend(el("legend"), categories, {
-    missing,
-    mixedResolution: levels.size > 1,
-  });
-  el("legend").querySelector("#methodology-btn")?.addEventListener("click", openMethodology);
+  const missingFor = (metric: MetricId) =>
+    data.districts.features.filter((f) => f.properties?.[METRICS[metric].field] == null).length;
 
+  // Legenda zależy od aktywnej metryki: inna jednostka, inny kierunek skali
+  // i inna liczba obszarów bez danych.
+  const drawLegend = (metric: MetricId) => {
+    renderLegend(el("legend"), categories, {
+      metric,
+      missing: missingFor(metric),
+      total: data.districts.features.length,
+      mixedResolution: levels.size > 1,
+    });
+    el("legend").querySelector("#methodology-btn")?.addEventListener("click", openMethodology);
+  };
+  drawLegend(DEFAULT_METRIC);
   const active = new Set(categories);
   const items: FilterItem[] = categories.map((c) => ({
     id: c,
@@ -108,18 +115,19 @@ async function bootstrap(): Promise<void> {
 
   el("loading")?.remove();
 
-  // Ostrzeżenie opisuje ODDZIELNIE geometrię i wskaźniki, bo ETL naprawia tylko
-  // to pierwsze — granice pochodzą z OSM, ale statystyk bezpieczeństwa w OSM nie ma.
-  if (data.geometryPlaceholder || data.safetyPlaceholder) {
+  // Badge mówi, ILE obszarów nie ma danych dla domyślnej metryki. Brak pomiaru
+  // musi być widoczny od razu, a nie dopiero po kliknięciu w obszar.
+  const badgeMissing = missingFor(DEFAULT_METRIC);
+  if (data.geometryPlaceholder || badgeMissing) {
     const badge = document.createElement("div");
     badge.className = "demo-badge";
     badge.textContent = data.geometryPlaceholder
       ? "⚠ Dane demonstracyjne (placeholder)"
-      : `⚠ Wskaźniki szacunkowe · ${missing} z ${data.districts.features.length} obszarów bez danych`;
+      : `⚠ ${badgeMissing} z ${data.districts.features.length} obszarów bez danych`;
     badge.title = data.geometryPlaceholder
       ? "Uruchom `npm run etl`, aby wgrać realne dane z OpenStreetMap"
-      : "Granice i miejsca pochodzą z OpenStreetMap. Wskaźniki bezpieczeństwa ma tylko " +
-        "Bilbao i są szacunkowe; pozostałe gminy nie mają ich wcale — patrz panel metodologii.";
+      : "Percepcja bezpieczeństwa jest badana tylko w Bilbao; statystyki " +
+        "przestępczości tylko dla gmin powyżej 20 000 mieszkańców. Szczegóły w panelu „Skąd te dane?”.";
     document.getElementById("app")?.appendChild(badge);
   }
 
@@ -135,7 +143,10 @@ async function bootstrap(): Promise<void> {
         if (feature?.geometry) map.fitBounds(bounds(feature.geometry), { padding: 60, maxZoom: 14 });
         openDistrict(code);
       },
-      onModeChange: (field) => setSafetyField(map, field),
+      onModeChange: (field) => {
+        setSafetyField(map, field);
+        drawLegend(field as MetricId);
+      },
     },
   );
 }

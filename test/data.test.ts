@@ -15,7 +15,11 @@ const registry = JSON.parse(
 ).cities as Array<{ slug: string; name: string; unit: string; minUnits: number }>;
 
 const codes = new Set<string>(districts.features.map((f: any) => f.properties.code));
-const safetyKeys = Object.keys(safety).filter((k) => !k.startsWith("_"));
+const safetyUnits = safety._units as Record<string, any>;
+const safetyKeys = Object.keys(safetyUnits);
+const sourceData = JSON.parse(
+  readFileSync(resolve(__dirname, "../etl/safety-data.json"), "utf8"),
+);
 const knownCategories = new Set(Object.keys(CATEGORY_COLORS));
 const places = [...poi.features, ...activities.features];
 
@@ -24,19 +28,22 @@ describe("Integralność danych (public/data)", () => {
     expect(codes.size).toBe(districts.features.length);
   });
 
-  it("klucze safety.json = kody dzielnic (1:1)", () => {
+  it("klucze safety.json = kody obszarów (1:1)", () => {
     for (const k of safetyKeys) expect(codes.has(k), `safety ma nieznany kod: ${k}`).toBe(true);
     for (const c of codes) expect(safetyKeys.includes(c), `brak safety dla: ${c}`).toBe(true);
   });
 
-  it("wskaźniki bezpieczeństwa są w zakresie 0–100 (lub null)", () => {
+  it("wskaźniki mieszczą się w zakresie swojej skali (lub są null)", () => {
     for (const k of safetyKeys) {
-      for (const field of ["safety_index", "day_score", "night_score"] as const) {
-        const v = safety[k][field];
-        if (v !== null && v !== undefined) {
-          expect(v, `${k}.${field}`).toBeGreaterThanOrEqual(0);
-          expect(v, `${k}.${field}`).toBeLessThanOrEqual(100);
-        }
+      const p = safetyUnits[k].perception;
+      if (p !== null) {
+        expect(p, `${k}.perception`).toBeGreaterThanOrEqual(0);
+        expect(p, `${k}.perception`).toBeLessThanOrEqual(10);
+      }
+      const c = safetyUnits[k].crime_rate;
+      if (c !== null) {
+        expect(c, `${k}.crime_rate`).toBeGreaterThanOrEqual(0);
+        expect(c, `${k}.crime_rate`).toBeLessThan(200);
       }
     }
   });
@@ -76,17 +83,60 @@ describe("Integralność danych (public/data)", () => {
     }
   });
 
-  it("gminy bez realnych statystyk mają null, a nie zmyślone liczby", () => {
-    // Wskaźników bezpieczeństwa nie ma w OSM. Dla gmin, dla których nikt ich nie
-    // wprowadził, jedyną uczciwą wartością jest null (mapa rysuje je na szaro).
-    const estimated = new Set(
-      districts.features
-        .filter((f: any) => f.properties.city === "bilbao")
-        .map((f: any) => f.properties.code),
-    );
+  it("każda liczba pochodzi z zadeklarowanego źródła", () => {
+    // Sedno sprawy: wartość bez `*_source` to wartość znikąd. Ten test nie
+    // pozwala jej wejść do repo.
     for (const k of safetyKeys) {
-      if (estimated.has(k)) continue;
-      expect(safety[k].safety_index, `${k} ma wymyślony wskaźnik`).toBeNull();
+      const u = safetyUnits[k];
+      if (u.perception !== null) {
+        expect(u.perception_source, `${k}: percepcja bez źródła`).toBeTruthy();
+        expect(safety._sources[u.perception_source], `${k}: nieznane źródło`).toBeTruthy();
+      }
+      if (u.crime_rate !== null) {
+        expect(u.crime_source, `${k}: przestępczość bez źródła`).toBeTruthy();
+        expect(safety._sources[u.crime_source], `${k}: nieznane źródło`).toBeTruthy();
+      }
+    }
+  });
+
+  it("wartości zgadzają się co do cyfry z plikiem źródłowym", () => {
+    // safety.json jest generowane. Gdyby ktoś je podmienił ręcznie, rozjedzie
+    // się z etl/safety-data.json — a tam każdy wpis ma cytowanie.
+    for (const [code, v] of Object.entries(sourceData.perception)) {
+      if (code.startsWith("_")) continue;
+      expect(safetyUnits[code]?.perception, `${code}`).toBe((v as any).value);
+    }
+    for (const [city, v] of Object.entries(sourceData.crime.byMunicipality)) {
+      const units = districts.features.filter((f: any) => f.properties.city === city);
+      for (const u of units) {
+        expect(safetyUnits[u.properties.code].crime_rate, u.properties.code).toBe((v as any).rate);
+      }
+    }
+  });
+
+  it("gminy poniżej progu publikacji nie mają żadnych liczb", () => {
+    // Eustat publikuje tylko dla gmin >20 000 mieszkańców. Dla reszty jedyną
+    // uczciwą wartością jest null — mapa rysuje je na szaro.
+    for (const city of sourceData.crime.unpublished.municipalities) {
+      const units = districts.features.filter((f: any) => f.properties.city === city);
+      expect(units.length, `${city}: brak jednostek`).toBeGreaterThan(0);
+      for (const u of units) {
+        const rec = safetyUnits[u.properties.code];
+        expect(rec.crime_rate, `${u.properties.code} ma wymyśloną przestępczość`).toBeNull();
+        expect(rec.perception, `${u.properties.code} ma wymyśloną percepcję`).toBeNull();
+        expect(rec.no_data_reason, `${u.properties.code}: brak wyjaśnienia`).toBeTruthy();
+      }
+    }
+  });
+
+  it("wartość gminna przypisana dzielnicy jest oznaczona jako gminna", () => {
+    // Bilbao ma jedną miejską stopę przestępczości i osiem dzielnic. Dziedziczenie
+    // jest w porządku, ale UI musi móc powiedzieć, że to nie pomiar dzielnicy.
+    for (const f of districts.features) {
+      const rec = safetyUnits[f.properties.code];
+      if (rec.crime_rate === null) continue;
+      const expected = f.properties.level === "district" ? "municipality" : "unit";
+      expect(rec.crime_scope, f.properties.code).toBe(expected);
     }
   });
 
@@ -101,11 +151,14 @@ describe("Integralność danych (public/data)", () => {
     }
   });
 
-  it("szacunkowe dane bezpieczeństwa są jawnie oznaczone", () => {
-    // Ostrzeżenie w UI zależy od tej flagi. Bez niej zmyślone wskaźniki
-    // prezentowałyby się jak dane rzeczywiste.
-    const anyEstimated = safetyKeys.some((k) => safety[k].safety_index !== null);
-    if (anyEstimated) expect(safety._placeholder, "brak flagi _placeholder").toBe(true);
+  it("każde źródło ma komplet metadanych", () => {
+    // Bez wydawcy, metody i URL-a czytelnik nie może zweryfikować liczby.
+    for (const [id, s] of Object.entries(safety._sources as Record<string, any>)) {
+      for (const field of ["title", "publisher", "method", "url", "scale"]) {
+        expect(s[field], `źródło ${id}: brak pola ${field}`).toBeTruthy();
+      }
+      expect(String(s.url).startsWith("https://"), `źródło ${id}: URL nie jest https`).toBe(true);
+    }
   });
 
   it("geometrie punktów mają poprawne współrzędne [lng,lat]", () => {

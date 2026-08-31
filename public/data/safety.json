@@ -1,132 +1,278 @@
 {
-  "_note": "Granice: OpenStreetMap. Bilbao ma podział na dzielnice (admin_level=9); pozostałe gminy nie mają go w OSM, więc występują jako jeden obszar. Wskaźniki bezpieczeństwa dla Bilbao są SZACUNKOWE/demonstracyjne; dla pozostałych gmin są puste (null) — nie zmyślamy ich. Realne dane: docs/SAFETY_METHODOLOGY.md.",
-  "_placeholder": true,
-  "bilbao-otxarkoaga-txurdinaga": {
-    "safety_index": 61,
-    "day_score": 68,
-    "night_score": 52,
-    "incidents_per_1k": 22.5,
-    "trend": "up",
-    "summary": "Dzielnica mieszkalna, w rewitalizacji, poprawiający się wskaźnik."
+  "_README": "GENEROWANE przez etl/build-safety.mjs — nie edytuj ręcznie. Dane i źródła: etl/safety-data.json.",
+  "_sources": {
+    "ikerfel2025": {
+      "title": "Estudio de Percepción de Seguridad y Victimización 2025",
+      "publisher": "Ayuntamiento de Bilbao (badanie: Ikerfel)",
+      "method": "8580 wywiadów telefonicznych, osoby 16+, wszystkie dzielnice; praca terenowa III–XII 2025",
+      "published": "2026-02-17",
+      "url": "https://www.deia.eus/bilbao/2026/02/17/aprueba-seguridad-bilbao-10712595.html",
+      "scale": "0–10, gdzie 10 = najbezpieczniej (subiektywna percepcja mieszkańców)"
+    },
+    "ikerfel2024": {
+      "title": "Estudio de Percepción de Seguridad y Victimización 2024",
+      "publisher": "Ayuntamiento de Bilbao (badanie: Ikerfel)",
+      "method": "5731 wywiadów telefonicznych, osoby 16+; praca terenowa VI–XII 2024",
+      "url": "https://www.ondavasca.com/la-percepcion-de-la-seguridad-ciudadana-en-bilbao-de-5-73-sobre-10/",
+      "scale": "0–10"
+    },
+    "eustat2026q1": {
+      "title": "Infracciones penales conocidas por la Ertzaintza por tipos según municipios de más de 20.000 habitantes, I/2026",
+      "publisher": "Eustat / Ertzaintza",
+      "method": "Przestępstwa zgłoszone policji, I kwartał 2026 (porównanie: I kwartał 2025). Publikowane WYŁĄCZNIE dla gmin powyżej 20 000 mieszkańców.",
+      "url": "https://es.eustat.eus/elementos/ele0025700/ti_infracciones-penales-conocidas-por-la-ertzaintza-en-la-cade-euskadi-por-tipos-segun-municipios-de-mas-de-20000-habitantes-i2026/tbl0025729_c.html",
+      "scale": "liczba przestępstw na 1000 mieszkańców, kwartalnie; WYŻSZA = gorzej"
+    }
   },
-  "bilbao-uribarri": {
-    "safety_index": 70,
-    "day_score": 76,
-    "night_score": 62,
-    "incidents_per_1k": 17.8,
-    "trend": "flat",
-    "summary": "Spokojna, wzgórzowa część miasta z panoramami."
+  "_cityWide": {
+    "bilbao": {
+      "perception": 5.58,
+      "perceptionNight": 5.24,
+      "perceptionPrev": 5.73,
+      "perceptionNightPrev": 5.88,
+      "note": "Percepcja nocna jest publikowana tylko dla całego miasta, nie per dzielnica."
+    }
   },
-  "bilbao-deusto": {
-    "safety_index": 74,
-    "day_score": 80,
-    "night_score": 66,
-    "incidents_per_1k": 15.1,
-    "trend": "flat",
-    "summary": "Dzielnica studencka z uniwersytetem, żywa i ogólnie bezpieczna."
-  },
-  "bilbao-abando": {
-    "safety_index": 86,
-    "day_score": 92,
-    "night_score": 78,
-    "incidents_per_1k": 9.4,
-    "trend": "up",
-    "summary": "Reprezentacyjne centrum miasta, bardzo bezpieczne, zwłaszcza w dzień."
-  },
-  "bilbao-ibaiondo": {
-    "safety_index": 63,
-    "day_score": 72,
-    "night_score": 52,
-    "incidents_per_1k": 21.7,
-    "trend": "down",
-    "summary": "Casco Viejo i okolice — tętniące życiem, ostrożność nocą."
-  },
-  "bilbao-begona": {
-    "safety_index": 72,
-    "day_score": 78,
-    "night_score": 64,
-    "incidents_per_1k": 16.3,
-    "trend": "up",
-    "summary": "Rejon bazyliki Begoña, zielony i cichy."
-  },
-  "bilbao-basurtu-zorrotza": {
-    "safety_index": 69,
-    "day_score": 75,
-    "night_score": 60,
-    "incidents_per_1k": 18.2,
-    "trend": "flat",
-    "summary": "Rejon szpitala i parku, dobrze skomunikowany."
-  },
-  "bilbao-errekalde": {
-    "safety_index": 64,
-    "day_score": 70,
-    "night_score": 55,
-    "incidents_per_1k": 20.9,
-    "trend": "flat",
-    "summary": "Gęsto zaludniona, robotnicza, z lokalnym charakterem."
-  },
-  "barakaldo": {
-    "safety_index": null,
-    "day_score": null,
-    "night_score": null,
-    "incidents_per_1k": null,
-    "trend": "flat",
-    "summary": ""
-  },
-  "basauri": {
-    "safety_index": null,
-    "day_score": null,
-    "night_score": null,
-    "incidents_per_1k": null,
-    "trend": "flat",
-    "summary": ""
-  },
-  "erandio": {
-    "safety_index": null,
-    "day_score": null,
-    "night_score": null,
-    "incidents_per_1k": null,
-    "trend": "flat",
-    "summary": ""
-  },
-  "arrigorriaga": {
-    "safety_index": null,
-    "day_score": null,
-    "night_score": null,
-    "incidents_per_1k": null,
-    "trend": "flat",
-    "summary": ""
-  },
-  "etxebarri": {
-    "safety_index": null,
-    "day_score": null,
-    "night_score": null,
-    "incidents_per_1k": null,
-    "trend": "flat",
-    "summary": ""
-  },
-  "sondika": {
-    "safety_index": null,
-    "day_score": null,
-    "night_score": null,
-    "incidents_per_1k": null,
-    "trend": "flat",
-    "summary": ""
-  },
-  "zamudio": {
-    "safety_index": null,
-    "day_score": null,
-    "night_score": null,
-    "incidents_per_1k": null,
-    "trend": "flat",
-    "summary": ""
-  },
-  "alonsotegi": {
-    "safety_index": null,
-    "day_score": null,
-    "night_score": null,
-    "incidents_per_1k": null,
-    "trend": "flat",
-    "summary": ""
+  "_units": {
+    "bilbao-otxarkoaga-txurdinaga": {
+      "perception": 5.66,
+      "perception_prev": 5.76,
+      "perception_trend": "down",
+      "perception_source": "ikerfel2025",
+      "perception_year": 2025,
+      "crime_rate": 16.3,
+      "crime_prev": 16.3,
+      "crime_trend": "flat",
+      "crime_change_pct": 0.5,
+      "crime_scope": "municipality",
+      "crime_source": "eustat2026q1",
+      "crime_period": "I kw. 2026",
+      "no_data_reason": null
+    },
+    "bilbao-uribarri": {
+      "perception": 5.79,
+      "perception_prev": 5.77,
+      "perception_trend": "up",
+      "perception_source": "ikerfel2025",
+      "perception_year": 2025,
+      "crime_rate": 16.3,
+      "crime_prev": 16.3,
+      "crime_trend": "flat",
+      "crime_change_pct": 0.5,
+      "crime_scope": "municipality",
+      "crime_source": "eustat2026q1",
+      "crime_period": "I kw. 2026",
+      "no_data_reason": null
+    },
+    "bilbao-deusto": {
+      "perception": 5.83,
+      "perception_prev": 6.02,
+      "perception_trend": "down",
+      "perception_source": "ikerfel2025",
+      "perception_year": 2025,
+      "crime_rate": 16.3,
+      "crime_prev": 16.3,
+      "crime_trend": "flat",
+      "crime_change_pct": 0.5,
+      "crime_scope": "municipality",
+      "crime_source": "eustat2026q1",
+      "crime_period": "I kw. 2026",
+      "no_data_reason": null
+    },
+    "bilbao-abando": {
+      "perception": 5.44,
+      "perception_prev": 5.72,
+      "perception_trend": "down",
+      "perception_source": "ikerfel2025",
+      "perception_year": 2025,
+      "crime_rate": 16.3,
+      "crime_prev": 16.3,
+      "crime_trend": "flat",
+      "crime_change_pct": 0.5,
+      "crime_scope": "municipality",
+      "crime_source": "eustat2026q1",
+      "crime_period": "I kw. 2026",
+      "no_data_reason": null
+    },
+    "bilbao-ibaiondo": {
+      "perception": 5.48,
+      "perception_prev": 5.65,
+      "perception_trend": "down",
+      "perception_source": "ikerfel2025",
+      "perception_year": 2025,
+      "crime_rate": 16.3,
+      "crime_prev": 16.3,
+      "crime_trend": "flat",
+      "crime_change_pct": 0.5,
+      "crime_scope": "municipality",
+      "crime_source": "eustat2026q1",
+      "crime_period": "I kw. 2026",
+      "no_data_reason": null
+    },
+    "bilbao-begona": {
+      "perception": 5.47,
+      "perception_prev": 5.72,
+      "perception_trend": "down",
+      "perception_source": "ikerfel2025",
+      "perception_year": 2025,
+      "crime_rate": 16.3,
+      "crime_prev": 16.3,
+      "crime_trend": "flat",
+      "crime_change_pct": 0.5,
+      "crime_scope": "municipality",
+      "crime_source": "eustat2026q1",
+      "crime_period": "I kw. 2026",
+      "no_data_reason": null
+    },
+    "bilbao-basurtu-zorrotza": {
+      "perception": 5.5,
+      "perception_prev": 5.72,
+      "perception_trend": "down",
+      "perception_source": "ikerfel2025",
+      "perception_year": 2025,
+      "crime_rate": 16.3,
+      "crime_prev": 16.3,
+      "crime_trend": "flat",
+      "crime_change_pct": 0.5,
+      "crime_scope": "municipality",
+      "crime_source": "eustat2026q1",
+      "crime_period": "I kw. 2026",
+      "no_data_reason": null
+    },
+    "bilbao-errekalde": {
+      "perception": 5.56,
+      "perception_prev": 5.52,
+      "perception_trend": "up",
+      "perception_source": "ikerfel2025",
+      "perception_year": 2025,
+      "crime_rate": 16.3,
+      "crime_prev": 16.3,
+      "crime_trend": "flat",
+      "crime_change_pct": 0.5,
+      "crime_scope": "municipality",
+      "crime_source": "eustat2026q1",
+      "crime_period": "I kw. 2026",
+      "no_data_reason": null
+    },
+    "barakaldo": {
+      "perception": null,
+      "perception_prev": null,
+      "perception_trend": "flat",
+      "perception_source": null,
+      "perception_year": null,
+      "crime_rate": 12.2,
+      "crime_prev": 13.3,
+      "crime_trend": "down",
+      "crime_change_pct": -7.9,
+      "crime_scope": "unit",
+      "crime_source": "eustat2026q1",
+      "crime_period": "I kw. 2026",
+      "no_data_reason": null
+    },
+    "basauri": {
+      "perception": null,
+      "perception_prev": null,
+      "perception_trend": "flat",
+      "perception_source": null,
+      "perception_year": null,
+      "crime_rate": 12.4,
+      "crime_prev": 9.2,
+      "crime_trend": "up",
+      "crime_change_pct": 35.4,
+      "crime_scope": "unit",
+      "crime_source": "eustat2026q1",
+      "crime_period": "I kw. 2026",
+      "no_data_reason": null
+    },
+    "erandio": {
+      "perception": null,
+      "perception_prev": null,
+      "perception_trend": "flat",
+      "perception_source": null,
+      "perception_year": null,
+      "crime_rate": 12.1,
+      "crime_prev": 13.9,
+      "crime_trend": "down",
+      "crime_change_pct": -12.5,
+      "crime_scope": "unit",
+      "crime_source": "eustat2026q1",
+      "crime_period": "I kw. 2026",
+      "no_data_reason": null
+    },
+    "arrigorriaga": {
+      "perception": null,
+      "perception_prev": null,
+      "perception_trend": "flat",
+      "perception_source": null,
+      "perception_year": null,
+      "crime_rate": null,
+      "crime_prev": null,
+      "crime_trend": "flat",
+      "crime_change_pct": null,
+      "crime_scope": null,
+      "crime_source": null,
+      "crime_period": null,
+      "no_data_reason": "Gmina poniżej 20 000 mieszkańców — brak publikowanych statystyk."
+    },
+    "etxebarri": {
+      "perception": null,
+      "perception_prev": null,
+      "perception_trend": "flat",
+      "perception_source": null,
+      "perception_year": null,
+      "crime_rate": null,
+      "crime_prev": null,
+      "crime_trend": "flat",
+      "crime_change_pct": null,
+      "crime_scope": null,
+      "crime_source": null,
+      "crime_period": null,
+      "no_data_reason": "Gmina poniżej 20 000 mieszkańców — brak publikowanych statystyk."
+    },
+    "sondika": {
+      "perception": null,
+      "perception_prev": null,
+      "perception_trend": "flat",
+      "perception_source": null,
+      "perception_year": null,
+      "crime_rate": null,
+      "crime_prev": null,
+      "crime_trend": "flat",
+      "crime_change_pct": null,
+      "crime_scope": null,
+      "crime_source": null,
+      "crime_period": null,
+      "no_data_reason": "Gmina poniżej 20 000 mieszkańców — brak publikowanych statystyk."
+    },
+    "zamudio": {
+      "perception": null,
+      "perception_prev": null,
+      "perception_trend": "flat",
+      "perception_source": null,
+      "perception_year": null,
+      "crime_rate": null,
+      "crime_prev": null,
+      "crime_trend": "flat",
+      "crime_change_pct": null,
+      "crime_scope": null,
+      "crime_source": null,
+      "crime_period": null,
+      "no_data_reason": "Gmina poniżej 20 000 mieszkańców — brak publikowanych statystyk."
+    },
+    "alonsotegi": {
+      "perception": null,
+      "perception_prev": null,
+      "perception_trend": "flat",
+      "perception_source": null,
+      "perception_year": null,
+      "crime_rate": null,
+      "crime_prev": null,
+      "crime_trend": "flat",
+      "crime_change_pct": null,
+      "crime_scope": null,
+      "crime_source": null,
+      "crime_period": null,
+      "no_data_reason": "Gmina poniżej 20 000 mieszkańców — brak publikowanych statystyk."
+    }
   }
 }

@@ -1,4 +1,4 @@
-import type { SafetyMap } from "../data/loader";
+import type { SafetyMap, SourceRef } from "../data/loader";
 import { CATEGORY_COLORS, CATEGORY_LABELS } from "../config";
 
 const TREND_ICON: Record<string, string> = { up: "▲", flat: "▬", down: "▼" };
@@ -15,32 +15,67 @@ function esc(s: unknown): string {
   );
 }
 
-/** Renderuje panel szczegółów wybranej dzielnicy (metryki + miejsca). */
+const fmt = (n: number | null, digits = 2): string =>
+  n == null ? "—" : n.toFixed(digits).replace(".", ",");
+
+/** Renderuje panel szczegółów wybranego obszaru (metryki + miejsca). */
 export function showDistrict(
   sidebar: HTMLElement,
   code: string,
   name: string,
   safety: SafetyMap,
   places: PlaceItem[] = [],
+  sources: Record<string, SourceRef> = {},
 ): void {
   const rec = safety[code];
   sidebar.classList.remove("hidden");
 
-  // Rekord z samymi nullami (gmina bez statystyk) to nadal BRAK danych — bez tego
-  // panel rysowałby pusty licznik "—/100", sugerujący, że pomiar istnieje.
-  const safetyHtml = !rec || rec.safety_index == null
-    ? `<p class="muted">Brak danych o bezpieczeństwie dla tego obszaru.</p>`
-    : `
-      <div class="score" style="--v:${rec.safety_index}">
-        <span class="score-num">${rec.safety_index ?? "—"}</span>
-        <span class="score-label">/100 bezpieczeństwo ${TREND_ICON[rec.trend] ?? ""}</span>
-      </div>
-      <ul class="metrics">
-        <li><span>Dzień</span><strong>${rec.day_score ?? "—"}</strong></li>
-        <li><span>Noc</span><strong>${rec.night_score ?? "—"}</strong></li>
-        <li><span>Incydenty / 1k</span><strong>${rec.incidents_per_1k ?? "—"}</strong></li>
-      </ul>
-      <p class="summary">${esc(rec.summary)}</p>`;
+  const blocks: string[] = [];
+
+  if (rec?.perception != null) {
+    // Trend percepcji: "up" = ocena wyższa niż rok wcześniej, czyli lepiej.
+    const src = rec.perception_source ? sources[rec.perception_source] : undefined;
+    blocks.push(`
+      <div class="metric">
+        <div class="metric-head">
+          <span class="metric-label">Percepcja bezpieczeństwa</span>
+          <span class="metric-value">${fmt(rec.perception)}<small>/10</small>
+            ${TREND_ICON[rec.perception_trend] ?? ""}</span>
+        </div>
+        <p class="metric-meta">Badanie ankietowe ${rec.perception_year ?? ""} ·
+          rok wcześniej ${fmt(rec.perception_prev)}</p>
+        ${src ? `<p class="metric-src">${esc(src.publisher)}</p>` : ""}
+      </div>`);
+  }
+
+  if (rec?.crime_rate != null) {
+    const src = rec.crime_source ? sources[rec.crime_source] : undefined;
+    const pct = rec.crime_change_pct;
+    const pctTxt =
+      pct == null ? "" : `${pct > 0 ? "+" : ""}${fmt(pct, 1)}% r/r`;
+    // Przy przestępczości "up" znaczy WIĘCEJ przestępstw — czyli gorzej.
+    const scopeNote =
+      rec.crime_scope === "municipality"
+        ? `<p class="metric-warn">⚠ Wartość dotyczy całej gminy — statystyk
+             w rozbiciu na dzielnice nikt nie publikuje.</p>`
+        : "";
+    blocks.push(`
+      <div class="metric">
+        <div class="metric-head">
+          <span class="metric-label">Przestępstwa / 1000 mieszk.</span>
+          <span class="metric-value">${fmt(rec.crime_rate, 1)}
+            ${TREND_ICON[rec.crime_trend] ?? ""}</span>
+        </div>
+        <p class="metric-meta">${esc(rec.crime_period ?? "")} ${pctTxt ? `· ${pctTxt}` : ""}</p>
+        ${scopeNote}
+        ${src ? `<p class="metric-src">${esc(src.publisher)}</p>` : ""}
+      </div>`);
+  }
+
+  const safetyHtml = blocks.length
+    ? blocks.join("")
+    : `<p class="muted">Brak danych o bezpieczeństwie dla tego obszaru.
+         ${esc(rec?.no_data_reason ?? "")}</p>`;
 
   const placesHtml = places.length
     ? `<h3 class="places-title">Miejsca w tym obszarze (${places.length})</h3>
@@ -57,11 +92,8 @@ export function showDistrict(
        </ul>`
     : `<p class="muted">Brak miejsc w danych dla tego obszaru.</p>`;
 
-  // Stopka opisuje stan TEGO obszaru. "Dane szacunkowe" przy obszarze bez
-  // żadnych wskaźników byłoby nieprawdą — tam nie ma czego szacować.
-  const hasSafety = Boolean(rec && rec.safety_index != null);
-  const sourceHtml = hasSafety
-    ? `<p class="source muted">Wskaźniki szacunkowe · miejsca i granice: OpenStreetMap</p>`
+  const sourceHtml = blocks.length
+    ? `<p class="source muted">Miejsca i granice: OpenStreetMap</p>`
     : `<p class="source muted">Brak wskaźników dla tego obszaru · miejsca i granice: OpenStreetMap</p>`;
 
   sidebar.innerHTML = `

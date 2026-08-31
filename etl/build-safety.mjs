@@ -1,0 +1,99 @@
+#!/usr/bin/env node
+/**
+ * Buduje public/data/safety.json z etl/safety-data.json (dane + cytowania)
+ * i public/data/districts.geojson (lista jednostek).
+ *
+ * Uruchomienie:  node etl/build-safety.mjs   (albo: npm run safety)
+ *
+ * ZASADA: żadna liczba nie powstaje tutaj. Skrypt tylko przepisuje to, co ktoś
+ * wpisał do safety-data.json wraz ze źródłem, i wstawia `null` wszędzie tam,
+ * gdzie źródła nie ma. Nie interpoluje, nie uśrednia i nie zgaduje.
+ *
+ * Dwie metryki celowo NIE są łączone w jeden indeks:
+ *   - `perception`  — subiektywna ocena mieszkańców (0–10), badanie ankietowe,
+ *   - `crime_rate`  — przestępstwa na 1000 mieszkańców, dane policyjne.
+ * Mierzą różne rzeczy, mają różne źródła i różny zasięg. Zważenie ich w jedną
+ * liczbę wyglądałoby precyzyjnie, a byłoby wymysłem.
+ */
+import { readFile, writeFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const DATA = resolve(__dirname, "../public/data");
+
+const trendOf = (now, prev) => {
+  if (now == null || prev == null) return "flat";
+  const d = now - prev;
+  if (Math.abs(d) < 0.005) return "flat";
+  return d > 0 ? "up" : "down";
+};
+
+const main = async () => {
+  const src = JSON.parse(await readFile(resolve(__dirname, "safety-data.json"), "utf8"));
+  const districts = JSON.parse(await readFile(`${DATA}/districts.geojson`, "utf8"));
+
+  const out = {
+    _README:
+      "GENEROWANE przez etl/build-safety.mjs — nie edytuj ręcznie. " +
+      "Dane i źródła: etl/safety-data.json.",
+    _sources: src.sources,
+    _cityWide: src.cityWide,
+    _units: {},
+  };
+
+  const stats = { perception: 0, crime: 0, empty: 0 };
+
+  for (const f of districts.features) {
+    const { code, city, level } = f.properties;
+
+    const p = src.perception[code];
+    const c = src.crime.byMunicipality[city];
+
+    // Percepcja jest mierzona per dzielnica; gminy bez badania mają null.
+    const perception = p ? p.value : null;
+    // Przestępczość jest mierzona per GMINA. Dzielnica dziedziczy wartość swojej
+    // gminy, ale z jawnym `crime_scope`, żeby UI mogło powiedzieć, że to nie jest
+    // pomiar dla tej konkretnej dzielnicy.
+    const crime = c ? c.rate : null;
+
+    if (perception != null) stats.perception++;
+    if (crime != null) stats.crime++;
+    if (perception == null && crime == null) stats.empty++;
+
+    out._units[code] = {
+      perception,
+      perception_prev: p ? p.prev : null,
+      perception_trend: p ? trendOf(p.value, p.prev) : "flat",
+      perception_source: perception != null ? src.perception._source : null,
+      perception_year: perception != null ? src.perception._year : null,
+
+      crime_rate: crime,
+      crime_prev: c ? c.prev : null,
+      // Dla przestępczości "up" znaczy WIĘCEJ przestępstw, czyli gorzej.
+      crime_trend: c ? trendOf(c.rate, c.prev) : "flat",
+      crime_change_pct: c ? c.changePct : null,
+      crime_scope: crime == null ? null : level === "district" ? "municipality" : "unit",
+      crime_source: crime != null ? src.crime._source : null,
+      crime_period: crime != null ? src.crime._period : null,
+
+      no_data_reason:
+        perception == null && crime == null
+          ? "Gmina poniżej 20 000 mieszkańców — brak publikowanych statystyk."
+          : null,
+    };
+  }
+
+  await writeFile(`${DATA}/safety.json`, JSON.stringify(out, null, 2));
+
+  const total = districts.features.length;
+  console.log(`✓ safety.json: ${total} jednostek`);
+  console.log(`  percepcja (per dzielnica): ${stats.perception}`);
+  console.log(`  przestępczość (per gmina): ${stats.crime}`);
+  console.log(`  bez żadnych danych:        ${stats.empty}`);
+};
+
+main().catch((e) => {
+  console.error("build-safety błąd:", e.message);
+  process.exit(1);
+});

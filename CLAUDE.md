@@ -34,10 +34,18 @@ npm run etl      # pobranie realnych danych z OSM (wymaga sieci → Overpass)
 ## Zasady
 - **Dane bezpieczeństwa są wrażliwe** — trzymaj się `docs/SAFETY_METHODOLOGY.md`
   (jawność, neutralny język, oznaczanie danych szacunkowych).
-- Granice i POI w `public/data/` są **realne** (OSM, `npm run etl`).
-  Wskaźniki bezpieczeństwa **ma tylko Bilbao i są szacunkowe**; pozostałe gminy
-  mają `null`. Flaga `_placeholder` w `safety.json` steruje ostrzeżeniem w UI —
-  nie usuwaj jej bez realnych danych i **nie wypełniaj nulli zmyślonymi liczbami**.
+- Wszystkie dane są **realne i mają cytowane źródło**. Granice i POI: OSM
+  (`npm run etl`). Bezpieczeństwo: `etl/safety-data.json` → `npm run safety`
+  → `public/data/safety.json` (generowane, nie edytuj ręcznie).
+- **Nie wpisuj liczby bez źródła.** Każda wartość musi mieć wpis w `sources`;
+  pilnuje tego test „każda liczba pochodzi z zadeklarowanego źródła". Czego nikt
+  nie opublikował, zostaje `null` i rysuje się na szaro.
+- **Dwie metryki, nigdy nie łączone w jeden indeks**: `perception` (0–10,
+  ankieta, tylko 8 dzielnic Bilbao) i `crime_rate` (na 1000 mieszk., policja,
+  tylko gminy >20 tys.). Mierzą co innego — zważenie ich byłoby wymysłem.
+  Mają też przeciwne kierunki, więc skala kolorów `crime_rate` jest odwrócona.
+- Percepcja nocna istnieje tylko zbiorczo dla Bilbao — nie rób z niej trybu
+  „noc" per obszar.
 - Gminy są przypięte po **ID relacji** w `etl/cities.json`. Nie wracaj do
   wyszukiwania po nazwie — `name="Bilbao"` dopasowuje też Ekwador i Kolumbię.
 - **Dwie rozdzielczości są zamierzone.** W całej Bizkaia tylko Bilbao ma w OSM

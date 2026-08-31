@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "e2e": "playwright test",
-    "etl": "node etl/fetch-osm.mjs"
+    "etl": "node etl/fetch-osm.mjs",
+    "safety": "node etl/build-safety.mjs"
   },
   "keywords": [
     "bilbao",

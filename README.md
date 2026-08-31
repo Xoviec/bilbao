@@ -10,8 +10,8 @@ kątem wydajności renderowania i czytelności danych.
 
 ## ✨ Co pokazuje mapa
 
-- **Choropleth bezpieczeństwa** — obszary pokolorowane wg indeksu (0–100); szary = brak danych.
-- **Tryb dzień/noc** — przełącznik pokazujący bezpieczeństwo wg pory doby.
+- **Choropleth dwóch metryk** — percepcja bezpieczeństwa albo przestępczość; szary = brak danych.
+- **Przełącznik metryki** — skala i jej kierunek zmieniają się razem z danymi.
 - **Aktywności** — sport, kultura, nocne życie, tereny zielone (ikony kategorii).
 - **POI / miejsca warte zobaczenia** — atrakcje, punkty widokowe, zabytki (clustering).
 - **Panel obszaru** — po kliknięciu: metryki bezpieczeństwa (lub jawne „brak danych"), miejsca.
@@ -42,6 +42,7 @@ npm run build    # produkcyjny build do dist/
 npm run preview  # podgląd builda
 npm test         # testy (vitest)
 npm run etl      # pobranie danych z OSM dla wszystkich gmin (wymaga sieci)
+npm run safety   # przebudowa safety.json z etl/safety-data.json
 ```
 
 ## 📁 Struktura
@@ -73,38 +74,51 @@ Dane w `public/data/` pochodzą z **OpenStreetMap** (`npm run etl`). Mapa obejmu
 |---|---|---|
 | Granice 16 jednostek (9 gmin) | OSM, relacje z `etl/cities.json` | **realne** |
 | POI (245) + aktywności (2494) | OSM (Overpass) | **realne** |
-| Wskaźniki bezpieczeństwa | — | **tylko Bilbao, szacunkowe** |
+| Percepcja bezpieczeństwa | Ikerfel / Ratusz Bilbao 2025 | **realne, 8 dzielnic Bilbao** |
+| Przestępstwa / 1000 mieszk. | Eustat / Ertzaintza, I kw. 2026 | **realne, 4 gminy** |
 
-### Dwie rozdzielczości — i dlaczego
+### Dane o bezpieczeństwie
 
-W **całej prowincji Bizkaia** podział administracyjny poniżej gminy ma w OSM
-wyłącznie Bilbao (8 jednostek `admin_level=9`; wszystkie 25 jednostek `admin_level=10`
-to również barrios Bilbao). Dlatego:
+Mapa pokazuje **dwie niezależne metryki**. Celowo nie są zlane w jeden „indeks
+bezpieczeństwa" — mierzą co innego, pochodzą z innych źródeł i obejmują inny
+obszar. Zważenie ich w jedną liczbę wyglądałoby precyzyjnie, a byłoby wymysłem.
 
-- **Bilbao** — choropleth po 8 dzielnicach,
-- **pozostałe 8 gmin** — jeden obszar na gminę (`unit: "municipality"` w rejestrze).
+**1. Percepcja bezpieczeństwa (0–10)** — [*Estudio de Percepción de Seguridad y
+Victimización 2025*](https://www.deia.eus/bilbao/2026/02/17/aprueba-seguridad-bilbao-10712595.html),
+Ratusz Bilbao, badanie Ikerfel: 8580 wywiadów telefonicznych, osoby 16+, III–XII 2025.
 
-Jednolity kolor gminy oznacza **brak danych szczegółowych, a nie jednorodność terenu** —
-legenda i panel metodologii mówią to wprost.
+| Dzielnica | 2025 | 2024 |
+|---|---|---|
+| Deusto | 5,83 | 6,02 |
+| Uribarri | 5,79 | 5,77 |
+| Otxarkoaga-Txurdinaga | 5,66 | 5,76 |
+| Errekalde | 5,56 | 5,52 |
+| Basurtu-Zorrotza | 5,50 | 5,72 |
+| Ibaiondo | 5,48 | 5,65 |
+| Begoña | 5,47 | 5,72 |
+| Abando | 5,44 | 5,72 |
 
-| Gmina | Relacja OSM | Jednostki | km² | Miejsc |
-|---|---|---|---|---|
-| Bilbao | 339549 | 8 dzielnic | 40,4 | 1876 |
-| Barakaldo | 340585 | 1 | 25,0 | 506 |
-| Erandio | 347284 | 1 | 18,8 | 125 |
-| Basauri | 340591 | 1 | 7,1 | 73 |
-| Arrigorriaga | 340587 | 1 | 16,0 | 61 |
-| Zamudio | 347287 | 1 | 17,9 | 34 |
-| Etxebarri | 341790 | 1 | 3,3 | 31 |
-| Sondika | 340648 | 1 | 6,8 | 21 |
-| Alonsotegi | 342633 | 1 | 20,2 | 12 |
+Całe miasto 5,58; nocą 5,24. **Percepcja nocna jest publikowana tylko zbiorczo**,
+nie per dzielnica — dlatego nie ma trybu „dzień/noc". Rozpiętość między
+dzielnicami to 0,39 pkt; skala kolorów jest stała, żeby jej nie wyolbrzymiać.
 
-Jednostki są rozłączne (0 nakładek na 2400 losowych punktów), a przypisanie potwierdza
-niezależnie reverse geocoding w Nominatim.
+**2. Przestępstwa na 1000 mieszkańców** — [Eustat / Ertzaintza, I kw. 2026](https://es.eustat.eus/elementos/ele0025700/ti_infracciones-penales-conocidas-por-la-ertzaintza-en-la-cade-euskadi-por-tipos-segun-municipios-de-mas-de-20000-habitantes-i2026/tbl0025729_c.html).
 
-> ⚠️ **Wskaźników bezpieczeństwa nie ma w OSM.** Ma je dziś tylko Bilbao i są
-> **szacunkowe**. Pozostałe gminy mają `null` — rysują się na szaro, bo zmyślanie
-> liczb byłoby gorsze niż ich brak. Podmień wg [metodologii](docs/SAFETY_METHODOLOGY.md).
+| Gmina | I kw. 2026 | I kw. 2025 | Zmiana |
+|---|---|---|---|
+| Bilbao | 16,3 | 16,3 | +0,5% |
+| Basauri | 12,4 | 9,2 | +35,4% |
+| Barakaldo | 12,2 | 13,3 | −7,9% |
+| Erandio | 12,1 | 13,9 | −12,5% |
+
+Publikowane **tylko dla gmin powyżej 20 000 mieszkańców**. Arrigorriaga, Etxebarri,
+Sondika, Zamudio i Alonsotegi są poniżej progu — zostają szare. Wartość dotyczy
+całej gminy; dzielnice Bilbao dziedziczą liczbę miejską z jawnym ostrzeżeniem
+w panelu, bo rozbicia na dzielnice nikt nie publikuje.
+
+> ⚠️ **Szary kolor to brak pomiaru, nie „bezpiecznie".** Nie wypełniamy go
+> szacunkami. Dane i cytowania: [`etl/safety-data.json`](etl/safety-data.json);
+> `public/data/safety.json` jest z nich generowane (`npm run safety`).
 
 ### Odświeżenie danych
 

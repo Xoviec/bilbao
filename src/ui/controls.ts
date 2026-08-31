@@ -1,3 +1,4 @@
+import { METRICS, DEFAULT_METRIC, type MetricId } from "../config";
 import type { SafetyField } from "../layers/safety";
 
 export interface DistrictOption {
@@ -10,13 +11,18 @@ export interface ControlHandlers {
   onModeChange: (field: SafetyField) => void;
 }
 
-const MODES: Array<{ field: SafetyField; label: string }> = [
-  { field: "safety_index", label: "Ogólny" },
-  { field: "day_score", label: "Dzień" },
-  { field: "night_score", label: "Noc" },
-];
+// Tryby odpowiadają metrykom, dla których ISTNIEJĄ realne dane. Nie ma tu
+// "dzień/noc": percepcja nocna jest publikowana tylko dla całego Bilbao,
+// więc nie da się z niej zrobić choroplethu per obszar.
+const MODES: Array<{ field: MetricId; label: string; title: string }> = (
+  Object.keys(METRICS) as MetricId[]
+).map((id) => ({
+  field: id,
+  label: METRICS[id].short,
+  title: `${METRICS[id].label} (${METRICS[id].unit})`,
+}));
 
-/** Renderuje wyszukiwarkę dzielnicy oraz przełącznik trybu (ogólny/dzień/noc). */
+/** Renderuje wyszukiwarkę obszaru oraz przełącznik metryki. */
 export function renderControls(
   container: HTMLElement,
   districts: DistrictOption[],
@@ -30,16 +36,16 @@ export function renderControls(
 
   container.innerHTML = `
     <label class="ctrl-search">
-      <span class="sr-only">Szukaj dzielnicy</span>
-      <select id="district-search" aria-label="Szukaj dzielnicy">
-        <option value="">🔍 Wybierz dzielnicę…</option>
+      <span class="sr-only">Szukaj obszaru</span>
+      <select id="district-search" aria-label="Szukaj obszaru">
+        <option value="">🔍 Wybierz obszar…</option>
         ${options}
       </select>
     </label>
-    <div class="ctrl-modes" role="group" aria-label="Tryb wskaźnika bezpieczeństwa">
+    <div class="ctrl-modes" role="group" aria-label="Wybór metryki">
       ${MODES.map(
-        (m, i) =>
-          `<button type="button" class="mode-btn${i === 0 ? " active" : ""}" data-field="${m.field}" aria-pressed="${i === 0}">${m.label}</button>`,
+        (m) =>
+          `<button type="button" class="mode-btn${m.field === DEFAULT_METRIC ? " active" : ""}" data-field="${m.field}" title="${m.title}" aria-pressed="${m.field === DEFAULT_METRIC}">${m.label}</button>`,
       ).join("")}
     </div>
   `;

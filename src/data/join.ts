@@ -2,8 +2,12 @@ import type { SafetyMap } from "./loader";
 
 /**
  * Czysta funkcja: dołącza metryki bezpieczeństwa do właściwości featerów
- * dzielnic (join po polu `code`). Zwraca nową kolekcję (bez mutacji wejścia).
+ * obszarów (join po polu `code`). Zwraca nową kolekcję (bez mutacji wejścia).
  * Wydzielona z loadera, aby była testowalna bez sieci.
+ *
+ * Brak rekordu i brak pomiaru dają tę samą wartość `null` — warstwa mapy
+ * maluje wtedy obszar na szaro. Zera nie wstawiamy: "0 przestępstw" i "nie
+ * wiemy" to dwie różne rzeczy.
  */
 export function joinSafety(
   districts: GeoJSON.FeatureCollection,
@@ -18,10 +22,11 @@ export function joinSafety(
         ...f,
         properties: {
           ...f.properties,
-          safety_index: rec?.safety_index ?? null,
-          day_score: rec?.day_score ?? null,
-          night_score: rec?.night_score ?? null,
-          trend: rec?.trend ?? "flat",
+          perception: rec?.perception ?? null,
+          perception_trend: rec?.perception_trend ?? "flat",
+          crime_rate: rec?.crime_rate ?? null,
+          crime_trend: rec?.crime_trend ?? "flat",
+          crime_scope: rec?.crime_scope ?? null,
         },
       };
     }),

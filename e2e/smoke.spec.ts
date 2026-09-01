@@ -41,9 +41,11 @@ test.describe("Bilbao Safety Map — smoke", () => {
     await expect(sidebar).toBeVisible();
     await expect(sidebar.locator(".metric")).toHaveCount(1);
     await expect(sidebar.locator(".metric-label")).toContainText("Percepcja");
-    await expect(sidebar.locator(".metric-context")).toContainText("dla całej gminy");
-    await expect(sidebar.locator(".metric-context")).toContainText("Bilbao 66,6‰");
-    await expect(sidebar.locator(".metric-context")).toContainText("nikt jej nie publikuje");
+    await expect(sidebar.locator(".metric-context")).toContainText("dla całej gminy Bilbao");
+    await expect(sidebar.locator(".metric-context")).toContainText("nie publikuje jej w tym rozbiciu");
+    // Kluczowe: żadnej liczby przestępczości na dzielnicy. Ta sama wartość
+    // powtórzona na ośmiu dzielnicach czytała się jak zepsute dane.
+    await expect(sidebar.locator(".metric-context")).not.toContainText("66");
   });
 
   test("najmniejsza gmina też ma przestępczość, ale nie percepcję", async ({ page }) => {
@@ -140,6 +142,23 @@ test.describe("Bilbao Safety Map — smoke", () => {
     }
     expect(hit, "nie udało się trafić w pinezkę miejsca").toBe(true);
     await expect(page.locator("#sidebar:not(.hidden)")).toHaveCount(0);
+  });
+
+  test("w trybie przestępczości celem jest gmina, nie dzielnica", async ({ page }) => {
+    // Regresja: przy ukrytych granicach dzielnic najazd nadal trafiał w dzielnicę,
+    // więc każda pokazywała nazwę dzielnicy z tą samą liczbą gminną.
+    await page.locator('.mode-btn[data-field="crime_rate"]').click();
+    await page.waitForTimeout(1200);
+    const box = (await page.locator("#map").boundingBox())!;
+    const seen = new Set<string>();
+    for (const [fx, fy] of [[0.42, 0.52], [0.46, 0.6], [0.4, 0.45]]) {
+      await page.mouse.move(box.x + box.width * fx, box.y + box.height * fy);
+      await page.waitForTimeout(400);
+      const t = await page.locator(".district-tooltip").innerText().catch(() => "");
+      if (t) seen.add(t.split("\n")[0].trim());
+    }
+    // Wszystkie trafienia wewnątrz Bilbao muszą dać JEDNĄ nazwę: gminę.
+    expect([...seen]).toEqual(["Bilbao"]);
   });
 
   test("filtr kategorii można odznaczyć", async ({ page }) => {

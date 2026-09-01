@@ -38,7 +38,9 @@ async function bootstrap(): Promise<void> {
     ...data.municipalities.features.filter((f) => !districtCities.has(f.properties?.code)),
   ];
 
-  const districtByCode = new Map(areas.map((f) => [f.properties?.code as string, f]));
+  const districtByCode = new Map(
+    [...areas, ...data.municipalities.features].map((f) => [f.properties?.code as string, f]),
+  );
   // Etykieta jednostki. Dzielnicę poprzedzamy nazwą gminy, bo lista miesza dwa
   // poziomy (dzielnice Bilbao + całe gminy) i samo "Abando" nie mówi, gdzie to jest.
   const labelOf = (f: GeoJSON.Feature): string => {
@@ -47,7 +49,14 @@ async function bootstrap(): Promise<void> {
     return f.properties?.level === "district" && cityName ? `${cityName} — ${name}` : name;
   };
 
-  const nameByCode = new Map(areas.map((f) => [f.properties?.code as string, labelOf(f)]));
+  // Nazwy i geometria także dla gmin spoza listy wyboru (Bilbao), bo w trybie
+  // przestępczości można w nie kliknąć na mapie.
+  const nameByCode = new Map(
+    [...areas, ...data.municipalities.features].map((f) => [
+      f.properties?.code as string,
+      labelOf(f),
+    ]),
+  );
 
   // Wspólne źródło miejsc: POI + aktywności.
   const places: GeoJSON.FeatureCollection = {
@@ -60,9 +69,17 @@ async function bootstrap(): Promise<void> {
   for (const f of places.features) {
     const d = f.properties?.district as string | undefined;
     if (!d) continue;
-    const arr = placesByDistrict.get(d) ?? [];
-    arr.push({ name: f.properties?.name as string, category: f.properties?.category as string });
-    placesByDistrict.set(d, arr);
+    const item = {
+      name: f.properties?.name as string,
+      category: f.properties?.category as string,
+    };
+    placesByDistrict.set(d, [...(placesByDistrict.get(d) ?? []), item]);
+    // Dodatkowo grupowanie po GMINIE — klik w gminę Bilbao w trybie przestępczości
+    // ma pokazać jej miejsca, a te są przypisane do dzielnic.
+    const city = f.properties?.city as string | undefined;
+    if (city && city !== d) {
+      placesByDistrict.set(city, [...(placesByDistrict.get(city) ?? []), item]);
+    }
   }
 
   const openDistrict = (code: string) =>

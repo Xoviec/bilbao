@@ -9,6 +9,12 @@ const SRC = "districts";
 // otwiera JEDNOCZEŚNIE popup miejsca i panel obszaru.
 const PLACE_LAYERS = ["places-points", "places-clusters"];
 
+// Aktywna metryka. Interakcja MUSI ją znać: w trybie przestępczości jednostką
+// jest gmina, więc dzielnice nie mogą być celem najazdu ani kliknięcia —
+// inaczej najeżdżasz na jednolite Bilbao, a dostajesz nazwę dzielnicy sklejoną
+// z liczbą gminną, osiem razy tę samą.
+let activeField: SafetyField = "perception";
+
 /** Szerokość obrysu zależna od stanu: zaznaczenie > najechanie > spoczynek. */
 const outlineWidth = (base: number): maplibregl.ExpressionSpecification =>
   [
@@ -58,6 +64,7 @@ const districtLabel = (withValue: boolean): maplibregl.ExpressionSpecification =
  * miałyby ten sam kolor. Legenda musi o tym mówić wprost (patrz `caveat`).
  */
 export function setSafetyField(map: maplibregl.Map, field: SafetyField): void {
+  activeField = field;
   if (!map.getLayer("municipalities-fill")) return; // warstwy jeszcze nie dodane
   const crime = field === "crime_rate";
 
@@ -232,8 +239,12 @@ function wireInteractions(map: maplibregl.Map, onSelect: (code: string) => void)
     map.setFeatureState({ source, id }, state);
   };
 
-  const fmt = (v: unknown, suffix: string) =>
-    v == null ? "brak danych" : `${String(v).replace(".", ",")}${suffix}`;
+  // Te same zaokrąglenia co w panelu i na etykietach mapy — inaczej ta sama
+  // wartość pokazuje się raz jako 66,58, raz jako 66,6.
+  const fmt = (v: unknown, suffix: string, digits: number) =>
+    typeof v === "number"
+      ? `${v.toFixed(digits).replace(".", ",")}${suffix}`
+      : "brak danych";
 
   /** Czy pod kursorem jest miejsce — wtedy klik należy do warstwy miejsc. */
   const overPlace = (e: maplibregl.MapMouseEvent) => {
@@ -242,10 +253,15 @@ function wireInteractions(map: maplibregl.Map, onSelect: (code: string) => void)
     return map.queryRenderedFeatures(e.point, { layers }).length > 0;
   };
 
-  // Dzielnice leżą NA gminach, więc pytamy najpierw o nie — inaczej klik w Bilbao
-  // trafiałby w gminę i gubił dzielnicę.
+  // Cel interakcji = jednostka aktywnej metryki.
+  //  - przestępczość → gmina (dzielnica nie ma własnej wartości),
+  //  - percepcja     → dzielnica, a poza Bilbao gmina.
   const topFeature = (e: maplibregl.MapMouseEvent) => {
-    const layers = ["districts-fill", "municipalities-fill"].filter((l) => map.getLayer(l));
+    const wanted =
+      activeField === "crime_rate"
+        ? ["municipalities-fill"]
+        : ["districts-fill", "municipalities-fill"];
+    const layers = wanted.filter((l) => map.getLayer(l));
     return map.queryRenderedFeatures(e.point, { layers })[0];
   };
 
@@ -262,23 +278,17 @@ function wireInteractions(map: maplibregl.Map, onSelect: (code: string) => void)
     const p = feature.properties ?? {};
     const src = feature.layer.id === "districts-fill" ? SRC : MUNI;
 
-    // Dzielnica nie ma własnej stopy przestępczości — pokazujemy wartość gminy
-    // podpisaną jej nazwą, żeby nie wyglądała na pomiar tej dzielnicy.
-    const crimeLine =
-      p.crime_rate != null
-        ? `${METRICS.crime_rate.short}: ${fmt(p.crime_rate, "‰")}`
-        : p.city_crime_rate != null
-          ? `${METRICS.crime_rate.short} (cała gmina ${p.city_name ?? ""}): ` +
-            `${fmt(p.city_crime_rate, "‰")}`
-          : `${METRICS.crime_rate.short}: brak danych`;
+    // Tooltip pokazuje metrykę TEJ warstwy, nie obie. Dzielnica nie ma stopy
+    // przestępczości, więc jej nie wypisujemy — powtarzanie liczby gminnej na
+    // ośmiu dzielnicach było właśnie tym, co wyglądało na zepsute dane.
+    const line =
+      src === MUNI
+        ? `${METRICS.crime_rate.short}: ${fmt(p.crime_rate, "‰", 1)}`
+        : `${METRICS.perception.short}: ${fmt(p.perception, "/10", 2)}`;
 
     tooltip
       .setLngLat(e.lngLat)
-      .setHTML(
-        `<strong>${p.name ?? "—"}</strong><br/>` +
-          `${METRICS.perception.short}: ${fmt(p.perception, "/10")}<br/>` +
-          crimeLine,
-      )
+      .setHTML(`<strong>${p.name ?? "—"}</strong><br/>${line}`)
       .addTo(map);
 
     if (feature.id === hovered && src === hoveredSrc) return;

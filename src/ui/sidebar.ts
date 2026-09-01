@@ -78,12 +78,15 @@ export function showDistrict(
   // Dzielnica NIE ma własnej stopy przestępczości — nikt jej nie publikuje w tym
   // podziale. Pokazujemy wartość gminy jako kontekst, wyraźnie oddzielony od
   // metryk tego obszaru, zamiast powtarzać tę samą liczbę na ośmiu dzielnicach.
+  // BEZ LICZBY. Powtórzenie tej samej stopy gminnej na ośmiu dzielnicach było
+  // dokładnie tym, co czytało się jak zepsute dane. Kierujemy do trybu, w którym
+  // ta metryka ma swoją właściwą jednostkę i pada dokładnie raz.
   const contextHtml =
     rec?.city_crime_rate != null
-      ? `<p class="metric-context">Przestępczość mierzona jest dla całej gminy:
-           <strong>${esc(rec.city_name ?? "")} ${fmt(rec.city_crime_rate, 1)}‰</strong>
-           (${esc(rec.city_crime_period ?? "")}). W podziale na dzielnice nikt jej
-           nie publikuje.</p>`
+      ? `<p class="metric-context">Przestępczość mierzona jest dla
+           <strong>całej gminy ${esc(rec.city_name ?? "")}</strong>, nie dla dzielnic —
+           nikt nie publikuje jej w tym rozbiciu. Zobacz ją w trybie
+           <strong>Przestępczość</strong>.</p>`
       : "";
 
   const safetyHtml = blocks.length

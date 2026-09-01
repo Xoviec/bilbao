@@ -10,8 +10,8 @@ kątem wydajności renderowania i czytelności danych.
 
 ## ✨ Co pokazuje mapa
 
-- **Choropleth przestępczości na 9 gminach** — tam, gdzie ta statystyka jest mierzona.
-- **Percepcja na 8 dzielnicach Bilbao** — kolor jako odchylenie od średniej + liczba na dzielnicy.
+- **Choropleth jednego wskaźnika na 9 gminach** — przestępstwa na 1000 mieszkańców.
+- **Panel obszaru** — wartość, trend r/r, odniesienie do prowincji, źródło.
 - **Aktywności** — sport, kultura, nocne życie, tereny zielone (ikony kategorii).
 - **POI / miejsca warte zobaczenia** — atrakcje, punkty widokowe, zabytki (clustering).
 - **Panel obszaru** — po kliknięciu: metryki bezpieczeństwa (lub jawne „brak danych"), miejsca.
@@ -67,44 +67,16 @@ bilbao-safety-map/
 
 ## 🗃️ Dane
 
-Dane w `public/data/` pochodzą z **OpenStreetMap** (`npm run etl`). Mapa obejmuje
-**Bilbao i 8 gmin z nim graniczących** — 16 jednostek, 2739 miejsc.
+Granice i miejsca pochodzą z **OpenStreetMap** (`npm run etl`). Mapa obejmuje
+**Bilbao i 8 gmin z nim graniczących**.
 
-| Zbiór | Źródło | Stan |
-|---|---|---|
-| Granice 16 jednostek (9 gmin) | OSM, relacje z `etl/cities.json` | **realne** |
-| POI (245) + aktywności (2494) | OSM (Overpass) | **realne** |
-| Percepcja bezpieczeństwa | Ikerfel / Ratusz Bilbao 2025 | **realne, 8 dzielnic Bilbao** |
-| Przestępstwa / 1000 mieszk. | Udalmap (Rząd Kraju Basków), 2024 | **realne, wszystkie 9 gmin** |
+### Jeden wskaźnik, jedna jednostka
 
-### Dane o bezpieczeństwie
+Mapa pokazuje **przestępstwa na 1000 mieszkańców, per gmina** — dziewięć obszarów,
+dziewięć niezależnych pomiarów. Pełne uzasadnienie wyboru:
+[`docs/METRIC_DECISION.md`](docs/METRIC_DECISION.md).
 
-Mapa pokazuje **dwie niezależne metryki**. Celowo nie są zlane w jeden „indeks
-bezpieczeństwa" — mierzą co innego, pochodzą z innych źródeł i obejmują inny
-obszar. Zważenie ich w jedną liczbę wyglądałoby precyzyjnie, a byłoby wymysłem.
-
-**1. Percepcja bezpieczeństwa (0–10)** — [*Estudio de Percepción de Seguridad y
-Victimización 2025*](https://www.deia.eus/bilbao/2026/02/17/aprueba-seguridad-bilbao-10712595.html),
-Ratusz Bilbao, badanie Ikerfel: 8580 wywiadów telefonicznych, osoby 16+, III–XII 2025.
-
-| Dzielnica | 2025 | 2024 |
-|---|---|---|
-| Deusto | 5,83 | 6,02 |
-| Uribarri | 5,79 | 5,77 |
-| Otxarkoaga-Txurdinaga | 5,66 | 5,76 |
-| Errekalde | 5,56 | 5,52 |
-| Basurtu-Zorrotza | 5,50 | 5,72 |
-| Ibaiondo | 5,48 | 5,65 |
-| Begoña | 5,47 | 5,72 |
-| Abando | 5,44 | 5,72 |
-
-Całe miasto 5,58; nocą 5,24. **Percepcja nocna jest publikowana tylko zbiorczo**,
-nie per dzielnica — dlatego nie ma trybu „dzień/noc". Rozpiętość między
-dzielnicami to 0,39 pkt; skala kolorów jest stała, żeby jej nie wyolbrzymiać.
-
-**2. Przestępstwa na 1000 mieszkańców (‰), 2024** — [Udalmap, Rząd Kraju Basków](https://www.euskadi.eus/indicadores-municipales-de-sostenibilidad-indice-de-delitos-x2030-habitantes/web01-a2nekabe/es/)
-([API](https://api.euskadi.eus/udalmap/indicators/110)). Obejmuje **wszystkie 251 gmin**
-— bez progu ludnościowego, więc także te najmniejsze.
+Źródło: [Udalmap, Rząd Kraju Basków](https://www.euskadi.eus/indicadores-municipales-de-sostenibilidad-indice-de-delitos-x2030-habitantes/web01-a2nekabe/es/), rok 2024.
 
 | Gmina | 2024 | 2023 | Zmiana |
 |---|---|---|---|
@@ -119,42 +91,36 @@ dzielnicami to 0,39 pkt; skala kolorów jest stała, żeby jej nie wyolbrzymiać
 | Etxebarri | 28,7 | 29,4 | −2,4% |
 | *Bizkaia (odniesienie)* | *49,6* | *49,9* | *−0,7%* |
 
-Wartość dotyczy **całej gminy i tylko tam jest przypisana**. Dzielnice Bilbao
-**nie mają własnej stopy przestępczości** — nikt jej w tym podziale nie publikuje,
-a raport [*Bilbao Hiri Segurua*](https://www.bizkaiagaur.com/2026/02/19/el-ayuntamiento-de-bilbao-ha-presentado-el-informe-bilbao-hiri-segurua/)
-(UPV/EHU, 2026) dopiero **rekomenduje** miastu wprowadzenie kwartalnych biuletynów
-w podziale na dzielnice. Panel dzielnicy pokazuje stopę gminy jako podpisany
-kontekst, a nie jako metrykę tej dzielnicy — powtarzanie tej samej liczby na
-ośmiu dzielnicach wyglądało jak zepsute dane.
-
-Rząd wielkości potwierdzony niezależnie kwartalnymi danymi Eustat/Ertzaintza
-(Bilbao 16,3‰ za I kw. 2026 ≈ 66,6‰ rocznie).
+> **Dlaczego nie per dzielnica:** przestępczości poniżej poziomu gminy **nikt nie
+> publikuje**. Sprawdzone trzykrotnie — cały katalog Bilbao Open Data (341 zbiorów,
+> zero statystyk), katalog krajowy (granulacja kończy się na gminie) i raport
+> *Bilbao Hiri Segurua* (UPV/EHU, 2026), który miastu dopiero **rekomenduje**
+> publikowanie takich danych. Wcześniej osiem dzielnic Bilbao dostawało tę samą
+> liczbę miejską i wyglądało to jak zepsute dane.
 
 > **Uwaga interpretacyjna:** to przestępstwa *zgłoszone*, dzielone przez liczbę
-> *mieszkańców*. Gminy z dużym ruchem przyjezdnych — Zamudio ma park technologiczny,
-> Sondika lotnisko — mają wskaźnik zawyżony, bo zdarzenia generują też osoby
-> spoza gminy. Wysoka pozycja Zamudio to w dużej mierze ten efekt, a nie
-> „niebezpieczna dzielnica".
+> *mieszkańców*. Gminy z dużym ruchem przyjezdnych — Zamudio ma park
+> technologiczny, Sondika lotnisko — mają wskaźnik zawyżony.
 
-> ⚠️ **Szary kolor to brak pomiaru, nie „bezpiecznie".** Nie wypełniamy go
-> szacunkami. Dane i cytowania: [`etl/safety-data.json`](etl/safety-data.json);
-> `public/data/safety.json` jest z nich generowane (`npm run safety`).
+### Percepcja bezpieczeństwa — osobno
+
+[Badanie Ratusza Bilbao](https://www.deia.eus/bilbao/2026/02/17/aprueba-seguridad-bilbao-10712595.html)
+(Ikerfel, 8580 wywiadów, 2025) obejmuje **tylko Bilbao**, więc nie może być
+miernikiem mapy. Jest w panelu gminy Bilbao jako lista ośmiu dzielnic:
+Deusto 5,83 · Uribarri 5,79 · Otxarkoaga-Txurdinaga 5,66 · Errekalde 5,56 ·
+Basurtu-Zorrotza 5,50 · Ibaiondo 5,48 · Begoña 5,47 · Abando 5,44.
+Miasto ogółem 5,58; nocą 5,24.
 
 ### Odświeżenie danych
 
 ```bash
-npm run etl                    # wszystkie gminy z etl/cities.json
-npm run etl -- barakaldo       # tylko wybrane
-npm run etl -- --refresh       # ignoruj cache, pobierz od nowa
+npm run etl                    # granice i miejsca z OSM
+npm run etl -- --refresh       # ignoruj cache
+npm run safety                 # przebudowa safety.json z etl/safety-data.json
 ```
 
-Gminy są przypięte po **ID relacji**, nie po nazwie — samo `name="Bilbao"` dopasowuje
-trzy różne Bilbao (Hiszpania, Ekwador, Kolumbia). Nowe miasto dodajesz jednym wpisem
-w `etl/cities.json`.
-
-Surowe odpowiedzi Overpass lądują w `etl/.cache/`, więc ponowny przebieg dociąga tylko
-brakujące gminy — publiczne lustra sypią się losowo (429/502/504) i bez cache'u upadek
-na ostatniej gminie kasowałby pobranie wszystkich poprzednich.
+Gminy są przypięte po **ID relacji** OSM w `etl/cities.json` — samo `name="Bilbao"`
+dopasowuje trzy różne Bilbao (Hiszpania, Ekwador, Kolumbia).
 
 Szczegóły: [`etl/README.md`](etl/README.md) i [`docs/ARD.md`](docs/ARD.md).
 

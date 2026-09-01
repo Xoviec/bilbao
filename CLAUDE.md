@@ -34,37 +34,17 @@ npm run etl      # pobranie realnych danych z OSM (wymaga sieci → Overpass)
 ## Zasady
 - **Dane bezpieczeństwa są wrażliwe** — trzymaj się `docs/SAFETY_METHODOLOGY.md`
   (jawność, neutralny język, oznaczanie danych szacunkowych).
+- **JEDEN wskaźnik, JEDNA jednostka.** Przestępstwa na 1000 mieszkańców, per gmina
+  (9 obszarów). Decyzja i jej uzasadnienie: `docs/METRIC_DECISION.md`. Nie dodawaj
+  drugiej metryki na innym poziomie pomiaru — za każdym razem kończyło się to albo
+  szarymi plamami, albo tą samą liczbą powtórzoną na wielu kształtach.
+- **Dzielnice nie są obszarami mapy.** Nie mają własnego pomiaru przestępczości i
+  nikt go nie publikuje. Ich percepcja żyje w panelu gminy Bilbao.
 - Wszystkie dane są **realne i mają cytowane źródło**. Granice i POI: OSM
   (`npm run etl`). Bezpieczeństwo: `etl/safety-data.json` → `npm run safety`
   → `public/data/safety.json` (generowane, nie edytuj ręcznie).
-- **Nie wpisuj liczby bez źródła.** Każda wartość musi mieć wpis w `sources`;
-  pilnuje tego test „każda liczba pochodzi z zadeklarowanego źródła". Czego nikt
-  nie opublikował, zostaje `null` i rysuje się na szaro.
-- **Dwie metryki, nigdy nie łączone w jeden indeks**: `perception` (0–10,
-  ankieta, tylko 8 dzielnic Bilbao) i `crime_rate` (na 1000 mieszk., policja,
-  wszystkie gminy, Udalmap). Mierzą co innego — zważenie ich byłoby wymysłem.
-  Sprawdzone liczbowo: kompozyt daje wewnątrz Bilbao ranking identyczny z samą
-  percepcją (przestępczość jest tam stałą), a poza Bilbao redukuje się do samej
-  przestępczości. Jeden wskaźnik znaczyłby więc dwie różne rzeczy zależnie od
-  miejsca na mapie.
-- **Dzielnica NIE MA własnej stopy przestępczości** (`crime_rate: null`). Wartość
-  gminy trafia do osobnych pól `city_crime_*` i UI pokazuje ją jako podpisany
-  kontekst. Nie wracaj do dziedziczenia — ta sama liczba na ośmiu dzielnicach
-  czyta się jak zepsute dane, choćby pod spodem stało wyjaśnienie.
-- **JEDNOSTKA RYSOWANIA = JEDNOSTKA POMIARU.** Dwie warstwy:
-  `municipalities.geojson` (9 gmin) niesie choropleth przestępczości, bo tam jest
-  ona mierzona; `districts.geojson` (16 jednostek, filtrowane do `level=district`)
-  niesie granice i liczby percepcji dla 8 dzielnic Bilbao. Nie przenoś
-  przestępczości na dzielnice jako kolor — wszystkie osiem dostałoby tę samą
-  wartość i geometria udawałaby informację.
-- **Skale mają różne znaczenie i legenda MUSI je rozróżniać.** Przestępczość to
-  skala bezwzględna (20–80‰, odwrócona, bo wyżej = gorzej). Percepcja to
-  ODCHYLENIE od średniej Bilbao (`center: 5.58`), bo cała rozpiętość między
-  dzielnicami to 0,39 pkt na skali 0–10 i na skali bezwzględnej wszystkie
-  wyglądałyby tak samo. Skala odchylenia powiększa różnicę — dlatego metryka ma
-  pole `caveat`, które legenda pokazuje na pomarańczowo. Nie usuwaj go.
-- Percepcja nocna istnieje tylko zbiorczo dla Bilbao — nie rób z niej trybu
-  „noc" per obszar.
+- **Nie wpisuj liczby bez źródła.** Pilnuje tego test „każda liczba pochodzi
+  z zadeklarowanego źródła".
 - Gminy są przypięte po **ID relacji** w `etl/cities.json`. Nie wracaj do
   wyszukiwania po nazwie — `name="Bilbao"` dopasowuje też Ekwador i Kolumbię.
 - **Dwie rozdzielczości są zamierzone.** W całej Bizkaia tylko Bilbao ma w OSM

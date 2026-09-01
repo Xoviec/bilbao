@@ -4,14 +4,14 @@ import "./style.css";
 import { createMap, resolveStyle } from "./map";
 import { loadAllData } from "./data/loader";
 import { bounds, collectionBounds, padBounds } from "./data/geo";
-import { addDistrictLayers, setSafetyField } from "./layers/districts";
+import { addAreaLayers } from "./layers/districts";
 import { addPlacesLayer } from "./layers/places";
 import { renderLegend } from "./ui/legend";
 import { showDistrict, type PlaceItem } from "./ui/sidebar";
 import { renderFilters, type FilterItem } from "./ui/filters";
 import { renderControls } from "./ui/controls";
 import { openMethodology } from "./ui/methodology";
-import { CATEGORY_COLORS, CATEGORY_LABELS, VIEW, DEFAULT_METRIC, type MetricId } from "./config";
+import { CATEGORY_COLORS, CATEGORY_LABELS, VIEW } from "./config";
 
 const el = (id: string) => document.getElementById(id) as HTMLElement;
 
@@ -30,17 +30,11 @@ async function bootstrap(): Promise<void> {
     maxBounds: padBounds(dataBounds, VIEW.boundsPadding),
   });
 
-  // Obszary wybieralne: dzielnice + gminy bez podziału. Gmina Bilbao jest
-  // reprezentowana przez swoje dzielnice, więc nie dublujemy jej na liście.
-  const districtCities = new Set(data.districts.features.map((f) => f.properties?.city));
-  const areas = [
-    ...data.districts.features,
-    ...data.municipalities.features.filter((f) => !districtCities.has(f.properties?.code)),
-  ];
+  // JEDNA jednostka: gmina. Dzielnice nie są obszarami mapy — patrz
+  // docs/METRIC_DECISION.md.
+  const areas = data.municipalities.features;
 
-  const districtByCode = new Map(
-    [...areas, ...data.municipalities.features].map((f) => [f.properties?.code as string, f]),
-  );
+  const districtByCode = new Map(areas.map((f) => [f.properties?.code as string, f]));
   // Etykieta jednostki. Dzielnicę poprzedzamy nazwą gminy, bo lista miesza dwa
   // poziomy (dzielnice Bilbao + całe gminy) i samo "Abando" nie mówi, gdzie to jest.
   const labelOf = (f: GeoJSON.Feature): string => {
@@ -49,14 +43,7 @@ async function bootstrap(): Promise<void> {
     return f.properties?.level === "district" && cityName ? `${cityName} — ${name}` : name;
   };
 
-  // Nazwy i geometria także dla gmin spoza listy wyboru (Bilbao), bo w trybie
-  // przestępczości można w nie kliknąć na mapie.
-  const nameByCode = new Map(
-    [...areas, ...data.municipalities.features].map((f) => [
-      f.properties?.code as string,
-      labelOf(f),
-    ]),
-  );
+  const nameByCode = new Map(areas.map((f) => [f.properties?.code as string, labelOf(f)]));
 
   // Wspólne źródło miejsc: POI + aktywności.
   const places: GeoJSON.FeatureCollection = {
@@ -92,6 +79,14 @@ async function bootstrap(): Promise<void> {
       data.sources,
       data.reference,
       data.cityWide,
+      // Percepcja dzielnic trafia do panelu gminy, w której leżą.
+      data.districts.features
+        .filter((f) => f.properties?.city === code && f.properties?.perception != null)
+        .map((f) => ({
+          name: f.properties?.name as string,
+          value: f.properties?.perception as number,
+        }))
+        .sort((a, b) => b.value - a.value),
     );
 
   const categories = [
@@ -102,48 +97,23 @@ async function bootstrap(): Promise<void> {
   // Kontroler filtra kategorii jest dostępny dopiero po dodaniu warstwy.
   let setCategories: ((active: Set<string>) => void) | undefined;
   const addLayers = () => {
-    addDistrictLayers(map, data.municipalities, data.districts, openDistrict);
+    addAreaLayers(map, data.municipalities, openDistrict);
     setCategories = addPlacesLayer(map, places).setActiveCategories;
-    // Etykiety dzielnic na sam wierzch: klastry miejsc są nieprzezroczystymi
-    // kołami rysowanymi później i zasłaniały nazwy trzech dzielnic.
-    map.moveLayer("districts-label");
+    // Etykiety na sam wierzch: klastry miejsc są nieprzezroczystymi kołami
+    // rysowanymi później i zasłaniały nazwy gmin.
     map.moveLayer("municipalities-label");
   };
   if (map.isStyleLoaded()) addLayers();
   else map.once("load", addLayers);
 
   // --- UI renderujemy NATYCHMIAST po danych (niezależnie od gotowości mapy) ---
-  // Braki liczymy na warstwie, która NIESIE KOLOR danej metryki — inaczej licznik
-  // rozjeżdża się z tym, co widać. Przestępczość koloruje gminy (9), więc dzielnice
-  // bez własnej stopy nie są dziurą. Percepcja koloruje dzielnice, a niezbadane
-  // gminy zostają szare, więc liczymy po wszystkich 16 obszarach.
-  const coverage = (metric: MetricId) =>
-    metric === "crime_rate"
-      ? // Warstwa gmin ma już dołączoną stopę w properties. Czytanie jej z
-        // `safety` gubiłoby Bilbao, którego gmina nie jest obszarem wybieralnym
-        // (reprezentują ją dzielnice), więc nie ma wpisu w `_units`.
-        { items: data.municipalities.features, get: (f: GeoJSON.Feature) => f.properties?.crime_rate }
-      : {
-          items: areas,
-          get: (f: GeoJSON.Feature) => data.safety[f.properties?.code as string]?.perception,
-        };
-
-  const missingFor = (metric: MetricId) => {
-    const { items, get } = coverage(metric);
-    return items.filter((f) => get(f) == null).length;
-  };
-
-  // Legenda zależy od aktywnej metryki: inna jednostka, inny kierunek skali
-  // i inna liczba obszarów bez danych.
-  const drawLegend = (metric: MetricId) => {
-    renderLegend(el("legend"), categories, {
-      metric,
-      missing: missingFor(metric),
-      total: coverage(metric).items.length,
-    });
+  const missing = areas.filter((f) => f.properties?.crime_rate == null).length;
+  const drawLegend = () => {
+    renderLegend(el("legend"), categories, { missing, total: areas.length });
     el("legend").querySelector("#methodology-btn")?.addEventListener("click", openMethodology);
   };
-  drawLegend(DEFAULT_METRIC);
+  drawLegend();
+
   const active = new Set(categories);
   const items: FilterItem[] = categories.map((c) => ({
     id: c,
@@ -167,17 +137,6 @@ async function bootstrap(): Promise<void> {
     badge.textContent = "⚠ Dane demonstracyjne (placeholder)";
     badge.title = "Uruchom `npm run etl`, aby wgrać realne dane z OpenStreetMap";
     document.getElementById("app")?.appendChild(badge);
-  } else {
-    // Każda metryka jest rysowana na swoim poziomie pomiaru, więc nie ma już
-    // szarych plam. Zostaje jedna rzecz warta powiedzenia od razu: percepcję
-    // bada tylko Bilbao.
-    const badge = document.createElement("div");
-    badge.className = "demo-badge";
-    badge.textContent = "ⓘ Percepcja: tylko Bilbao · Przestępczość: wszystkie gminy";
-    badge.title =
-      "Każdy wskaźnik jest pokazany na poziomie, na którym go zmierzono. " +
-      "Szczegóły w panelu „Skąd te dane?”.";
-    document.getElementById("app")?.appendChild(badge);
   }
 
   renderControls(
@@ -186,16 +145,10 @@ async function bootstrap(): Promise<void> {
       code: f.properties?.code as string,
       name: labelOf(f),
     })),
-    {
-      onSearch: (code) => {
-        const feature = districtByCode.get(code);
-        if (feature?.geometry) map.fitBounds(bounds(feature.geometry), { padding: 60, maxZoom: 14 });
-        openDistrict(code);
-      },
-      onModeChange: (field) => {
-        setSafetyField(map, field);
-        drawLegend(field as MetricId);
-      },
+    (code) => {
+      const feature = districtByCode.get(code);
+      if (feature?.geometry) map.fitBounds(bounds(feature.geometry), { padding: 60, maxZoom: 14 });
+      openDistrict(code);
     },
   );
 }

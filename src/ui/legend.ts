@@ -1,12 +1,10 @@
-import { CATEGORY_COLORS, CATEGORY_LABELS, METRICS, type MetricId } from "../config";
+import { CATEGORY_COLORS, CATEGORY_LABELS, METRICS, DEFAULT_METRIC } from "../config";
 import { rampStops } from "../layers/safety";
 
 export interface LegendNotes {
   /** Ile obszarów nie ma danych dla AKTYWNEJ metryki (rysowane na szaro). */
   missing: number;
   total: number;
-  /** Aktywna metryka. */
-  metric: MetricId;
 }
 
 /**
@@ -21,7 +19,7 @@ export function renderLegend(
   categories: string[],
   notes: LegendNotes,
 ): void {
-  const metric = METRICS[notes.metric];
+  const metric = METRICS[DEFAULT_METRIC];
 
   // Choropleth istnieje TYLKO dla przestępczości. Percepcja ma rozpiętość
   // 0,39 pkt na skali 0–10 — gradient udawałby różnicę, której nie ma, więc
@@ -40,18 +38,12 @@ export function renderLegend(
     <div class="legend-bar" style="background: linear-gradient(90deg, ${gradient});"></div>
     <div class="legend-scale">
       <span>${loLabel}</span>
-      ${metric.center != null
-        ? `<span>śr. ${String(metric.center).replace(".", ",")}</span>`
-        : `<span>${lo}–${hi}${metric.unit}</span>`}
+      <span>${lo}–${hi}${metric.unit}</span>
       <span>${hiLabel}</span>
     </div>
-    ${metric.caveat ? `<p class="legend-note legend-caveat">⚠ ${metric.caveat}</p>` : ""}
-    ${notes.metric === "crime_rate"
-      ? `<p class="legend-note">Kolor i etykiety na poziomie <strong>gminy</strong> —
-           tam ta statystyka jest mierzona. Podział Bilbao na dzielnice jest w tym
-           widoku ukryty, bo nikt nie publikuje przestępczości w tym rozbiciu.</p>`
-      : `<p class="legend-note">Kolor na poziomie <strong>dzielnicy</strong>.
-           Badana wyłącznie w Bilbao — pozostałe gminy pozostają szare.</p>`}
+    <p class="legend-note">Jeden wskaźnik na jednej jednostce — <strong>gminie</strong>,
+       bo tylko na tym poziomie ta statystyka jest mierzona. Dziewięć obszarów,
+       dziewięć niezależnych pomiarów.</p>
   `;
 
   const catRows = categories
@@ -67,7 +59,7 @@ export function renderLegend(
     notes.missing
       ? `<div class="legend-cat legend-missing">
            <span class="dot" style="background:#cccccc"></span>
-           <span>${notes.metric === "perception" ? "Nie badano" : "Brak danych"} (${notes.missing} z ${notes.total})</span>
+           <span>Brak danych (${notes.missing} z ${notes.total})</span>
          </div>`
       : "";
 

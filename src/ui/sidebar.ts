@@ -28,34 +28,17 @@ export function showDistrict(
   sources: Record<string, SourceRef> = {},
   reference: Reference | null = null,
   cityWide: Record<string, CityWide> = {},
+  districtPerception: Array<{ name: string; value: number }> = [],
 ): void {
   const rec = safety[code];
-  // Percepcja nocna jest publikowana tylko zbiorczo dla miasta, nie per dzielnica.
-  // To jedyne miejsce, gdzie da się ją uczciwie pokazać — jako kontekst, nie
-  // jako wartość tej dzielnicy.
-  const city = cityWide[code.split("-")[0]];
+  const city = cityWide[code];
   sidebar.classList.remove("hidden");
 
   const blocks: string[] = [];
 
-  if (rec?.perception != null) {
-    // Trend percepcji: "up" = ocena wyższa niż rok wcześniej, czyli lepiej.
-    const src = rec.perception_source ? sources[rec.perception_source] : undefined;
-    blocks.push(`
-      <div class="metric">
-        <div class="metric-head">
-          <span class="metric-label">Percepcja bezpieczeństwa</span>
-          <span class="metric-value">${fmt(rec.perception)}<small>/10</small>
-            ${TREND_ICON[rec.perception_trend] ?? ""}</span>
-        </div>
-        <p class="metric-meta">Badanie ankietowe ${rec.perception_year ?? ""} ·
-          rok wcześniej ${fmt(rec.perception_prev)}${
-            city ? ` · miasto ogółem ${fmt(city.perception)}, nocą ${fmt(city.perceptionNight)}` : ""
-          }</p>
-        ${src ? `<p class="metric-src">${esc(src.publisher)}</p>` : ""}
-      </div>`);
-  }
-
+  // Percepcja NIE jest wskaźnikiem mapy — istnieje tylko dla Bilbao, więc nie może
+  // być jednolita (docs/METRIC_DECISION.md). Dane nie przepadają: pokazujemy je
+  // w panelu Bilbao jako listę ośmiu dzielnic, jawnie oddzieloną od miernika mapy.
   if (rec?.crime_rate != null) {
     const src = rec.crime_source ? sources[rec.crime_source] : undefined;
     const pct = rec.crime_change_pct;
@@ -78,21 +61,27 @@ export function showDistrict(
   // Dzielnica NIE ma własnej stopy przestępczości — nikt jej nie publikuje w tym
   // podziale. Pokazujemy wartość gminy jako kontekst, wyraźnie oddzielony od
   // metryk tego obszaru, zamiast powtarzać tę samą liczbę na ośmiu dzielnicach.
-  // BEZ LICZBY. Powtórzenie tej samej stopy gminnej na ośmiu dzielnicach było
-  // dokładnie tym, co czytało się jak zepsute dane. Kierujemy do trybu, w którym
-  // ta metryka ma swoją właściwą jednostkę i pada dokładnie raz.
-  const contextHtml =
-    rec?.city_crime_rate != null
-      ? `<p class="metric-context">Przestępczość mierzona jest dla
-           <strong>całej gminy ${esc(rec.city_name ?? "")}</strong>, nie dla dzielnic —
-           nikt nie publikuje jej w tym rozbiciu. Zobacz ją w trybie
-           <strong>Przestępczość</strong>.</p>`
-      : "";
-
   const safetyHtml = blocks.length
     ? blocks.join("")
     : `<p class="muted">Brak danych o bezpieczeństwie dla tego obszaru.
          ${esc(rec?.no_data_reason ?? "")}</p>`;
+
+  const perceptionHtml = districtPerception.length
+    ? `<div class="extra">
+         <h3 class="extra-title">Percepcja bezpieczeństwa wg dzielnic (0–10)</h3>
+         <p class="extra-note">Badanie ankietowe Ratusza Bilbao (Ikerfel, 2025).
+            Osobny wskaźnik — nie miernik mapy, bo istnieje tylko w Bilbao.${
+              city ? ` Miasto ogółem ${fmt(city.perception)}, nocą ${fmt(city.perceptionNight)}.` : ""
+            }</p>
+         <ul class="perc-list">
+           ${districtPerception
+             .map(
+               (d) => `<li><span>${esc(d.name)}</span><strong>${fmt(d.value)}</strong></li>`,
+             )
+             .join("")}
+         </ul>
+       </div>`
+    : "";
 
   const placesHtml = places.length
     ? `<h3 class="places-title">Miejsca w tym obszarze (${places.length})</h3>
@@ -117,7 +106,7 @@ export function showDistrict(
     <button class="close" aria-label="Zamknij">×</button>
     <h2 tabindex="-1">${esc(name)}</h2>
     ${safetyHtml}
-    ${contextHtml}
+    ${perceptionHtml}
     ${placesHtml}
     ${sourceHtml}
   `;

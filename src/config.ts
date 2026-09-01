@@ -49,57 +49,30 @@ export const DATA = {
 // Diverging, bezpieczna dla daltonistów.
 export const RAMP = ["#d73027", "#fc8d59", "#fee08b", "#91cf60", "#1a9850"];
 
-export type MetricId = "perception" | "crime_rate";
+export type MetricId = "crime_rate";
 
 export interface Metric {
   id: MetricId;
-  /** Pole w properties featera. */
   field: string;
   label: string;
   unit: string;
-  /**
-   * Zakres skali kolorów. USTALONY, nie rozciągany do min–max danych.
-   * Rozciągnięcie sprawiłoby, że różnica 0,39 pkt między dzielnicami Bilbao
-   * wygląda jak przepaść — a samo źródło pisze, że jest "ledwie dostrzegalna".
-   * Stały zakres pokazuje ją taką, jaka jest.
-   */
   domain: [number, number];
-  /** Czy wyższa wartość znaczy bezpieczniej. */
   higherIsBetter: boolean;
   short: string;
-  /** Punkt odniesienia skali (np. średnia miasta) — środek palety. */
-  center?: number;
-  /** Ostrzeżenie o skali, pokazywane w legendzie. */
-  caveat?: string;
-  /** Etykiety krańców skali; gdy brak, legenda pokazuje same liczby. */
   ends?: [string, string];
 }
 
+// JEDEN wskaźnik, JEDNA jednostka — patrz docs/METRIC_DECISION.md.
+// Przestępczość jest mierzona per gmina i tylko tam jest rysowana: 9 obszarów,
+// 9 niezależnych pomiarów, zero powtórzeń. Percepcja wypadła z mapy, bo istnieje
+// wyłącznie dla Bilbao i z definicji nie może być jednolita.
 export const METRICS: Record<MetricId, Metric> = {
-  perception: {
-    id: "perception",
-    field: "perception",
-    label: "Percepcja bezpieczeństwa",
-    unit: "/10",
-    // Skala ODCHYLENIA od średniej miasta (5,58), nie skala bezwzględna.
-    // Rozpiętość między dzielnicami to 0,39 pkt na skali 0–10, więc paleta
-    // rozciągnięta na 0–10 dałaby jeden kolor dla wszystkich. Zamiast rezygnować
-    // z koloru, pokazujemy odchylenie — i mówimy o tym wprost w legendzie.
-    domain: [5.33, 5.83],
-    center: 5.58,
-    higherIsBetter: true,
-    short: "Percepcja",
-    ends: ["poniżej średniej", "powyżej średniej"],
-    caveat:
-      "Skala pokazuje ODCHYLENIE od średniej Bilbao (5,58). Cała różnica między " +
-      "dzielnicami to 0,39 pkt na skali 0–10 — kolor ją powiększa, żeby była widoczna.",
-  },
   crime_rate: {
     id: "crime_rate",
     field: "crime_rate",
     label: "Przestępstwa na 1000 mieszkańców",
     unit: "‰",
-    // Zakres obejmuje wszystkie 9 gmin (28,7–74,8) ze średnią Bizkaia 49,6 pośrodku.
+    // Obejmuje wszystkie 9 gmin (28,7–74,8), średnia Bizkaia 49,6 pośrodku.
     domain: [20, 80],
     higherIsBetter: false,
     short: "Przestępczość",
@@ -107,7 +80,7 @@ export const METRICS: Record<MetricId, Metric> = {
   },
 };
 
-export const DEFAULT_METRIC: MetricId = "perception";
+export const DEFAULT_METRIC: MetricId = "crime_rate";
 
 // Kolory kategorii aktywności / POI.
 export const CATEGORY_COLORS: Record<string, string> = {

@@ -113,23 +113,8 @@ export async function loadAllData(): Promise<LoadedData> {
     fetchJSON<GeoJSON.FeatureCollection>(DATA.poi),
   ]);
 
-  const safety = { ...(safetyFile._units ?? {}) };
+  const safety = safetyFile._units ?? {};
 
-  // Gmina, którą na mapie reprezentują jej dzielnice (Bilbao), nie jest obszarem
-  // wybieralnym z listy, ale W TRYBIE PRZESTĘPCZOŚCI jest celem kliknięcia —
-  // wtedy potrzebuje własnego rekordu. Dokładamy go z warstwy gmin.
-  for (const [city, m] of Object.entries(safetyFile._municipalities ?? {})) {
-    if (safety[city]) continue;
-    safety[city] = {
-      perception: null, perception_prev: null, perception_trend: "flat",
-      perception_source: null, perception_year: null,
-      crime_rate: m.crime_rate, crime_prev: m.crime_prev, crime_trend: m.crime_trend,
-      crime_change_pct: m.crime_change_pct, crime_source: m.crime_source,
-      crime_period: m.crime_period,
-      city_name: null, city_crime_rate: null, city_crime_period: null,
-      no_data_reason: "Percepcji bezpieczeństwa nie bada się poza Bilbao.",
-    };
-  }
   const geometryPlaceholder = Boolean(
     (districts as { meta?: { placeholder?: boolean } }).meta?.placeholder,
   );

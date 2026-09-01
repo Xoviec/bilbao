@@ -15,14 +15,9 @@ const registry = JSON.parse(
   readFileSync(resolve(__dirname, "../etl/cities.json"), "utf8"),
 ).cities as Array<{ slug: string; name: string; unit: string; minUnits: number }>;
 
-// Obszary wybieralne w UI = dzielnice + gminy bez podziału. Ta sama reguła co
-// w main.ts i build-safety.mjs: districts.geojson trzyma tylko realne dzielnice,
-// żeby nie duplikować geometrii gmin.
-const districtCities = new Set(districts.features.map((f: any) => f.properties.city));
-const areas = [
-  ...districts.features,
-  ...municipalities.features.filter((f: any) => !districtCities.has(f.properties.code)),
-];
+// JEDNA jednostka mapy: gmina (docs/METRIC_DECISION.md). Dzielnice zostają
+// w danych — ich percepcja trafia do panelu gminy — ale nie są obszarami mapy.
+const areas = municipalities.features;
 const codes = new Set<string>(areas.map((f: any) => f.properties.code));
 const safetyUnits = safety._units as Record<string, any>;
 const safetyKeys = Object.keys(safetyUnits);
@@ -38,9 +33,26 @@ describe("Integralność danych (public/data)", () => {
     expect(codes.size).toBe(areas.length);
   });
 
-  it("klucze safety.json = kody obszarów (1:1)", () => {
-    for (const k of safetyKeys) expect(codes.has(k), `safety ma nieznany kod: ${k}`).toBe(true);
-    for (const c of codes) expect(safetyKeys.includes(c), `brak safety dla: ${c}`).toBe(true);
+  it("safety.json pokrywa obszary mapy i dzielnice", () => {
+    // Gminy = obszary mapy; dzielnice = dane do panelu gminy.
+    const all = new Set<string>([
+      ...municipalities.features.map((f: any) => f.properties.code),
+      ...districts.features.map((f: any) => f.properties.code),
+    ]);
+    for (const k of safetyKeys) expect(all.has(k), `safety ma nieznany kod: ${k}`).toBe(true);
+    for (const c of all) expect(safetyKeys.includes(c), `brak safety dla: ${c}`).toBe(true);
+  });
+
+  it("każdy obszar mapy ma wartość miernika", () => {
+    // Sedno: jeden wskaźnik, wszędzie obecny. Żadnej szarej plamy.
+    for (const f of areas) {
+      expect(safetyUnits[f.properties.code].crime_rate, f.properties.code).not.toBeNull();
+    }
+  });
+
+  it("obszary mapy mają RÓŻNE wartości — geometria niesie informację", () => {
+    const vals = areas.map((f: any) => safetyUnits[f.properties.code].crime_rate);
+    expect(new Set(vals).size).toBe(vals.length);
   });
 
   it("wskaźniki mieszczą się w zakresie swojej skali (lub są null)", () => {
@@ -64,23 +76,19 @@ describe("Integralność danych (public/data)", () => {
     }
   });
 
-  it("district każdego miejsca odnosi się do istniejącej dzielnicy", () => {
+  it("każde miejsce należy do istniejącej gminy", () => {
+    const cities = new Set(municipalities.features.map((f: any) => f.properties.code));
     for (const f of places) {
-      const d = f.properties.district;
-      if (d) expect(codes.has(d), `miejsce ${f.properties.name} → nieznana dzielnica ${d}`).toBe(true);
+      expect(cities.has(f.properties.city), `miejsce ${f.properties.name}`).toBe(true);
     }
   });
 
-  it("każda gmina z rejestru ma swoje jednostki", () => {
+  it("każda gmina z rejestru jest obszarem mapy", () => {
+    const codesOnMap = new Set(areas.map((f: any) => f.properties.code));
     for (const city of registry) {
-      const units = areas.filter((f: any) => f.properties.city === city.slug);
-      expect(units.length, `${city.name}: brak jednostek`).toBeGreaterThanOrEqual(city.minUnits);
-      for (const u of units) {
-        expect(u.properties.level, `${city.name}: zły poziom`).toBe(
-          city.unit === "district" ? "district" : "municipality",
-        );
-      }
+      expect(codesOnMap.has(city.slug), `${city.name}: brak na mapie`).toBe(true);
     }
+    expect(areas.length).toBe(registry.length);
   });
 
   it("kody są przestrzeniowane nazwą gminy", () => {
@@ -128,17 +136,14 @@ describe("Integralność danych (public/data)", () => {
     }
   });
 
-  it("percepcja istnieje tylko tam, gdzie ją zbadano", () => {
-    // Ratusz Bilbao bada percepcję u siebie. Poza Bilbao nikt tego nie robi,
-    // więc jedyną uczciwą wartością jest null + podany powód.
-    for (const f of areas) {
-      const rec = safetyUnits[f.properties.code];
-      if (f.properties.city === "bilbao") {
-        expect(rec.perception, `${f.properties.code}: brak percepcji`).not.toBeNull();
-      } else {
-        expect(rec.perception, `${f.properties.code} ma wymyśloną percepcję`).toBeNull();
-        expect(rec.no_data_reason, `${f.properties.code}: brak wyjaśnienia`).toBeTruthy();
-      }
+  it("percepcja istnieje tylko dla dzielnic Bilbao", () => {
+    // Nie jest miernikiem mapy — istnieje wyłącznie w Bilbao, więc z definicji
+    // nie mogłaby być jednolita. Trafia do panelu gminy jako dodatek.
+    for (const f of districts.features) {
+      expect(safetyUnits[f.properties.code].perception, f.properties.code).not.toBeNull();
+    }
+    for (const f of municipalities.features) {
+      expect(safetyUnits[f.properties.code].perception, f.properties.code).toBeNull();
     }
   });
 
@@ -173,12 +178,12 @@ describe("Integralność danych (public/data)", () => {
     }
   });
 
-  it("gmina ma własną stopę i nie ma pola kontekstowego", () => {
-    for (const f of areas) {
-      const rec = safetyUnits[f.properties.code];
-      if (f.properties.level === "district") continue;
-      expect(rec.crime_rate, `${f.properties.code}`).not.toBeNull();
-      expect(rec.city_crime_rate, `${f.properties.code}: zbędny kontekst`).toBeNull();
+  it("gmina ma własną stopę, dzielnica nie", () => {
+    for (const f of municipalities.features) {
+      expect(safetyUnits[f.properties.code].crime_rate, f.properties.code).not.toBeNull();
+    }
+    for (const f of districts.features) {
+      expect(safetyUnits[f.properties.code].crime_rate, f.properties.code).toBeNull();
     }
   });
 

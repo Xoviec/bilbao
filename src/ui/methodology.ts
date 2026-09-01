@@ -1,49 +1,48 @@
+const DECISION_DOC =
+  "https://github.com/Xoviec/bilbao/blob/main/docs/METRIC_DECISION.md";
+
 const REPO_DOC =
   "https://github.com/Xoviec/bilbao/blob/main/docs/SAFETY_METHODOLOGY.md";
 
 const CONTENT = `
   <h2>Skąd te dane?</h2>
-  <p>Mapa pokazuje <strong>dwie niezależne metryki</strong>. Celowo nie są zlane
-     w jeden „indeks bezpieczeństwa" — mierzą co innego, pochodzą z innych źródeł
-     i obejmują inny obszar. Zważenie ich w jedną liczbę wyglądałoby precyzyjnie,
-     a byłoby wymysłem.</p>
+  <p>Mapa pokazuje <strong>jeden wskaźnik na jednej jednostce</strong>:
+     przestępstwa na 1000 mieszkańców, per gmina. Dziewięć obszarów, dziewięć
+     niezależnych pomiarów.</p>
 
-  <h3>1. Percepcja bezpieczeństwa (0–10)</h3>
-  <p><em>Estudio de Percepción de Seguridad y Victimización 2025</em>, Ratusz Bilbao,
-     badanie wykonane przez Ikerfel: <strong>8580 wywiadów telefonicznych</strong>
-     z osobami 16+, praca terenowa marzec–grudzień 2025.</p>
-  <ul>
-    <li>Dostępne dla <strong>8 dzielnic Bilbao</strong>. Pozostałe gminy nie prowadzą takiego badania.</li>
-    <li>Całe miasto: <strong>5,58</strong>; nocą <strong>5,24</strong>
-        (percepcja nocna publikowana jest tylko zbiorczo, nie per dzielnica —
-        dlatego nie ma trybu „noc").</li>
-    <li>Rozpiętość między dzielnicami to <strong>0,39 pkt</strong> (5,44–5,83).
-        Skala kolorów jest stała, żeby tej różnicy nie wyolbrzymiać.</li>
-    <li>To <strong>odczucie mieszkańców</strong>, nie pomiar przestępczości.</li>
-  </ul>
-
-  <h3>2. Przestępstwa na 1000 mieszkańców (‰)</h3>
+  <h3>Miernik mapy</h3>
   <p><em>Udalmap — Indicadores municipales de sostenibilidad: Índice de delitos</em>,
      Rząd Kraju Basków. Dane <strong>roczne za 2024</strong> (porównanie: 2023).</p>
   <ul>
     <li>Obejmuje <strong>wszystkie 251 gmin</strong> Kraju Basków — bez progu
-        ludnościowego, więc także te najmniejsze jak Sondika czy Alonsotegi.</li>
+        ludnościowego, więc także najmniejsze jak Sondika czy Alonsotegi.</li>
     <li>Odniesienie: cała prowincja <strong>Bizkaia 49,6‰</strong>.</li>
-    <li>Wartość dotyczy <strong>całej gminy</strong>. Dzielnice Bilbao dziedziczą
-        liczbę miejską, bo rozbicia na dzielnice nikt nie publikuje — panel
-        obszaru zaznacza to ostrzeżeniem.</li>
-    <li>To przestępstwa <strong>zgłoszone</strong>. Wyższa zgłaszalność potrafi
-        podnieść wskaźnik bez wzrostu realnej przestępczości. Gminy z dużym ruchem
-        przyjezdnych (praca, zakupy, lotnisko) mają wskaźnik zawyżony, bo dzieli się
-        zdarzenia przez samych mieszkańców.</li>
-    <li>Rząd wielkości potwierdzony niezależnie danymi kwartalnymi Eustat/Ertzaintza
-        (Bilbao 16,3‰ za I kw. 2026 ≈ 66,6‰ rocznie).</li>
+    <li>To przestępstwa <strong>zgłoszone</strong>, dzielone przez liczbę
+        <strong>mieszkańców</strong>. Gminy z dużym ruchem przyjezdnych — Zamudio
+        ma park technologiczny, Sondika lotnisko — mają wskaźnik zawyżony, bo
+        zdarzenia generują też osoby spoza gminy.</li>
+    <li>Rząd wielkości potwierdzony niezależnie kwartalnymi danymi
+        Eustat/Ertzaintza (Bilbao 16,3‰ za I kw. 2026 ≈ 66,6‰ rocznie).</li>
   </ul>
 
-  <p class="warn">⚠️ Szary kolor to <strong>brak pomiaru</strong>, nie „bezpiecznie".
-     Nie wypełniamy go szacunkami.</p>
+  <h3>Dlaczego nie ma podziału na dzielnice</h3>
+  <p><strong>Nikt nie publikuje przestępczości poniżej poziomu gminy.</strong>
+     Sprawdzone trzykrotnie: cały katalog Bilbao Open Data (341 zbiorów, zero
+     statystyk), katalog krajowy (granulacja kończy się na gminie) oraz raport
+     <em>Bilbao Hiri Segurua</em> (UPV/EHU, 2026), który miastu dopiero
+     <strong>rekomenduje</strong> publikowanie takich danych.</p>
+  <p>Dlatego mapa jest grubsza, ale spójna: każdy kolor znaczy wszędzie to samo.
+     Wcześniej osiem dzielnic Bilbao dostawało tę samą liczbę miejską i wyglądało
+     to jak zepsute dane.</p>
 
-  <p>Zasady etyczne (neutralny język, unikanie stygmatyzacji) i pełny opis:
+  <h3>Percepcja bezpieczeństwa — osobno</h3>
+  <p>Ratusz Bilbao bada ją ankietowo (Ikerfel, 8580 wywiadów, 2025) i tylko
+     w Bilbao, więc <strong>nie może być miernikiem mapy</strong>. Znajdziesz ją
+     w panelu gminy Bilbao jako listę ośmiu dzielnic.</p>
+
+  <p>Pełne uzasadnienie wyboru miernika:
+     <a href="${DECISION_DOC}" target="_blank" rel="noopener">METRIC_DECISION.md ↗</a> ·
+     zasady etyczne:
      <a href="${REPO_DOC}" target="_blank" rel="noopener">SAFETY_METHODOLOGY.md ↗</a></p>
 `;
 

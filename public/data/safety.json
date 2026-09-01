@@ -267,6 +267,23 @@
       "city_crime_period": "2024",
       "no_data_reason": null
     },
+    "bilbao": {
+      "perception": null,
+      "perception_prev": null,
+      "perception_trend": "flat",
+      "perception_source": null,
+      "perception_year": null,
+      "crime_rate": 66.58,
+      "crime_prev": 65.58,
+      "crime_trend": "up",
+      "crime_change_pct": 1.5,
+      "crime_source": "udalmap2024",
+      "crime_period": "2024",
+      "city_name": null,
+      "city_crime_rate": null,
+      "city_crime_period": null,
+      "no_data_reason": "Percepcji bezpieczeństwa nie bada się poza Bilbao."
+    },
     "barakaldo": {
       "perception": null,
       "perception_prev": null,

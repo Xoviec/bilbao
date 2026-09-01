@@ -1,19 +1,12 @@
 import maplibregl from "maplibre-gl";
-import { safetyFillColor, type SafetyField } from "./safety";
+import { safetyFillColor } from "./safety";
 import { LABEL_FONT, METRICS } from "../config";
 
 const MUNI = "municipalities";
-const SRC = "districts";
 // Warstwy miejsc mają własne handlery kliknięcia (popup, rozwijanie klastra).
 // Nasz handler jest globalny, więc musi im ustąpić — inaczej jeden klik w pinezkę
 // otwiera JEDNOCZEŚNIE popup miejsca i panel obszaru.
 const PLACE_LAYERS = ["places-points", "places-clusters"];
-
-// Aktywna metryka. Interakcja MUSI ją znać: w trybie przestępczości jednostką
-// jest gmina, więc dzielnice nie mogą być celem najazdu ani kliknięcia —
-// inaczej najeżdżasz na jednolite Bilbao, a dostajesz nazwę dzielnicy sklejoną
-// z liczbą gminną, osiem razy tę samą.
-let activeField: SafetyField = "perception";
 
 /** Szerokość obrysu zależna od stanu: zaznaczenie > najechanie > spoczynek. */
 const outlineWidth = (base: number): maplibregl.ExpressionSpecification =>
@@ -26,123 +19,27 @@ const outlineWidth = (base: number): maplibregl.ExpressionSpecification =>
     base,
   ] as maplibregl.ExpressionSpecification;
 
-/** Etykieta z nazwą i wartością metryki (polski separator dziesiętny). */
-const valueLabel = (field: string, suffix: string): maplibregl.ExpressionSpecification =>
-  [
-    "concat",
-    ["get", "name"],
-    "\n",
-    ["number-format", ["get", field], { locale: "pl-PL", "min-fraction-digits": 1, "max-fraction-digits": 1 }],
-    suffix,
-  ] as maplibregl.ExpressionSpecification;
-
-/** Etykieta dzielnicy: sama nazwa albo nazwa + zmierzona percepcja. */
-const districtLabel = (withValue: boolean): maplibregl.ExpressionSpecification =>
-  (withValue
-    ? [
-        "concat",
-        ["get", "name"],
-        "\n",
-        // number-format daje polski separator dziesiętny; zwykłe to-string
-        // wypisywało "5.44" obok "5,44" w panelu.
-        [
-          "number-format",
-          ["get", "perception"],
-          { locale: "pl-PL", "min-fraction-digits": 2, "max-fraction-digits": 2 },
-        ],
-        "/10",
-      ]
-    : ["get", "name"]) as maplibregl.ExpressionSpecification;
-
 /**
- * Przełącza metrykę. Każda jest rysowana na swoim poziomie pomiaru:
- *   - przestępczość → gminy (tam jest mierzona), dzielnice przezroczyste,
- *   - percepcja     → dzielnice Bilbao, gminy neutralnie szare (nie badano).
+ * Warstwy obszarów.
  *
- * Skala percepcji pokazuje ODCHYLENIE od średniej miasta, bo cała rozpiętość
- * między dzielnicami to 0,39 pkt na skali 0–10 — na skali bezwzględnej wszystkie
- * miałyby ten sam kolor. Legenda musi o tym mówić wprost (patrz `caveat`).
+ * JEDNA jednostka — gmina — bo tylko na tym poziomie mierzona jest przestępczość
+ * (patrz docs/METRIC_DECISION.md). Dzielnice Bilbao nie są tu rysowane: nie mają
+ * własnego pomiaru, a osiem kształtów z jedną wartością czytało się jak zepsute
+ * dane. Ich dane o percepcji żyją w panelu gminy Bilbao.
  */
-export function setSafetyField(map: maplibregl.Map, field: SafetyField): void {
-  activeField = field;
-  if (!map.getLayer("municipalities-fill")) return; // warstwy jeszcze nie dodane
-  const crime = field === "crime_rate";
-
-  map.setPaintProperty(
-    "municipalities-fill",
-    "fill-color",
-    crime
-      ? (safetyFillColor("crime_rate") as maplibregl.ExpressionSpecification)
-      : "#e8eaed",
-  );
-  map.setPaintProperty("municipalities-fill", "fill-opacity", crime ? 0.48 : 0.22);
-
-  // W trybie percepcji dzielnice DOSTAJĄ kolor (odchylenie od średniej miasta).
-  // W trybie przestępczości muszą być przezroczyste, żeby było widać kolor gminy.
-  map.setPaintProperty(
-    "districts-fill",
-    "fill-color",
-    crime ? "#000000" : (safetyFillColor("perception") as maplibregl.ExpressionSpecification),
-  );
-  map.setPaintProperty("districts-fill", "fill-opacity", [
-    "case",
-    ["boolean", ["feature-state", "hover"], false],
-    crime ? 0.06 : 0.62,
-    crime ? 0 : 0.48,
-  ] as maplibregl.ExpressionSpecification);
-
-  map.setLayoutProperty("districts-label", "text-field", districtLabel(!crime));
-
-  // W trybie przestępczości granice i nazwy dzielnic ZNIKAJĄ. Rysowanie ich nad
-  // jednolicie pokolorowanym Bilbao obiecywało zróżnicowanie, którego w danych
-  // nie ma — mapa wyglądała na zepsutą. Widok przestępczości to 9 gmin i tyle;
-  // dzielnice zostają tylko jako niewidoczna warstwa trafień (klik nadal działa).
-  const show = (id: string, on: boolean) =>
-    map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
-  show("districts-outline", !crime);
-  show("districts-label", !crime);
-  show("municipalities-label", crime);
-}
-
-/**
- * Dodaje warstwy gmin (choropleth) i dzielnic (granice, etykiety, interakcje).
- * `onSelect(code)` dostaje kod klikniętego obszaru.
- */
-export function addDistrictLayers(
+export function addAreaLayers(
   map: maplibregl.Map,
   municipalities: GeoJSON.FeatureCollection,
-  districts: GeoJSON.FeatureCollection,
   onSelect: (code: string) => void,
 ): void {
   map.addSource(MUNI, { type: "geojson", data: municipalities, promoteId: "code" });
-  map.addSource(SRC, { type: "geojson", data: districts, promoteId: "code" });
 
   map.addLayer({
     id: "municipalities-fill",
     type: "fill",
     source: MUNI,
-    paint: { "fill-color": "#e8eaed", "fill-opacity": 0.22 },
-  });
-
-  map.addLayer({
-    id: "municipalities-outline",
-    type: "line",
-    source: MUNI,
-    paint: { "line-color": "#ffffff", "line-width": outlineWidth(1.6) },
-  });
-
-  const ONLY_DISTRICTS: maplibregl.FilterSpecification = ["==", ["get", "level"], "district"];
-
-  map.addLayer({
-    id: "districts-fill",
-    type: "fill",
-    filter: ONLY_DISTRICTS,
-    // W trybie percepcji niesie kolor (odchylenie od średniej miasta); w trybie
-    // przestępczości staje się przezroczystą warstwą trafień, bo dzielnica nie ma
-    // własnej stopy przestępczości.
-    source: SRC,
     paint: {
-      "fill-color": safetyFillColor("perception") as maplibregl.ExpressionSpecification,
+      "fill-color": safetyFillColor() as maplibregl.ExpressionSpecification,
       "fill-opacity": [
         "case",
         ["boolean", ["feature-state", "hover"], false],
@@ -153,56 +50,33 @@ export function addDistrictLayers(
   });
 
   map.addLayer({
-    id: "districts-outline",
+    id: "municipalities-outline",
     type: "line",
-    source: SRC,
-    filter: ONLY_DISTRICTS,
-    paint: {
-      "line-color": "#ffffff",
-      "line-width": outlineWidth(1.4),
-      "line-dasharray": [1, 0],
-    },
+    source: MUNI,
+    paint: { "line-color": "#ffffff", "line-width": outlineWidth(1.6) },
   });
 
-  // JEDNA warstwa etykiet: nazwa, a w trybie percepcji nazwa + wartość.
-  map.addLayer({
-    id: "districts-label",
-    type: "symbol",
-    source: SRC,
-    filter: ONLY_DISTRICTS,
-    layout: {
-      "text-field": districtLabel(true),
-      "text-size": 12,
-      "text-font": LABEL_FONT,
-      "text-line-height": 1.3,
-      // Etykieta dzielnicy jest ważniejsza niż podpisy podkładu i nie może
-      // znikać pod klastrami miejsc — inaczej widać same liczby bez nazw.
-      "text-allow-overlap": false,
-      "text-ignore-placement": false,
-      "text-padding": 4,
-      "symbol-sort-key": 0,
-    },
-    paint: {
-      "text-color": "#14324f",
-      "text-halo-color": "#ffffff",
-      "text-halo-width": 2.2,
-    },
-  });
-
-  // Nazwa gminy + jej stopa przestępczości. Widoczna tylko w trybie przestępczości,
-  // gdzie gmina JEST jednostką — wtedy widać dziewięć różnych wartości zamiast
-  // jednej rozmazanej po dzielnicach.
   map.addLayer({
     id: "municipalities-label",
     type: "symbol",
     source: MUNI,
     layout: {
-      "text-field": valueLabel("crime_rate", "‰"),
+      "text-field": [
+        "concat",
+        ["get", "name"],
+        "\n",
+        // Polski separator dziesiętny, zgodny z panelem i tooltipem.
+        [
+          "number-format",
+          ["get", "crime_rate"],
+          { locale: "pl-PL", "min-fraction-digits": 1, "max-fraction-digits": 1 },
+        ],
+        METRICS.crime_rate.unit,
+      ],
       "text-size": 13,
       "text-font": LABEL_FONT,
       "text-line-height": 1.3,
       "text-padding": 6,
-      visibility: "none",
     },
     paint: {
       "text-color": "#1b1b1b",
@@ -216,12 +90,7 @@ export function addDistrictLayers(
 
 function wireInteractions(map: maplibregl.Map, onSelect: (code: string) => void): void {
   let hovered: string | number | undefined;
-  let hoveredSrc = SRC;
   let selected: string | number | undefined;
-  // Źródło ZAZNACZONEGO obiektu trzeba pamiętać osobno od najechanego. Czyszczenie
-  // starego zaznaczenia w źródle akurat najechanego obiektu gubiło je przy
-  // przejściu dzielnica → gmina i dwa obszary zostawały podświetlone.
-  let selectedSrc = SRC;
 
   const tooltip = new maplibregl.Popup({
     closeButton: false,
@@ -230,20 +99,14 @@ function wireInteractions(map: maplibregl.Map, onSelect: (code: string) => void)
     className: "district-tooltip",
   });
 
-  const setState = (
-    id: string | number | undefined,
-    source: string,
-    state: Record<string, boolean>,
-  ) => {
+  const setState = (id: string | number | undefined, state: Record<string, boolean>) => {
     if (id === undefined) return;
-    map.setFeatureState({ source, id }, state);
+    map.setFeatureState({ source: MUNI, id }, state);
   };
 
-  // Te same zaokrąglenia co w panelu i na etykietach mapy — inaczej ta sama
-  // wartość pokazuje się raz jako 66,58, raz jako 66,6.
-  const fmt = (v: unknown, suffix: string, digits: number) =>
+  const fmt = (v: unknown) =>
     typeof v === "number"
-      ? `${v.toFixed(digits).replace(".", ",")}${suffix}`
+      ? `${v.toFixed(1).replace(".", ",")}${METRICS.crime_rate.unit}`
       : "brak danych";
 
   /** Czy pod kursorem jest miejsce — wtedy klik należy do warstwy miejsc. */
@@ -253,63 +116,45 @@ function wireInteractions(map: maplibregl.Map, onSelect: (code: string) => void)
     return map.queryRenderedFeatures(e.point, { layers }).length > 0;
   };
 
-  // Cel interakcji = jednostka aktywnej metryki.
-  //  - przestępczość → gmina (dzielnica nie ma własnej wartości),
-  //  - percepcja     → dzielnica, a poza Bilbao gmina.
-  const topFeature = (e: maplibregl.MapMouseEvent) => {
-    const wanted =
-      activeField === "crime_rate"
-        ? ["municipalities-fill"]
-        : ["districts-fill", "municipalities-fill"];
-    const layers = wanted.filter((l) => map.getLayer(l));
-    return map.queryRenderedFeatures(e.point, { layers })[0];
-  };
+  const areaAt = (e: maplibregl.MapMouseEvent) =>
+    map.getLayer("municipalities-fill")
+      ? map.queryRenderedFeatures(e.point, { layers: ["municipalities-fill"] })[0]
+      : undefined;
 
   map.on("mousemove", (e) => {
-    const feature = topFeature(e);
+    const feature = areaAt(e);
     if (!feature) {
       map.getCanvas().style.cursor = "";
       tooltip.remove();
-      setState(hovered, hoveredSrc, { hover: false });
+      setState(hovered, { hover: false });
       hovered = undefined;
       return;
     }
     map.getCanvas().style.cursor = "pointer";
     const p = feature.properties ?? {};
-    const src = feature.layer.id === "districts-fill" ? SRC : MUNI;
-
-    // Tooltip pokazuje metrykę TEJ warstwy, nie obie. Dzielnica nie ma stopy
-    // przestępczości, więc jej nie wypisujemy — powtarzanie liczby gminnej na
-    // ośmiu dzielnicach było właśnie tym, co wyglądało na zepsute dane.
-    const line =
-      src === MUNI
-        ? `${METRICS.crime_rate.short}: ${fmt(p.crime_rate, "‰", 1)}`
-        : `${METRICS.perception.short}: ${fmt(p.perception, "/10", 2)}`;
 
     tooltip
       .setLngLat(e.lngLat)
-      .setHTML(`<strong>${p.name ?? "—"}</strong><br/>${line}`)
+      .setHTML(
+        `<strong>${p.name ?? "—"}</strong><br/>` +
+          `${METRICS.crime_rate.short}: ${fmt(p.crime_rate)}`,
+      )
       .addTo(map);
 
-    if (feature.id === hovered && src === hoveredSrc) return;
-    setState(hovered, hoveredSrc, { hover: false });
+    if (feature.id === hovered) return;
+    setState(hovered, { hover: false });
     hovered = feature.id;
-    hoveredSrc = src;
-    setState(hovered, hoveredSrc, { hover: true });
+    setState(hovered, { hover: true });
   });
 
   map.on("click", (e) => {
-    // Klik w pinezkę lub klaster obsługuje warstwa miejsc — nie przestawiamy
-    // wtedy panelu obszaru.
     if (overPlace(e)) return;
-    const feature = topFeature(e);
+    const feature = areaAt(e);
     const code = feature?.properties?.code as string | undefined;
     if (!code) return;
-    const src = feature.layer.id === "districts-fill" ? SRC : MUNI;
-    setState(selected, selectedSrc, { selected: false });
-    selected = feature.id;
-    selectedSrc = src;
-    setState(selected, selectedSrc, { selected: true });
+    setState(selected, { selected: false });
+    selected = feature!.id;
+    setState(selected, { selected: true });
     onSelect(code);
   });
 }

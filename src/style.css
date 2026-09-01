@@ -128,6 +128,15 @@ body { color: var(--text); background: var(--bg); }
 }
 .metric-context strong { color: var(--text); }
 
+.extra { margin-top: 16px; padding-top: 12px; border-top: 1px solid #eee; }
+.extra-title { font-size: 0.9rem; margin: 0 0 4px; }
+.extra-note { margin: 0 0 8px; font-size: 0.72rem; color: var(--muted); line-height: 1.4; }
+.perc-list { list-style: none; padding: 0; margin: 0; }
+.perc-list li {
+  display: flex; justify-content: space-between; gap: 10px;
+  padding: 4px 0; border-bottom: 1px solid #eee; font-size: 0.82rem;
+}
+
 .summary { line-height: 1.5; }
 
 .places-title { font-size: 0.9rem; margin: 16px 0 8px; }
@@ -198,7 +207,7 @@ body { color: var(--text); background: var(--bg); }
     --bg: #14161a; --panel: rgba(24, 27, 32, 0.96);
     --text: #e7e9ee; --muted: #9aa3b2;
   }
-  .metrics li, .places-list li, .metric { border-bottom-color: #2a2e36; }
+  .metrics li, .places-list li, .metric, .perc-list li, .extra { border-bottom-color: #2a2e36; }
   .metric-warn, .legend-caveat { color: #e0a266; }
   #district-search, .ctrl-modes, .mode-btn { border-color: #2a2e36; }
 }

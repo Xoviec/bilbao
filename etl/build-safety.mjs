@@ -63,14 +63,10 @@ const main = async () => {
 
   const stats = { perception: 0, crime: 0, empty: 0 };
 
-  // Obszary wybieralne w UI: dzielnice + te gminy, które nie mają podziału.
-  // districts.geojson trzyma już tylko realne dzielnice, więc gminy bez podziału
-  // dokładamy z warstwy gmin — inaczej wypadłyby z safety.json.
-  const districtCities = new Set(districts.features.map((f) => f.properties.city));
-  const areas = [
-    ...districts.features,
-    ...municipalities.features.filter((f) => !districtCities.has(f.properties.code)),
-  ];
+  // WSZYSTKIE gminy (obszary mapy) + WSZYSTKIE dzielnice (dane do panelu gminy).
+  // Gmina Bilbao musi tu być, bo jest obszarem mapy; jej dzielnice też, bo panel
+  // Bilbao pokazuje ich percepcję.
+  const areas = [...districts.features, ...municipalities.features];
 
   for (const f of areas) {
     const { code, city, level } = f.properties;

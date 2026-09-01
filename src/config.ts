@@ -39,6 +39,7 @@ export const FALLBACK_STYLE = {
 export const DATA = {
   districts: "data/districts.geojson",
   municipalities: "data/municipalities.geojson",
+  ineDistricts: "data/ine-districts.geojson",
   safety: "data/safety.json",
   activities: "data/activities.geojson",
   poi: "data/poi.geojson",
@@ -49,7 +50,7 @@ export const DATA = {
 // Diverging, bezpieczna dla daltonistów.
 export const RAMP = ["#d73027", "#fc8d59", "#fee08b", "#91cf60", "#1a9850"];
 
-export type MetricId = "crime_rate";
+export type MetricId = "income";
 
 export interface Metric {
   id: MetricId;
@@ -62,25 +63,25 @@ export interface Metric {
   ends?: [string, string];
 }
 
-// JEDEN wskaźnik, JEDNA jednostka — patrz docs/METRIC_DECISION.md.
-// Przestępczość jest mierzona per gmina i tylko tam jest rysowana: 9 obszarów,
-// 9 niezależnych pomiarów, zero powtórzeń. Percepcja wypadła z mapy, bo istnieje
-// wyłącznie dla Bilbao i z definicji nie może być jednolita.
+// JEDEN wskaźnik, JEDNA jednostka — dystrykt INE (patrz docs/METRIC_DECISION.md).
+// To jedyna jednostka, w której Bilbao i wszyscy sąsiedzi mają ten sam podział
+// i ten sam pomiar: 31 obszarów, 31 różnych wartości, zero powtórzeń i zero
+// szarych plam.
 export const METRICS: Record<MetricId, Metric> = {
-  crime_rate: {
-    id: "crime_rate",
-    field: "crime_rate",
-    label: "Przestępstwa na 1000 mieszkańców",
-    unit: "‰",
-    // Obejmuje wszystkie 9 gmin (28,7–74,8), średnia Bizkaia 49,6 pośrodku.
-    domain: [20, 80],
-    higherIsBetter: false,
-    short: "Przestępczość",
-    ends: ["mniej", "więcej"],
+  income: {
+    id: "income",
+    field: "income",
+    label: "Dochód netto na osobę",
+    unit: " €",
+    // Obejmuje wszystkie 31 dystryktów (15 034 – 30 762 €).
+    domain: [15000, 31000],
+    higherIsBetter: true,
+    short: "Dochód",
+    ends: ["niższy", "wyższy"],
   },
 };
 
-export const DEFAULT_METRIC: MetricId = "crime_rate";
+export const DEFAULT_METRIC: MetricId = "income";
 
 // Kolory kategorii aktywności / POI.
 export const CATEGORY_COLORS: Record<string, string> = {

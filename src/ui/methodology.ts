@@ -6,41 +6,44 @@ const REPO_DOC =
 
 const CONTENT = `
   <h2>Skąd te dane?</h2>
-  <p>Mapa pokazuje <strong>jeden wskaźnik na jednej jednostce</strong>:
-     przestępstwa na 1000 mieszkańców, per gmina. Dziewięć obszarów, dziewięć
-     niezależnych pomiarów.</p>
+  <p>Mapa pokazuje <strong>jeden wskaźnik na jednej jednostce</strong>: dochód
+     netto na osobę, per <strong>dystrykt INE</strong>. Bilbao dzieli się na
+     8 dzielnic, sąsiednie gminy na swoje dystrykty — razem 31 obszarów,
+     31 niezależnych pomiarów.</p>
+
+  <p class="warn">⚠️ To wskaźnik <strong>dochodowy, nie pomiar przestępczości</strong>.
+     Wybrany dlatego, że jest jedyną statystyką publikowaną w tej samej jednostce
+     dla Bilbao i wszystkich sąsiadów. Dane o bezpieczeństwie znajdziesz w panelu
+     każdego obszaru.</p>
 
   <h3>Miernik mapy</h3>
-  <p><em>Udalmap — Indicadores municipales de sostenibilidad: Índice de delitos</em>,
-     Rząd Kraju Basków. Dane <strong>roczne za 2024</strong> (porównanie: 2023).</p>
+  <p><em>Atlas de Distribución de Renta de los Hogares</em> (INE), rok 2023.
+     Źródło: deklaracje podatkowe IRPF (AEAT i skarby baskijski/nawarski).</p>
   <ul>
-    <li>Obejmuje <strong>wszystkie 251 gmin</strong> Kraju Basków — bez progu
-        ludnościowego, więc także najmniejsze jak Sondika czy Alonsotegi.</li>
-    <li>Odniesienie: cała prowincja <strong>Bizkaia 49,6‰</strong>.</li>
-    <li>To przestępstwa <strong>zgłoszone</strong>, dzielone przez liczbę
-        <strong>mieszkańców</strong>. Gminy z dużym ruchem przyjezdnych — Zamudio
-        ma park technologiczny, Sondika lotnisko — mają wskaźnik zawyżony, bo
-        zdarzenia generują też osoby spoza gminy.</li>
-    <li>Rząd wielkości potwierdzony niezależnie kwartalnymi danymi
-        Eustat/Ertzaintza (Bilbao 16,3‰ za I kw. 2026 ≈ 66,6‰ rocznie).</li>
+    <li>Publikowany dla <strong>każdej gminy, dystryktu i sekcji censalnej</strong>
+        w Hiszpanii — stąd wspólna jednostka dla całej aglomeracji.</li>
+    <li>Zakres na mapie: <strong>15 034 – 30 762 €</strong>. Wewnątrz Bilbao od
+        Otxarkoaga-Txurdinaga (15 771 €) po Abando (30 762 €).</li>
   </ul>
 
-  <h3>Dlaczego nie ma podziału na dzielnice</h3>
-  <p><strong>Nikt nie publikuje przestępczości poniżej poziomu gminy.</strong>
-     Sprawdzone trzykrotnie: cały katalog Bilbao Open Data (341 zbiorów, zero
-     statystyk), katalog krajowy (granulacja kończy się na gminie) oraz raport
+  <h3>Bezpieczeństwo — w panelu obszaru</h3>
+  <ul>
+    <li><strong>Przestępstwa na 1000 mieszkańców</strong> (Udalmap, 2024) —
+        mierzone <em>per gmina</em>, więc podpisane nazwą gminy, nie dystryktu.
+        Odniesienie: Bizkaia 49,6‰.</li>
+    <li><strong>Percepcja bezpieczeństwa</strong> (ankieta Ratusza Bilbao,
+        Ikerfel 2025, 8580 wywiadów) — tylko dla ośmiu dzielnic Bilbao.</li>
+  </ul>
+
+  <h3>Dlaczego przestępczość nie jest miernikiem mapy</h3>
+  <p><strong>Nikt nie publikuje jej poniżej poziomu gminy.</strong> Sprawdzone
+     trzykrotnie: cały katalog Bilbao Open Data (341 zbiorów, zero statystyk),
+     katalog krajowy (granulacja kończy się na gminie) oraz raport
      <em>Bilbao Hiri Segurua</em> (UPV/EHU, 2026), który miastu dopiero
-     <strong>rekomenduje</strong> publikowanie takich danych.</p>
-  <p>Dlatego mapa jest grubsza, ale spójna: każdy kolor znaczy wszędzie to samo.
-     Wcześniej osiem dzielnic Bilbao dostawało tę samą liczbę miejską i wyglądało
-     to jak zepsute dane.</p>
+     <strong>rekomenduje</strong> publikowanie takich danych. Użycie jej jako
+     miernika mapy oznaczałoby jedną liczbę powtórzoną na ośmiu dzielnicach.</p>
 
-  <h3>Percepcja bezpieczeństwa — osobno</h3>
-  <p>Ratusz Bilbao bada ją ankietowo (Ikerfel, 8580 wywiadów, 2025) i tylko
-     w Bilbao, więc <strong>nie może być miernikiem mapy</strong>. Znajdziesz ją
-     w panelu gminy Bilbao jako listę ośmiu dzielnic.</p>
-
-  <p>Pełne uzasadnienie wyboru miernika:
+  <p>Pełne uzasadnienie wyboru:
      <a href="${DECISION_DOC}" target="_blank" rel="noopener">METRIC_DECISION.md ↗</a> ·
      zasady etyczne:
      <a href="${REPO_DOC}" target="_blank" rel="noopener">SAFETY_METHODOLOGY.md ↗</a></p>

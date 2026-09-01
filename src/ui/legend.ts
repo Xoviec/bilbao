@@ -41,9 +41,13 @@ export function renderLegend(
       <span>${lo}–${hi}${metric.unit}</span>
       <span>${hiLabel}</span>
     </div>
-    <p class="legend-note">Jeden wskaźnik na jednej jednostce — <strong>gminie</strong>,
-       bo tylko na tym poziomie ta statystyka jest mierzona. Dziewięć obszarów,
-       dziewięć niezależnych pomiarów.</p>
+    <p class="legend-note">Jeden wskaźnik na jednej jednostce — <strong>dystrykcie
+       INE</strong>. Bilbao dzieli się na 8 dzielnic, sąsiednie gminy na swoje
+       dystrykty; razem 31 obszarów, 31 niezależnych pomiarów.</p>
+    <p class="legend-note legend-caveat">⚠ To wskaźnik <strong>dochodowy</strong>,
+       nie pomiar przestępczości. Jest jedyną statystyką publikowaną w tej samej
+       jednostce dla Bilbao i wszystkich sąsiadów. Przestępczość (mierzona per
+       gmina) i percepcja są w panelu obszaru.</p>
   `;
 
   const catRows = categories

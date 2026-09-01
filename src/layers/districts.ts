@@ -2,7 +2,7 @@ import maplibregl from "maplibre-gl";
 import { safetyFillColor } from "./safety";
 import { LABEL_FONT, METRICS } from "../config";
 
-const MUNI = "municipalities";
+const MUNI = "ine-districts";
 // Warstwy miejsc mają własne handlery kliknięcia (popup, rozwijanie klastra).
 // Nasz handler jest globalny, więc musi im ustąpić — inaczej jeden klik w pinezkę
 // otwiera JEDNOCZEŚNIE popup miejsca i panel obszaru.
@@ -20,22 +20,21 @@ const outlineWidth = (base: number): maplibregl.ExpressionSpecification =>
   ] as maplibregl.ExpressionSpecification;
 
 /**
- * Warstwy obszarów.
+ * Warstwy obszarów: 31 dystryktów INE.
  *
- * JEDNA jednostka — gmina — bo tylko na tym poziomie mierzona jest przestępczość
- * (patrz docs/METRIC_DECISION.md). Dzielnice Bilbao nie są tu rysowane: nie mają
- * własnego pomiaru, a osiem kształtów z jedną wartością czytało się jak zepsute
- * dane. Ich dane o percepcji żyją w panelu gminy Bilbao.
+ * To JEDYNA jednostka, w której Bilbao (8 dzielnic) i wszystkie gminy sąsiednie
+ * (Barakaldo 9, Basauri 5, Erandio 3, Arrigorriaga 2, reszta po 1) mają ten sam
+ * podział i ten sam pomiar. Patrz docs/METRIC_DECISION.md.
  */
 export function addAreaLayers(
   map: maplibregl.Map,
-  municipalities: GeoJSON.FeatureCollection,
+  areas: GeoJSON.FeatureCollection,
   onSelect: (code: string) => void,
 ): void {
-  map.addSource(MUNI, { type: "geojson", data: municipalities, promoteId: "code" });
+  map.addSource(MUNI, { type: "geojson", data: areas, promoteId: "code" });
 
   map.addLayer({
-    id: "municipalities-fill",
+    id: "areas-fill",
     type: "fill",
     source: MUNI,
     paint: {
@@ -50,14 +49,14 @@ export function addAreaLayers(
   });
 
   map.addLayer({
-    id: "municipalities-outline",
+    id: "areas-outline",
     type: "line",
     source: MUNI,
     paint: { "line-color": "#ffffff", "line-width": outlineWidth(1.6) },
   });
 
   map.addLayer({
-    id: "municipalities-label",
+    id: "areas-label",
     type: "symbol",
     source: MUNI,
     layout: {
@@ -68,12 +67,12 @@ export function addAreaLayers(
         // Polski separator dziesiętny, zgodny z panelem i tooltipem.
         [
           "number-format",
-          ["get", "crime_rate"],
-          { locale: "pl-PL", "min-fraction-digits": 1, "max-fraction-digits": 1 },
+          ["get", "income"],
+          { locale: "pl-PL", "min-fraction-digits": 0, "max-fraction-digits": 0 },
         ],
-        METRICS.crime_rate.unit,
+        METRICS.income.unit,
       ],
-      "text-size": 13,
+      "text-size": 11,
       "text-font": LABEL_FONT,
       "text-line-height": 1.3,
       "text-padding": 6,
@@ -106,7 +105,7 @@ function wireInteractions(map: maplibregl.Map, onSelect: (code: string) => void)
 
   const fmt = (v: unknown) =>
     typeof v === "number"
-      ? `${v.toFixed(1).replace(".", ",")}${METRICS.crime_rate.unit}`
+      ? `${v.toLocaleString("pl-PL")}${METRICS.income.unit}`
       : "brak danych";
 
   /** Czy pod kursorem jest miejsce — wtedy klik należy do warstwy miejsc. */
@@ -117,8 +116,8 @@ function wireInteractions(map: maplibregl.Map, onSelect: (code: string) => void)
   };
 
   const areaAt = (e: maplibregl.MapMouseEvent) =>
-    map.getLayer("municipalities-fill")
-      ? map.queryRenderedFeatures(e.point, { layers: ["municipalities-fill"] })[0]
+    map.getLayer("areas-fill")
+      ? map.queryRenderedFeatures(e.point, { layers: ["areas-fill"] })[0]
       : undefined;
 
   map.on("mousemove", (e) => {
@@ -137,7 +136,7 @@ function wireInteractions(map: maplibregl.Map, onSelect: (code: string) => void)
       .setLngLat(e.lngLat)
       .setHTML(
         `<strong>${p.name ?? "—"}</strong><br/>` +
-          `${METRICS.crime_rate.short}: ${fmt(p.crime_rate)}`,
+          `${METRICS.income.short}: ${fmt(p.income)}`,
       )
       .addTo(map);
 

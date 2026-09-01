@@ -3,11 +3,11 @@ import "./style.css";
 
 import { createMap, resolveStyle } from "./map";
 import { loadAllData } from "./data/loader";
-import { bounds, collectionBounds, padBounds } from "./data/geo";
+import { bounds, collectionBounds, padBounds, pointInGeometry } from "./data/geo";
 import { addAreaLayers } from "./layers/districts";
 import { addPlacesLayer } from "./layers/places";
 import { renderLegend } from "./ui/legend";
-import { showDistrict, type PlaceItem } from "./ui/sidebar";
+import { showArea, type PlaceItem, type AreaView } from "./ui/sidebar";
 import { renderFilters, type FilterItem } from "./ui/filters";
 import { renderControls } from "./ui/controls";
 import { openMethodology } from "./ui/methodology";
@@ -24,15 +24,15 @@ async function bootstrap(): Promise<void> {
   // etl/cities.json), a zaszyty bbox Bilbao ucinałby sąsiadów.
   // Zakres z warstwy GMIN — districts.geojson trzyma już tylko dzielnice Bilbao,
   // więc sam by kadrował mapę na jedno miasto.
-  const dataBounds = collectionBounds(data.municipalities);
+  const dataBounds = collectionBounds(data.ineDistricts);
   const map = createMap("map", style, {
     bounds: dataBounds,
     maxBounds: padBounds(dataBounds, VIEW.boundsPadding),
   });
 
-  // JEDNA jednostka: gmina. Dzielnice nie są obszarami mapy — patrz
-  // docs/METRIC_DECISION.md.
-  const areas = data.municipalities.features;
+  // JEDNA jednostka: dystrykt INE. Bilbao dzieli się na 8 nazwanych dzielnic,
+  // sąsiedzi na swoje dystrykty — razem 31 obszarów (docs/METRIC_DECISION.md).
+  const areas = data.ineDistricts.features;
 
   const districtByCode = new Map(areas.map((f) => [f.properties?.code as string, f]));
   // Etykieta jednostki. Dzielnicę poprzedzamy nazwą gminy, bo lista miesza dwa
@@ -43,7 +43,6 @@ async function bootstrap(): Promise<void> {
     return f.properties?.level === "district" && cityName ? `${cityName} — ${name}` : name;
   };
 
-  const nameByCode = new Map(areas.map((f) => [f.properties?.code as string, labelOf(f)]));
 
   // Wspólne źródło miejsc: POI + aktywności.
   const places: GeoJSON.FeatureCollection = {
@@ -61,33 +60,51 @@ async function bootstrap(): Promise<void> {
       category: f.properties?.category as string,
     };
     placesByDistrict.set(d, [...(placesByDistrict.get(d) ?? []), item]);
-    // Dodatkowo grupowanie po GMINIE — klik w gminę Bilbao w trybie przestępczości
-    // ma pokazać jej miejsca, a te są przypisane do dzielnic.
-    const city = f.properties?.city as string | undefined;
-    if (city && city !== d) {
-      placesByDistrict.set(city, [...(placesByDistrict.get(city) ?? []), item]);
-    }
   }
 
-  const openDistrict = (code: string) =>
-    showDistrict(
-      el("sidebar"),
-      code,
-      nameByCode.get(code) ?? code,
-      data.safety,
-      placesByDistrict.get(code) ?? [],
-      data.sources,
-      data.reference,
-      data.cityWide,
-      // Percepcja dzielnic trafia do panelu gminy, w której leżą.
-      data.districts.features
-        .filter((f) => f.properties?.city === code && f.properties?.perception != null)
-        .map((f) => ({
-          name: f.properties?.name as string,
-          value: f.properties?.perception as number,
-        }))
-        .sort((a, b) => b.value - a.value),
+  // Miejsca przypisujemy do dystryktów INE geometrycznie — punkty mają współrzędne,
+  // a dystrykty własne poligony (podział INE nie pokrywa się z podziałem OSM).
+  for (const f of areas) {
+    const code = f.properties?.code as string;
+    const inside = places.features.filter(
+      (pl) => pointInGeometry((pl.geometry as GeoJSON.Point).coordinates as [number, number], f.geometry),
     );
+    placesByDistrict.set(
+      code,
+      inside.map((pl) => ({
+        name: pl.properties?.name as string,
+        category: pl.properties?.category as string,
+      })),
+    );
+  }
+
+  // Percepcja po nazwie dzielnicy — istnieje tylko dla Bilbao.
+  const perceptionByName = new Map(
+    data.districts.features.map((f) => [
+      f.properties?.name as string,
+      f.properties?.perception as number | null,
+    ]),
+  );
+
+  const openDistrict = (code: string) => {
+    const f = districtByCode.get(code);
+    if (!f) return;
+    const p = f.properties ?? {};
+    const muni = data.safety[p.city as string];
+    const view: AreaView = {
+      name: p.name as string,
+      income: (p.income as number) ?? null,
+      incomePrev: (p.income_prev as number) ?? null,
+      incomeYear: (p.income_year as number) ?? null,
+      cityName: p.cityName as string,
+      crimeRate: muni?.crime_rate ?? null,
+      crimePeriod: muni?.crime_period ?? null,
+      crimeChangePct: muni?.crime_change_pct ?? null,
+      perception: perceptionByName.get(p.name as string) ?? null,
+      perceptionYear: 2025,
+    };
+    showArea(el("sidebar"), view, placesByDistrict.get(code) ?? [], data.reference);
+  };
 
   const categories = [
     ...new Set(places.features.map((f) => f.properties?.category as string)),
@@ -97,17 +114,17 @@ async function bootstrap(): Promise<void> {
   // Kontroler filtra kategorii jest dostępny dopiero po dodaniu warstwy.
   let setCategories: ((active: Set<string>) => void) | undefined;
   const addLayers = () => {
-    addAreaLayers(map, data.municipalities, openDistrict);
+    addAreaLayers(map, data.ineDistricts, openDistrict);
     setCategories = addPlacesLayer(map, places).setActiveCategories;
     // Etykiety na sam wierzch: klastry miejsc są nieprzezroczystymi kołami
     // rysowanymi później i zasłaniały nazwy gmin.
-    map.moveLayer("municipalities-label");
+    map.moveLayer("areas-label");
   };
   if (map.isStyleLoaded()) addLayers();
   else map.once("load", addLayers);
 
   // --- UI renderujemy NATYCHMIAST po danych (niezależnie od gotowości mapy) ---
-  const missing = areas.filter((f) => f.properties?.crime_rate == null).length;
+  const missing = areas.filter((f) => f.properties?.income == null).length;
   const drawLegend = () => {
     renderLegend(el("legend"), categories, { missing, total: areas.length });
     el("legend").querySelector("#methodology-btn")?.addEventListener("click", openMethodology);

@@ -16,7 +16,7 @@ export function rampStops(metric: Metric): Array<[number, string]> {
  * Obszary bez danych (null) dostają kolor neutralny — brak pomiaru nie jest
  * wynikiem i nie może wyglądać jak wynik.
  */
-export function safetyFillColor(field: SafetyField = "crime_rate"): unknown {
+export function safetyFillColor(field: SafetyField = "income"): unknown {
   const metric = METRICS[field];
   const stops = rampStops(metric).flatMap(([v, c]) => [v, c]);
   return [

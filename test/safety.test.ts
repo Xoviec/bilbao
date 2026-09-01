@@ -6,17 +6,16 @@ describe("safetyFillColor", () => {
   it("obszary bez danych dostają kolor neutralny", () => {
     const expr = safetyFillColor() as unknown[];
     expect(expr[0]).toBe("case");
-    expect((expr[1] as unknown[])[1]).toEqual(["get", "crime_rate"]);
+    expect((expr[1] as unknown[])[1]).toEqual(["get", "income"]);
     expect(expr[2]).toBe("#cccccc"); // kolor braku danych
   });
 });
 
 describe("rampStops", () => {
-  it("przestępczość: skala odwrócona, bo wyżej = gorzej", () => {
-    // Ten sam zielony kolor nie może znaczyć raz "dobrze", raz "źle".
-    const stops = rampStops(METRICS.crime_rate);
-    expect(stops[0][1]).toBe(RAMP[RAMP.length - 1]); // mało przestępstw = zieleń
-    expect(stops[stops.length - 1][1]).toBe(RAMP[0]); // dużo = czerwień
+  it("dochód: wyżej = zieleń", () => {
+    const stops = rampStops(METRICS.income);
+    expect(stops[0][1]).toBe(RAMP[0]); // niski dochód = czerwień
+    expect(stops[stops.length - 1][1]).toBe(RAMP[RAMP.length - 1]); // wysoki = zieleń
   });
 
   it("skala pokrywa zadeklarowany zakres metryki", () => {
@@ -33,7 +32,7 @@ describe("konfiguracja metryk", () => {
     // Sedno decyzji z docs/METRIC_DECISION.md: jeden wskaźnik na jednej
     // jednostce. Druga metryka na innym poziomie pomiaru zawsze prowadziła do
     // szarych plam albo do tej samej liczby powtórzonej na wielu kształtach.
-    expect(Object.keys(METRICS)).toEqual(["crime_rate"]);
-    expect(DEFAULT_METRIC).toBe("crime_rate");
+    expect(Object.keys(METRICS)).toEqual(["income"]);
+    expect(DEFAULT_METRIC).toBe("income");
   });
 });

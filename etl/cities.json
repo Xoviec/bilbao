@@ -10,7 +10,18 @@
       "relation": 339549,
       "unit": "district",
       "minUnits": 8,
-      "minPlaces": 1000
+      "minPlaces": 1000,
+      "ine": "48020",
+      "districtNames": {
+        "01": "Deusto",
+        "02": "Uribarri",
+        "03": "Otxarkoaga-Txurdinaga",
+        "04": "Begoña",
+        "05": "Ibaiondo",
+        "06": "Abando",
+        "07": "Errekalde",
+        "08": "Basurtu-Zorrotza"
+      }
     },
     {
       "slug": "barakaldo",
@@ -18,7 +29,8 @@
       "relation": 340585,
       "unit": "municipality",
       "minUnits": 1,
-      "minPlaces": 300
+      "minPlaces": 300,
+      "ine": "48013"
     },
     {
       "slug": "basauri",
@@ -26,7 +38,8 @@
       "relation": 340591,
       "unit": "municipality",
       "minUnits": 1,
-      "minPlaces": 40
+      "minPlaces": 40,
+      "ine": "48015"
     },
     {
       "slug": "erandio",
@@ -34,7 +47,8 @@
       "relation": 347284,
       "unit": "municipality",
       "minUnits": 1,
-      "minPlaces": 60
+      "minPlaces": 60,
+      "ine": "48902"
     },
     {
       "slug": "arrigorriaga",
@@ -42,7 +56,8 @@
       "relation": 340587,
       "unit": "municipality",
       "minUnits": 1,
-      "minPlaces": 30
+      "minPlaces": 30,
+      "ine": "48011"
     },
     {
       "slug": "etxebarri",
@@ -50,7 +65,8 @@
       "relation": 341790,
       "unit": "municipality",
       "minUnits": 1,
-      "minPlaces": 15
+      "minPlaces": 15,
+      "ine": "48029"
     },
     {
       "slug": "sondika",
@@ -58,7 +74,8 @@
       "relation": 340648,
       "unit": "municipality",
       "minUnits": 1,
-      "minPlaces": 10
+      "minPlaces": 10,
+      "ine": "48904"
     },
     {
       "slug": "zamudio",
@@ -66,7 +83,8 @@
       "relation": 347287,
       "unit": "municipality",
       "minUnits": 1,
-      "minPlaces": 15
+      "minPlaces": 15,
+      "ine": "48905"
     },
     {
       "slug": "alonsotegi",
@@ -74,7 +92,10 @@
       "relation": 342633,
       "unit": "municipality",
       "minUnits": 1,
-      "minPlaces": 8
+      "minPlaces": 8,
+      "ine": "48912"
     }
-  ]
+  ],
+  "_ine": "Kod gminy w INE. Dystrykty INE istnieją w KAŻDEJ hiszpańskiej gminie — to jedyna jednostka wspólna dla Bilbao i sąsiadów.",
+  "_districtNames": "Nazwy dzielnic Bilbao wg numeracji Ratusza. INE nie nadaje nazw dystryktom pozostałych gmin."
 }

@@ -11,6 +11,7 @@ const safety = read("safety.json");
 const poi = read("poi.geojson");
 const activities = read("activities.geojson");
 const municipalities = read("municipalities.geojson");
+const ine = read("ine-districts.geojson");
 const registry = JSON.parse(
   readFileSync(resolve(__dirname, "../etl/cities.json"), "utf8"),
 ).cities as Array<{ slug: string; name: string; unit: string; minUnits: number }>;
@@ -253,6 +254,51 @@ describe("Warstwa gmin (choropleth przestępczości)", () => {
     // udawać, bo warstwa gmin nie rysuje percepcji.
     for (const f of municipalities.features) {
       expect(muniCrime[f.properties.code].perception).toBeUndefined();
+    }
+  });
+});
+
+describe("Dystrykty INE (jednostka mapy)", () => {
+  it("Bilbao jest podzielone na 8 nazwanych dzielnic", () => {
+    // Twarde wymaganie: Bilbao MUSI być podzielone.
+    const bil = ine.features.filter((f: any) => f.properties.city === "bilbao");
+    expect(bil.length).toBe(8);
+    const names = bil.map((f: any) => f.properties.name).sort();
+    expect(names).toEqual([
+      "Abando", "Basurtu-Zorrotza", "Begoña", "Deusto",
+      "Errekalde", "Ibaiondo", "Otxarkoaga-Txurdinaga", "Uribarri",
+    ]);
+  });
+
+  it("sąsiedzi też są podzieleni na swoje dystrykty", () => {
+    const counts: Record<string, number> = {};
+    for (const f of ine.features) counts[f.properties.city] = (counts[f.properties.city] ?? 0) + 1;
+    expect(counts.barakaldo).toBe(9);
+    expect(counts.basauri).toBe(5);
+    expect(counts.erandio).toBe(3);
+    expect(counts.arrigorriaga).toBe(2);
+    expect(ine.features.length).toBe(31);
+  });
+
+  it("każdy dystrykt ma wartość miernika", () => {
+    for (const f of ine.features) {
+      expect(f.properties.income, f.properties.code).not.toBeNull();
+      expect(typeof f.properties.income).toBe("number");
+    }
+  });
+
+  it("wartości są RÓŻNE — żadnych powtórzeń", () => {
+    // Regresja, która wracała wielokrotnie: ta sama liczba na wielu kształtach.
+    const vals = ine.features.map((f: any) => f.properties.income);
+    expect(new Set(vals).size).toBe(vals.length);
+  });
+
+  it("geometrie to realne poligony", () => {
+    for (const f of ine.features) {
+      const ring = f.geometry.type === "Polygon"
+        ? f.geometry.coordinates[0]
+        : f.geometry.coordinates[0][0];
+      expect(ring.length, f.properties.code).toBeGreaterThan(10);
     }
   });
 });

@@ -10,7 +10,7 @@ kątem wydajności renderowania i czytelności danych.
 
 ## ✨ Co pokazuje mapa
 
-- **Choropleth jednego wskaźnika na 9 gminach** — przestępstwa na 1000 mieszkańców.
+- **Choropleth jednego wskaźnika na 31 dystryktach** — Bilbao podzielone na 8 dzielnic.
 - **Panel obszaru** — wartość, trend r/r, odniesienie do prowincji, źródło.
 - **Aktywności** — sport, kultura, nocne życie, tereny zielone (ikony kategorii).
 - **POI / miejsca warte zobaczenia** — atrakcje, punkty widokowe, zabytki (clustering).
@@ -70,46 +70,42 @@ bilbao-safety-map/
 Granice i miejsca pochodzą z **OpenStreetMap** (`npm run etl`). Mapa obejmuje
 **Bilbao i 8 gmin z nim graniczących**.
 
-### Jeden wskaźnik, jedna jednostka
+### Jeden wskaźnik, jedna jednostka: 31 dystryktów INE
 
-Mapa pokazuje **przestępstwa na 1000 mieszkańców, per gmina** — dziewięć obszarów,
-dziewięć niezależnych pomiarów. Pełne uzasadnienie wyboru:
-[`docs/METRIC_DECISION.md`](docs/METRIC_DECISION.md).
+**Bilbao dzieli się na 8 dzielnic, sąsiednie gminy na swoje dystrykty.** To jedyna
+jednostka, w której cała aglomeracja ma ten sam podział i ten sam pomiar.
+Uzasadnienie: [`docs/METRIC_DECISION.md`](docs/METRIC_DECISION.md).
 
-Źródło: [Udalmap, Rząd Kraju Basków](https://www.euskadi.eus/indicadores-municipales-de-sostenibilidad-indice-de-delitos-x2030-habitantes/web01-a2nekabe/es/), rok 2024.
+| Gmina | Dystryktów |
+|---|---|
+| Bilbao | 8 (Deusto, Uribarri, Otxarkoaga-Txurdinaga, Begoña, Ibaiondo, Abando, Errekalde, Basurtu-Zorrotza) |
+| Barakaldo | 9 |
+| Basauri | 5 |
+| Erandio | 3 |
+| Arrigorriaga | 2 |
+| Etxebarri, Sondika, Zamudio, Alonsotegi | po 1 |
+| **Razem** | **31** |
 
-| Gmina | 2024 | 2023 | Zmiana |
-|---|---|---|---|
-| Zamudio | 74,8 | 67,4 | +11,0% |
-| Bilbao | 66,6 | 65,6 | +1,5% |
-| Erandio | 60,1 | 58,3 | +3,1% |
-| Barakaldo | 52,2 | 55,6 | −6,2% |
-| Alonsotegi | 50,6 | 47,0 | +7,6% |
-| Sondika | 48,2 | 61,2 | −21,2% |
-| Basauri | 46,7 | 49,3 | −5,4% |
-| Arrigorriaga | 37,3 | 36,1 | +3,2% |
-| Etxebarri | 28,7 | 29,4 | −2,4% |
-| *Bizkaia (odniesienie)* | *49,6* | *49,9* | *−0,7%* |
+Miernik: **dochód netto na osobę**, [INE ADRH](https://www.ine.es/metodologia/metodologia_adrh.pdf) 2023.
+Zakres 15 034 – 30 762 € — wewnątrz samego Bilbao od Otxarkoaga-Txurdinaga
+(15 771 €) po Abando (30 762 €). **31 obszarów, 31 różnych wartości.**
 
-> **Dlaczego nie per dzielnica:** przestępczości poniżej poziomu gminy **nikt nie
-> publikuje**. Sprawdzone trzykrotnie — cały katalog Bilbao Open Data (341 zbiorów,
-> zero statystyk), katalog krajowy (granulacja kończy się na gminie) i raport
-> *Bilbao Hiri Segurua* (UPV/EHU, 2026), który miastu dopiero **rekomenduje**
-> publikowanie takich danych. Wcześniej osiem dzielnic Bilbao dostawało tę samą
-> liczbę miejską i wyglądało to jak zepsute dane.
+> ⚠️ **To wskaźnik dochodowy, nie pomiar przestępczości.** Wybrany, bo jest jedyną
+> statystyką publikowaną w tej samej jednostce dla Bilbao i wszystkich sąsiadów.
+> Mapa mówi o tym wprost w legendzie i panelu metodologii.
 
-> **Uwaga interpretacyjna:** to przestępstwa *zgłoszone*, dzielone przez liczbę
-> *mieszkańców*. Gminy z dużym ruchem przyjezdnych — Zamudio ma park
-> technologiczny, Sondika lotnisko — mają wskaźnik zawyżony.
+### Bezpieczeństwo — w panelu obszaru
 
-### Percepcja bezpieczeństwa — osobno
+- **Przestępstwa na 1000 mieszkańców** ([Udalmap](https://www.euskadi.eus/indicadores-municipales-de-sostenibilidad-indice-de-delitos-x2030-habitantes/web01-a2nekabe/es/), 2024) — mierzone **per gmina**,
+  więc podpisane nazwą gminy: Zamudio 74,8 · Bilbao 66,6 · Erandio 60,1 ·
+  Barakaldo 52,2 · Alonsotegi 50,6 · Sondika 48,2 · Basauri 46,7 ·
+  Arrigorriaga 37,3 · Etxebarri 28,7 (Bizkaia 49,6).
+- **Percepcja bezpieczeństwa** ([Ikerfel dla Ratusza Bilbao](https://www.deia.eus/bilbao/2026/02/17/aprueba-seguridad-bilbao-10712595.html), 2025) —
+  osiem dzielnic Bilbao: Deusto 5,83 … Abando 5,44.
 
-[Badanie Ratusza Bilbao](https://www.deia.eus/bilbao/2026/02/17/aprueba-seguridad-bilbao-10712595.html)
-(Ikerfel, 8580 wywiadów, 2025) obejmuje **tylko Bilbao**, więc nie może być
-miernikiem mapy. Jest w panelu gminy Bilbao jako lista ośmiu dzielnic:
-Deusto 5,83 · Uribarri 5,79 · Otxarkoaga-Txurdinaga 5,66 · Errekalde 5,56 ·
-Basurtu-Zorrotza 5,50 · Ibaiondo 5,48 · Begoña 5,47 · Abando 5,44.
-Miasto ogółem 5,58; nocą 5,24.
+> **Dlaczego przestępczość nie jest miernikiem mapy:** nikt nie publikuje jej
+> poniżej poziomu gminy. Użycie jej oznaczałoby jedną liczbę powtórzoną na ośmiu
+> dzielnicach Bilbao. Sprawdzone trzykrotnie — szczegóły w dokumencie decyzji.
 
 ### Odświeżenie danych
 
@@ -117,6 +113,7 @@ Miasto ogółem 5,58; nocą 5,24.
 npm run etl                    # granice i miejsca z OSM
 npm run etl -- --refresh       # ignoruj cache
 npm run safety                 # przebudowa safety.json z etl/safety-data.json
+npm run ine                    # dystrykty INE + dochód (miernik mapy)
 ```
 
 Gminy są przypięte po **ID relacji** OSM w `etl/cities.json` — samo `name="Bilbao"`

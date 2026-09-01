@@ -18,6 +18,110 @@ function esc(s: unknown): string {
 const fmt = (n: number | null, digits = 2): string =>
   n == null ? "—" : n.toFixed(digits).replace(".", ",");
 
+export interface AreaView {
+  name: string;
+  /** Miernik mapy: dochód netto na osobę (dystrykt INE). */
+  income: number | null;
+  incomePrev: number | null;
+  incomeYear: number | null;
+  /** Kontekst: stopa przestępczości gminy, w której leży dystrykt. */
+  cityName: string;
+  crimeRate: number | null;
+  crimePeriod: string | null;
+  crimeChangePct: number | null;
+  /** Kontekst: percepcja tej dzielnicy, jeśli badana (tylko Bilbao). */
+  perception: number | null;
+  perceptionYear: number | null;
+}
+
+const money = (n: number | null) =>
+  n == null ? "—" : `${n.toLocaleString("pl-PL")} €`;
+
+/** Renderuje panel szczegółów wybranego obszaru (miernik + kontekst + miejsca). */
+export function showArea(
+  sidebar: HTMLElement,
+  view: AreaView,
+  places: PlaceItem[] = [],
+  reference: Reference | null = null,
+): void {
+  sidebar.classList.remove("hidden");
+
+  const trend =
+    view.income != null && view.incomePrev != null
+      ? view.income > view.incomePrev
+        ? "up"
+        : view.income < view.incomePrev
+          ? "down"
+          : "flat"
+      : "flat";
+
+  const metricHtml = `
+    <div class="metric">
+      <div class="metric-head">
+        <span class="metric-label">Dochód netto na osobę</span>
+        <span class="metric-value">${money(view.income)} ${TREND_ICON[trend] ?? ""}</span>
+      </div>
+      <p class="metric-meta">${view.incomeYear ?? ""} · rok wcześniej ${money(view.incomePrev)}</p>
+      <p class="metric-src">INE — Atlas de Distribución de Renta de los Hogares</p>
+    </div>`;
+
+  // Kontekst: przestępczość mierzona jest per GMINA, nie per dystrykt — dlatego
+  // stoi osobno i jest podpisana nazwą gminy, a nie tego obszaru.
+  const pct = view.crimeChangePct;
+  const crimeHtml =
+    view.crimeRate != null
+      ? `<p class="metric-context">Przestępczość mierzona jest dla całej gminy
+           <strong>${esc(view.cityName)}</strong>: ${fmt(view.crimeRate, 1)}‰
+           (${esc(view.crimePeriod ?? "")}${
+             pct == null ? "" : `, ${pct > 0 ? "+" : ""}${fmt(pct, 1)}% r/r`
+           })${reference ? ` · ${esc(reference.name)}: ${fmt(reference.rate, 1)}‰` : ""}.
+           W podziale na dzielnice nikt jej nie publikuje.</p>`
+      : "";
+
+  const percHtml =
+    view.perception != null
+      ? `<p class="metric-context">Percepcja bezpieczeństwa tej dzielnicy:
+           <strong>${fmt(view.perception)}/10</strong> (ankieta Ratusza Bilbao,
+           ${view.perceptionYear ?? ""}). Badana wyłącznie w Bilbao.</p>`
+      : "";
+
+  const placesHtml = places.length
+    ? `<h3 class="places-title">Miejsca w tym obszarze (${places.length})</h3>
+       <ul class="places-list">
+         ${places
+           .map(
+             (p) => `<li>
+               <span class="dot" style="background:${CATEGORY_COLORS[p.category] ?? "#666"}"></span>
+               <span class="place-name">${esc(p.name)}</span>
+               <span class="place-cat">${esc(CATEGORY_LABELS[p.category] ?? p.category)}</span>
+             </li>`,
+           )
+           .join("")}
+       </ul>`
+    : `<p class="muted">Brak miejsc w danych dla tego obszaru.</p>`;
+
+  sidebar.innerHTML = `
+    <button class="close" aria-label="Zamknij">×</button>
+    <h2 tabindex="-1">${esc(view.name)}</h2>
+    ${metricHtml}
+    ${crimeHtml}
+    ${percHtml}
+    ${placesHtml}
+    <p class="source muted">Granice i miejsca: OpenStreetMap · dystrykty: INE</p>
+  `;
+
+  const close = () => {
+    sidebar.classList.add("hidden");
+    document.removeEventListener("keydown", onKey);
+  };
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === "Escape") close();
+  };
+  sidebar.querySelector(".close")?.addEventListener("click", close);
+  document.addEventListener("keydown", onKey);
+  (sidebar.querySelector("h2") as HTMLElement)?.focus();
+}
+
 /** Renderuje panel szczegółów wybranego obszaru (metryki + miejsca). */
 export function showDistrict(
   sidebar: HTMLElement,

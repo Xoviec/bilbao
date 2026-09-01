@@ -1,6 +1,6 @@
 # Wybór jednego miernika dla całej mapy
 
-**Status:** zdecydowane · **Data:** 2026-09-01
+**Status:** zdecydowane (wariant B) · **Data:** 2026-09-01 · **Wersja:** 2
 
 ## Problem
 
@@ -73,38 +73,43 @@ gmina i *(c)* tematu bezpieczeństwa. Trzeba z czegoś zrezygnować.
 | C | 436 sekcji censalnych | dochód (ADRH) | ✅ | ❌ |
 | D (stan obecny) | mieszana | dwa wskaźniki | ❌ | częściowo |
 
-### Wybrano: wariant A
+### Wybrano: wariant B
 
-**Jeden wskaźnik: przestępstwa na 1000 mieszkańców (Udalmap, rok 2024).
-Jedna jednostka: gmina. Dziewięć obszarów, dziewięć różnych wartości.**
+**Jeden wskaźnik: dochód netto na osobę (INE ADRH, rok 2023).
+Jedna jednostka: dystrykt INE. 31 obszarów, 31 różnych wartości.**
 
-Uzasadnienie:
+Wariant A (przestępczość per gmina) był wybrany jako pierwszy i **odrzucony po
+teście z użytkownikiem**: dawał 9 obszarów, czyli Bilbao jako jedną plamę.
+Wymaganie „Bilbao ma być podzielone na dzielnice" jest twarde, a wariant A go
+nie spełnia. Wariant B spełnia je jako **jedyny**:
 
-- To **jedyny wariant, w którym mapa nadal mówi o bezpieczeństwie**. Warianty B i C
-  są ładniejsze i drobniejsze, ale mierzą zamożność. Pokazywanie dochodu pod
-  szyldem mapy bezpieczeństwa byłoby podmianą tematu.
-- **Zero powtórzeń.** Dziewięć kształtów, dziewięć niezależnych pomiarów:
-  Zamudio 74,8 · Bilbao 66,6 · Erandio 60,1 · Barakaldo 52,2 · Alonsotegi 50,6 ·
-  Sondika 48,2 · Basauri 46,7 · Arrigorriaga 37,3 · Etxebarri 28,7.
-- **Dane zweryfikowane** co do setnych wobec świeżego pliku z euskadi.eus, rząd
-  wielkości potwierdzony niezależnie kwartalnymi danymi Eustat/Ertzaintza
-  (Bilbao 16,3‰ za I kw. 2026 ≈ 66,6‰ rocznie).
-- Rozpiętość **2,61×** — kolor niesie realną informację, bez naciągania skali.
+| | wariant A | wariant B |
+|---|---|---|
+| Bilbao podzielone | ❌ 1 obszar | ✅ 8 dzielnic |
+| Sąsiedzi podzieleni | ❌ po 1 | ✅ Barakaldo 9, Basauri 5, Erandio 3, Arrigorriaga 2 |
+| Ten sam wskaźnik wszędzie | ✅ | ✅ |
+| Powtórzone wartości | brak | brak (31/31 unikalnych) |
+| Szare plamy | brak | brak |
+| O bezpieczeństwie | ✅ | ❌ dochód |
 
-### Czego świadomie się pozbywamy
+Rozpiętość: **15 034 – 30 762 €**, czyli 2,05×. Wewnątrz samego Bilbao od 15 771 €
+(Otxarkoaga-Txurdinaga) do 30 762 € (Abando) — kolor niesie realną informację.
 
-- **Dzielnice przestają być jednostką mapy.** Nie znikają z danych, ale nie są już
-  kolorowane ani klikane jako obszary — bo nie ma dla nich pomiaru.
-- **Percepcja przestaje być warstwą mapy.** Istnieje tylko dla Bilbao, więc z
-  definicji nie może być jednolita. Trafia do panelu gminy Bilbao jako lista ośmiu
-  wartości — informacja zostaje, ale nie udaje wskaźnika porównywalnego z resztą.
-- Skutek: mapa jest **grubsza, ale spójna**. Każdy kolor znaczy to samo wszędzie.
+### Uczciwość: to nie jest miernik przestępczości
 
-## Warunek powrotu do dzielnic
+Dochód **nie mierzy bezpieczeństwa**. Mapa mówi o tym wprost w legendzie
+(pomarańczowe ostrzeżenie) i w panelu metodologii. Dane o bezpieczeństwie nie
+znikają — każdy panel obszaru pokazuje:
+
+- **przestępczość gminy**, w której leży dystrykt (Udalmap 2024), z jawnym
+  podpisem, że mierzona jest per gmina i nikt nie publikuje jej per dzielnica,
+- **percepcję dzielnicy** dla ośmiu dzielnic Bilbao (Ikerfel 2025).
+
+### Warunek powrotu do przestępczości jako miernika mapy
 
 Gdy Bilbao wdroży rekomendację EHU i zacznie publikować przestępczość per dzielnica,
-wracamy do 31 dystryktów bez przebudowy: wartości dopisuje się do
-`etl/safety-data.json`, a jednostkę przełącza w `etl/cities.json`.
+wystarczy dopisać wartości do `etl/safety-data.json` i przełączyć pole `field`
+w `src/config.ts` — jednostka (31 dystryktów) już jest właściwa.
 
 ## Źródła
 

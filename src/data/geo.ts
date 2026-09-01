@@ -49,3 +49,34 @@ export function padBounds(b: Bounds, ratio = 0.08): Bounds {
 export function boundsCenter(b: Bounds): [number, number] {
   return [(b[0][0] + b[1][0]) / 2, (b[0][1] + b[1][1]) / 2];
 }
+
+/** Ray casting: czy punkt [lng,lat] leży w pierścieniu. */
+function pointInRing(pt: [number, number], ring: number[][]): boolean {
+  let inside = false;
+  const [x, y] = pt;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i];
+    const [xj, yj] = ring[j];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+/**
+ * Czy punkt leży w geometrii Polygon/MultiPolygon.
+ * Potrzebne, bo podział INE nie pokrywa się z podziałem OSM — miejsca trzeba
+ * przypisać do dystryktów geometrycznie, a nie po kodzie.
+ */
+export function pointInGeometry(pt: [number, number], geometry: GeoJSON.Geometry): boolean {
+  const polys =
+    geometry.type === "Polygon"
+      ? [geometry.coordinates]
+      : geometry.type === "MultiPolygon"
+        ? geometry.coordinates
+        : [];
+  for (const poly of polys) {
+    const [outer, ...holes] = poly;
+    if (pointInRing(pt, outer) && !holes.some((h) => pointInRing(pt, h))) return true;
+  }
+  return false;
+}

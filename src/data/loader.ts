@@ -80,7 +80,9 @@ interface SafetyFile {
 }
 
 export interface LoadedData {
-  /** Poligony gmin — jedyna warstwa niosąca choropleth przestępczości. */
+  /** Dystrykty INE — warstwa niosąca choropleth (31 obszarów). */
+  ineDistricts: GeoJSON.FeatureCollection;
+  /** Poligony gmin — kontekst (stopa przestępczości mierzona na tym poziomie). */
   municipalities: GeoJSON.FeatureCollection;
   districts: GeoJSON.FeatureCollection;
   safety: SafetyMap;
@@ -105,9 +107,10 @@ async function fetchJSON<T>(url: string): Promise<T> {
  * obszarów (join po polu `code`).
  */
 export async function loadAllData(): Promise<LoadedData> {
-  const [districts, municipalities, safetyFile, activities, poi] = await Promise.all([
+  const [districts, municipalities, ineDistricts, safetyFile, activities, poi] = await Promise.all([
     fetchJSON<GeoJSON.FeatureCollection>(DATA.districts),
     fetchJSON<GeoJSON.FeatureCollection>(DATA.municipalities),
+    fetchJSON<GeoJSON.FeatureCollection>(DATA.ineDistricts),
     fetchJSON<SafetyFile>(DATA.safety),
     fetchJSON<GeoJSON.FeatureCollection>(DATA.activities),
     fetchJSON<GeoJSON.FeatureCollection>(DATA.poi),
@@ -120,6 +123,7 @@ export async function loadAllData(): Promise<LoadedData> {
   );
 
   return {
+    ineDistricts,
     municipalities: joinCrime(municipalities, safetyFile._municipalities ?? {}),
     districts: joinSafety(districts, safety),
     safety,

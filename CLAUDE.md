@@ -34,12 +34,16 @@ npm run etl      # pobranie realnych danych z OSM (wymaga sieci → Overpass)
 ## Zasady
 - **Dane bezpieczeństwa są wrażliwe** — trzymaj się `docs/SAFETY_METHODOLOGY.md`
   (jawność, neutralny język, oznaczanie danych szacunkowych).
-- **JEDEN wskaźnik, JEDNA jednostka.** Przestępstwa na 1000 mieszkańców, per gmina
-  (9 obszarów). Decyzja i jej uzasadnienie: `docs/METRIC_DECISION.md`. Nie dodawaj
-  drugiej metryki na innym poziomie pomiaru — za każdym razem kończyło się to albo
+- **JEDEN wskaźnik, JEDNA jednostka: dystrykt INE (31 obszarów).** Miernik to
+  dochód netto na osobę (INE ADRH). Decyzja: `docs/METRIC_DECISION.md`.
+  Nie dodawaj drugiej metryki na innym poziomie pomiaru — kończyło się to albo
   szarymi plamami, albo tą samą liczbą powtórzoną na wielu kształtach.
-- **Dzielnice nie są obszarami mapy.** Nie mają własnego pomiaru przestępczości i
-  nikt go nie publikuje. Ich percepcja żyje w panelu gminy Bilbao.
+- **Bilbao MUSI być podzielone na 8 dzielnic.** To twarde wymaganie. Dystrykty INE
+  są jedyną jednostką, w której Bilbao i sąsiedzi mają wspólny podział i wspólny
+  pomiar — OSM ma podział poniżej gminy tylko dla Bilbao.
+- **Miernik mapy to dochód, nie przestępczość** — i legenda oraz panel metodologii
+  muszą to mówić wprost. Przestępczość (per gmina) i percepcja (8 dzielnic Bilbao)
+  są kontekstem w panelu obszaru, jawnie podpisanym poziomem pomiaru.
 - Wszystkie dane są **realne i mają cytowane źródło**. Granice i POI: OSM
   (`npm run etl`). Bezpieczeństwo: `etl/safety-data.json` → `npm run safety`
   → `public/data/safety.json` (generowane, nie edytuj ręcznie).

@@ -6,12 +6,10 @@ test.describe("Bilbao Safety Map — smoke", () => {
     await expect(page.locator("#district-search")).toBeVisible({ timeout: 20000 });
   });
 
-  test("jeden wskaźnik, jedna jednostka — 9 gmin, bez przełącznika", async ({ page }) => {
-    // Sedno docs/METRIC_DECISION.md. Przełącznik metryk zniknął, bo nie ma czym
-    // przełączać; obszarów jest dokładnie tyle, ile gmin.
+  test("jeden wskaźnik, 31 dystryktów, bez przełącznika", async ({ page }) => {
     await expect(page.locator(".mode-btn")).toHaveCount(0);
-    await expect(page.locator("#district-search option")).toHaveCount(10); // 9 + placeholder
-    await expect(page.locator("#legend .legend-title").first()).toContainText("Przestępstwa");
+    await expect(page.locator("#district-search option")).toHaveCount(32); // 31 + placeholder
+    await expect(page.locator("#legend .legend-title").first()).toContainText("Dochód");
     await expect(page.locator("#legend .legend-bar")).toBeVisible();
     await expect(page.locator("#filters .filter-row")).not.toHaveCount(0);
   });
@@ -31,29 +29,34 @@ test.describe("Bilbao Safety Map — smoke", () => {
     }
     // Różne punkty = różne gminy = różne wartości.
     expect(seen.size).toBeGreaterThan(1);
-    for (const t of seen) expect(t).toMatch(/Przestępczość: \d+,\d‰/);
+    for (const t of seen) expect(t).toMatch(/Dochód: [\d\u00a0\s]+ €/);
   });
 
-  test("panel gminy pokazuje miernik ze źródłem i odniesieniem", async ({ page }) => {
-    await page.selectOption("#district-search", "zamudio");
-    const sidebar = page.locator("#sidebar");
-    await expect(sidebar).toBeVisible();
-    await expect(sidebar.locator("h2")).toContainText("Zamudio");
-    await expect(sidebar.locator(".metric-value")).toContainText("74,8");
-    await expect(sidebar.locator(".metric-meta")).toContainText("Bizkaia");
-    await expect(sidebar.locator(".metric-src")).toContainText("Udalmap");
+  test("Bilbao JEST podzielone na 8 nazwanych dzielnic", async ({ page }) => {
+    // Twarde wymaganie. Dzielnice muszą być osobnymi obszarami na liście.
+    const opts = await page.locator("#district-search option").allTextContents();
+    for (const n of [
+      "Deusto", "Uribarri", "Otxarkoaga-Txurdinaga", "Begoña",
+      "Ibaiondo", "Abando", "Errekalde", "Basurtu-Zorrotza",
+    ]) {
+      expect(opts, `brak dzielnicy ${n}`).toContain(n);
+    }
+    // Sąsiedzi też mają własne dystrykty.
+    expect(opts.filter((o) => /Barakaldo · dystrykt/.test(o)).length).toBe(9);
   });
 
-  test("panel Bilbao dokłada percepcję ośmiu dzielnic", async ({ page }) => {
-    // Dane percepcji nie przepadły przy przejściu na jeden miernik — są w panelu
-    // gminy, jawnie oddzielone od miernika mapy.
-    await page.selectOption("#district-search", "bilbao");
+  test("panel dzielnicy Bilbao: miernik + przestępczość gminy + percepcja", async ({ page }) => {
+    await page.selectOption("#district-search", "ine-4802006"); // Abando
     const sidebar = page.locator("#sidebar");
     await expect(sidebar).toBeVisible();
-    await expect(sidebar.locator(".metric-value")).toContainText("66,6");
-    await expect(sidebar.locator(".perc-list li")).toHaveCount(8);
-    await expect(sidebar.locator(".extra-note")).toContainText("tylko w Bilbao");
-    await expect(sidebar.locator(".perc-list li").first()).toContainText("Deusto");
+    await expect(sidebar.locator("h2")).toContainText("Abando");
+    await expect(sidebar.locator(".metric-value")).toContainText("30 762");
+    await expect(sidebar.locator(".metric-src")).toContainText("INE");
+    // Przestępczość jest kontekstem gminy, jawnie podpisanym.
+    await expect(sidebar.locator(".metric-context").first()).toContainText("całej gminy");
+    await expect(sidebar.locator(".metric-context").first()).toContainText("66,6‰");
+    // Percepcja tej dzielnicy.
+    await expect(sidebar.locator(".metric-context").last()).toContainText("5,44/10");
   });
 
   test("panel źródeł otwiera się i zamyka", async ({ page }) => {

@@ -3,7 +3,7 @@ import "./style.css";
 
 import { createMap, resolveStyle } from "./map";
 import { loadAllData } from "./data/loader";
-import { bounds, collectionBounds, padBounds, pointInGeometry } from "./data/geo";
+import { bounds, collectionBounds, padBounds } from "./data/geo";
 import { addAreaLayers } from "./layers/districts";
 import { addPlacesLayer } from "./layers/places";
 import { renderLegend } from "./ui/legend";
@@ -24,15 +24,18 @@ async function bootstrap(): Promise<void> {
   // etl/cities.json), a zaszyty bbox Bilbao ucinałby sąsiadów.
   // Zakres z warstwy GMIN — districts.geojson trzyma już tylko dzielnice Bilbao,
   // więc sam by kadrował mapę na jedno miasto.
-  const dataBounds = collectionBounds(data.ineDistricts);
+  const dataBounds = collectionBounds(data.municipalities);
   const map = createMap("map", style, {
     bounds: dataBounds,
     maxBounds: padBounds(dataBounds, VIEW.boundsPadding),
   });
 
-  // JEDNA jednostka: dystrykt INE. Bilbao dzieli się na 8 nazwanych dzielnic,
-  // sąsiedzi na swoje dystrykty — razem 31 obszarów (docs/METRIC_DECISION.md).
-  const areas = data.ineDistricts.features;
+  // 16 obszarów: 8 dzielnic Bilbao (percepcja, mierzona per dzielnica) + 8 gmin
+  // sąsiednich (przestępczość, mierzona per gmina). Patrz docs/METRIC_DECISION.md.
+  const neighbours = data.municipalities.features.filter(
+    (f) => f.properties?.code !== "bilbao",
+  );
+  const areas = [...data.districts.features, ...neighbours];
 
   const districtByCode = new Map(areas.map((f) => [f.properties?.code as string, f]));
   // Etykieta jednostki. Dzielnicę poprzedzamy nazwą gminy, bo lista miesza dwa
@@ -62,48 +65,36 @@ async function bootstrap(): Promise<void> {
     placesByDistrict.set(d, [...(placesByDistrict.get(d) ?? []), item]);
   }
 
-  // Miejsca przypisujemy do dystryktów INE geometrycznie — punkty mają współrzędne,
-  // a dystrykty własne poligony (podział INE nie pokrywa się z podziałem OSM).
-  for (const f of areas) {
-    const code = f.properties?.code as string;
-    const inside = places.features.filter(
-      (pl) => pointInGeometry((pl.geometry as GeoJSON.Point).coordinates as [number, number], f.geometry),
-    );
-    placesByDistrict.set(
-      code,
-      inside.map((pl) => ({
-        name: pl.properties?.name as string,
-        category: pl.properties?.category as string,
-      })),
-    );
-  }
-
-  // Percepcja po nazwie dzielnicy — istnieje tylko dla Bilbao.
-  const perceptionByName = new Map(
-    data.districts.features.map((f) => [
-      f.properties?.name as string,
-      f.properties?.perception as number | null,
-    ]),
-  );
 
   const openDistrict = (code: string) => {
     const f = districtByCode.get(code);
     if (!f) return;
     const p = f.properties ?? {};
-    const muni = data.safety[p.city as string];
+    const rec = data.safety[code];
+    const isDistrict = p.level === "district";
     const view: AreaView = {
       name: p.name as string,
-      income: (p.income as number) ?? null,
-      incomePrev: (p.income_prev as number) ?? null,
-      incomeYear: (p.income_year as number) ?? null,
-      cityName: p.cityName as string,
-      crimeRate: muni?.crime_rate ?? null,
-      crimePeriod: muni?.crime_period ?? null,
-      crimeChangePct: muni?.crime_change_pct ?? null,
-      perception: perceptionByName.get(p.name as string) ?? null,
-      perceptionYear: 2025,
+      isDistrict,
+      perception: rec?.perception ?? null,
+      perceptionPrev: rec?.perception_prev ?? null,
+      crimeRate: rec?.crime_rate ?? null,
+      crimePrev: rec?.crime_prev ?? null,
+      crimeChangePct: rec?.crime_change_pct ?? null,
+      crimePeriod: rec?.crime_period ?? null,
+      // Dzielnica dziedziczy stopę SWOJEJ gminy jako kontekst, jawnie podpisany.
+      cityName: (p.cityName as string) ?? (p.name as string),
+      cityCrimeRate: isDistrict
+        ? (data.safety[p.city as string]?.crime_rate ?? null)
+        : null,
     };
-    showArea(el("sidebar"), view, placesByDistrict.get(code) ?? [], data.reference);
+    showArea(
+      el("sidebar"),
+      view,
+      placesByDistrict.get(code) ?? [],
+      data.reference,
+      isDistrict ? data.victimisation : null,
+      data.cityWide[p.city as string] ?? null,
+    );
   };
 
   const categories = [
@@ -114,17 +105,24 @@ async function bootstrap(): Promise<void> {
   // Kontroler filtra kategorii jest dostępny dopiero po dodaniu warstwy.
   let setCategories: ((active: Set<string>) => void) | undefined;
   const addLayers = () => {
-    addAreaLayers(map, data.ineDistricts, openDistrict);
+    addAreaLayers(map, data.districts, data.municipalities, openDistrict);
     setCategories = addPlacesLayer(map, places).setActiveCategories;
     // Etykiety na sam wierzch: klastry miejsc są nieprzezroczystymi kołami
     // rysowanymi później i zasłaniały nazwy gmin.
-    map.moveLayer("areas-label");
+    map.moveLayer("muni-label");
+    map.moveLayer("dist-label");
   };
   if (map.isStyleLoaded()) addLayers();
   else map.once("load", addLayers);
 
   // --- UI renderujemy NATYCHMIAST po danych (niezależnie od gotowości mapy) ---
-  const missing = areas.filter((f) => f.properties?.income == null).length;
+  // Braki: obszar bez wartości SWOJEJ metryki. Powinno być zero.
+  const missing = areas.filter((f) => {
+    const rec = data.safety[f.properties?.code as string];
+    return f.properties?.level === "district"
+      ? rec?.perception == null
+      : rec?.crime_rate == null;
+  }).length;
   const drawLegend = () => {
     renderLegend(el("legend"), categories, { missing, total: areas.length });
     el("legend").querySelector("#methodology-btn")?.addEventListener("click", openMethodology);

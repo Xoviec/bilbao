@@ -1,120 +1,129 @@
-# Wybór jednego miernika dla całej mapy
+# Jaki wskaźnik bezpieczeństwa pokazuje mapa
 
-**Status:** zdecydowane (wariant B) · **Data:** 2026-09-01 · **Wersja:** 2
+**Status:** zdecydowane · **Wersja:** 3 · **Data:** 2026-09-01
 
-## Problem
+## Pytanie, na które mapa ma odpowiadać
 
-Mapa ma pokazywać **jeden wskaźnik, w tej samej jednostce, dla Bilbao i wszystkich
-8 gmin sąsiednich**. Dotychczas pokazywała dwa, w dwóch różnych jednostkach:
+> Czy po tej dzielnicy można bezpiecznie chodzić?
 
-| Wskaźnik | Jednostka | Pokrycie | Skutek na mapie |
-|---|---|---|---|
-| Percepcja (Ikerfel) | dzielnica | **tylko 8 dzielnic Bilbao** | 8 z 16 obszarów szarych |
-| Przestępczość (Udalmap) | gmina | 9 gmin | 8 dzielnic Bilbao z **tą samą liczbą** |
+To znaczy: **kradzieże, rozboje, pobicia** — a nie zamożność, nie demografia.
+Wersja 2 tego dokumentu wybrała dochód (INE ADRH) dlatego, że jako jedyny
+istnieje w tej samej jednostce wszędzie. **To był błąd** — spójność jednostki
+została postawiona ponad sensem aplikacji. Mapa bezpieczeństwa ma pokazywać
+bezpieczeństwo.
 
-Obie wady wynikają z jednej przyczyny: **jednostka rysowania ≠ jednostka pomiaru**.
-Efekt uboczny — ta sama wartość 66,58‰ powtórzona na ośmiu kształtach — czyta się
-jak zepsute dane, niezależnie od tego, co napisano w dopisku.
+## Co realnie istnieje
 
-## Co sprawdziłem
+Sprawdzone wyczerpująco (cztery niezależne przejścia):
 
-### Przestępczość poniżej poziomu gminy — NIE ISTNIEJE
+### ❌ Liczby przestępstw per dzielnica — NIE ISTNIEJĄ
 
-Trzy niezależne weryfikacje:
+| Sprawdzone | Wynik |
+|---|---|
+| Bilbao Open Data (cały katalog przez API `datos.gob.es`) | 341 zbiorów, **zero** statystyk przestępczości |
+| Katalog krajowy `datos.gob.es`, „infracciones penales" | 40 zbiorów, najdrobniej **gmina** |
+| Eustat / Ertzaintza | gminy >20 tys. mieszkańców |
+| Udalmap | wszystkie gminy, ale **tylko gmina** |
+| Prasa (Deia, El Correo, Radio Nervión) | opisy „gorących punktów", **bez liczb per dzielnica** |
 
-1. **Bilbao Open Data**, pełny katalog przez API `datos.gob.es` (publisher `L01480209`):
-   **341 zbiorów**. Filtr `segur|delit|crimin|polic|victim|infracc|denunc|ertzain`
-   daje **jedno** trafienie — „Noticias de temas de Seguridad", czyli kanał newsów.
-   Zero statystyk.
-2. **Katalog krajowy**, 40 zbiorów „infracciones penales": najdrobniejsza granulacja
-   to **gmina**. Dalej już tylko prowincja, państwo, typ przestępstwa.
-3. **Raport „Bilbao Hiri Segurua"** (UPV/EHU, luty 2026) — **rekomenduje** Ratuszowi
-   dopiero *wprowadzenie* kwartalnych biuletynów bezpieczeństwa w podziale na
-   dzielnice. Czyli takich danych jeszcze nie ma i miasto właśnie dostało zalecenie,
-   żeby zacząć je tworzyć.
+Raport [*Bilbao Hiri Segurua*](https://www.bizkaiagaur.com/2026/02/19/el-ayuntamiento-de-bilbao-ha-presentado-el-informe-bilbao-hiri-segurua/)
+(UPV/EHU, luty 2026) **rekomenduje Ratuszowi dopiero wprowadzenie** kwartalnych
+biuletynów bezpieczeństwa w podziale na dzielnice. Czyli takich danych jeszcze
+nie ma — miasto właśnie dostało zalecenie, żeby zacząć je publikować.
 
-**Wniosek: nie da się uzyskać przestępczości per dzielnica. Żadną drogą.**
+### ✅ Percepcja bezpieczeństwa per dzielnica — ISTNIEJE
 
-### Jednostka wspólna dla wszystkich gmin — ISTNIEJE
+[*Estudio de Percepción de Seguridad y Victimización 2025*](https://www.deia.eus/bilbao/2026/02/17/aprueba-seguridad-bilbao-10712595.html),
+Ratusz Bilbao, badanie Ikerfel: **8580 wywiadów telefonicznych**, osoby 16+,
+praca terenowa III–XII 2025.
 
-INE dzieli **każdą** hiszpańską gminę na dystrykty i sekcje censalne. Sprawdzone
-przez [INE OGC API Features](https://www.ine.es/geoserver/ogc/features/v1/collections)
-(warstwa `Secciones_2025`, filtr `CUMUN IN (…)`):
+To **jedyny pomiar bezpieczeństwa robiony per dzielnica** i zarazem dosłowna
+odpowiedź na pytanie „czy da się tu bezpiecznie chodzić" — mieszkańcy oceniają
+własną dzielnicę.
 
-| Gmina | Dystrykty INE | Sekcje censalne |
+| Dzielnica | 2025 | 2024 |
 |---|---|---|
-| Bilbao | 8 | 271 |
-| Barakaldo | 9 | 86 |
-| Basauri | 5 | 36 |
-| Erandio | 3 | 20 |
-| Arrigorriaga | 2 | 8 |
-| Etxebarri | 1 | 7 |
-| Sondika | 1 | 3 |
-| Alonsotegi | 1 | 3 |
-| Zamudio | 1 | 2 |
-| **Razem** | **31** | **436** |
+| Deusto | 5,83 | 6,02 |
+| Uribarri | 5,79 | 5,77 |
+| Otxarkoaga-Txurdinaga | 5,66 | 5,76 |
+| Errekalde | 5,56 | 5,52 |
+| Basurtu-Zorrotza | 5,50 | 5,72 |
+| Ibaiondo | 5,48 | 5,65 |
+| Begoña | 5,47 | 5,72 |
+| Abando | 5,44 | 5,72 |
 
-Osiem dystryktów INE Bilbao pokrywa się z jego ośmioma dzielnicami administracyjnymi.
-Ta sama lista 31 dystryktów wychodzi niezależnie z rejestru statystycznego INE
-(zmienna `Distritos`, operacja 353) — dwa źródła INE się zgadzają.
+Miasto ogółem 5,58; **nocą 5,24**.
 
-**Ale**: jedyne dane publikowane w tej jednostce to **INE ADRH** — dochód, indeks
-Giniego, odsetek osób poniżej progów dochodowych. **Nie przestępczość.**
+### ✅ Wiktymizacja — ISTNIEJE (dla całego miasta)
 
-## Rozstrzygnięcie
+Z tego samego badania. To są twarde statystyki „ilu ludzi padło ofiarą czego":
 
-Nie da się mieć naraz: *(a)* jednego wskaźnika, *(b)* jednostki drobniejszej niż
-gmina i *(c)* tematu bezpieczeństwa. Trzeba z czegoś zrezygnować.
-
-| Wariant | Jednostka | Wskaźnik | Jednolity? | O bezpieczeństwie? |
-|---|---|---|---|---|
-| **A** | 9 gmin | przestępczość ‰ (Udalmap) | ✅ | ✅ |
-| B | 31 dystryktów INE | dochód (ADRH) | ✅ | ❌ |
-| C | 436 sekcji censalnych | dochód (ADRH) | ✅ | ❌ |
-| D (stan obecny) | mieszana | dwa wskaźniki | ❌ | częściowo |
-
-### Wybrano: wariant B
-
-**Jeden wskaźnik: dochód netto na osobę (INE ADRH, rok 2023).
-Jedna jednostka: dystrykt INE. 31 obszarów, 31 różnych wartości.**
-
-Wariant A (przestępczość per gmina) był wybrany jako pierwszy i **odrzucony po
-teście z użytkownikiem**: dawał 9 obszarów, czyli Bilbao jako jedną plamę.
-Wymaganie „Bilbao ma być podzielone na dzielnice" jest twarde, a wariant A go
-nie spełnia. Wariant B spełnia je jako **jedyny**:
-
-| | wariant A | wariant B |
+| Przestępstwo | 2025 | 2024 |
 |---|---|---|
-| Bilbao podzielone | ❌ 1 obszar | ✅ 8 dzielnic |
-| Sąsiedzi podzieleni | ❌ po 1 | ✅ Barakaldo 9, Basauri 5, Erandio 3, Arrigorriaga 2 |
-| Ten sam wskaźnik wszędzie | ✅ | ✅ |
-| Powtórzone wartości | brak | brak (31/31 unikalnych) |
-| Szare plamy | brak | brak |
-| O bezpieczeństwie | ✅ | ❌ dochód |
+| Kradzież (hurto) | **9,3 %** | 9,2 % |
+| Rozbój z przemocą | **2,5 %** | 2,7 % |
+| Napaść na tle seksualnym | **2,5 %** | 3,2 % |
+| Zniszczenie mienia | **8,1 %** | 9,8 % |
+| Oszustwo (głównie online) | **53 %** | — |
 
-Rozpiętość: **15 034 – 30 762 €**, czyli 2,05×. Wewnątrz samego Bilbao od 15 771 €
-(Otxarkoaga-Txurdinaga) do 30 762 € (Abando) — kolor niesie realną informację.
+Publikowane zbiorczo dla Bilbao, nie per dzielnica.
 
-### Uczciwość: to nie jest miernik przestępczości
+### ✅ Przestępczość per gmina — ISTNIEJE
 
-Dochód **nie mierzy bezpieczeństwa**. Mapa mówi o tym wprost w legendzie
-(pomarańczowe ostrzeżenie) i w panelu metodologii. Dane o bezpieczeństwie nie
-znikają — każdy panel obszaru pokazuje:
+[Udalmap](https://www.euskadi.eus/indicadores-municipales-de-sostenibilidad-indice-de-delitos-x2030-habitantes/web01-a2nekabe/es/),
+przestępstwa na 1000 mieszkańców, rok 2024. Wszystkie 251 gmin Kraju Basków.
 
-- **przestępczość gminy**, w której leży dystrykt (Udalmap 2024), z jawnym
-  podpisem, że mierzona jest per gmina i nikt nie publikuje jej per dzielnica,
-- **percepcję dzielnicy** dla ośmiu dzielnic Bilbao (Ikerfel 2025).
+Zamudio 74,8 · Bilbao 66,6 · Erandio 60,1 · Barakaldo 52,2 · Alonsotegi 50,6 ·
+Sondika 48,2 · Basauri 46,7 · Arrigorriaga 37,3 · Etxebarri 28,7
+(odniesienie: Bizkaia 49,6).
 
-### Warunek powrotu do przestępczości jako miernika mapy
+## Decyzja
 
-Gdy Bilbao wdroży rekomendację EHU i zacznie publikować przestępczość per dzielnica,
-wystarczy dopisać wartości do `etl/safety-data.json` i przełączyć pole `field`
-w `src/config.ts` — jednostka (31 dystryktów) już jest właściwa.
+**Mapa pokazuje wyłącznie dane o bezpieczeństwie, każdy obszar w najdrobniejszej
+jednostce, w jakiej jest dla niego mierzone.**
+
+| Obszar | Wskaźnik | Jednostka pomiaru |
+|---|---|---|
+| 8 dzielnic Bilbao | percepcja bezpieczeństwa 0–10 | **dzielnica** |
+| 8 gmin sąsiednich | przestępstwa na 1000 mieszk. | gmina |
+
+Razem **16 obszarów, każdy z własną wartością**. Żadnych szarych plam, żadnej
+liczby powtórzonej na wielu kształtach.
+
+### Dlaczego dwie miary, a nie jedna
+
+Bo trzeciej możliwości nie ma:
+
+- Jedna miara **wszędzie** = przestępczość per gmina → Bilbao jako jedna plama.
+  Odrzucone: Bilbao ma być podzielone na dzielnice.
+- Jedna miara **per dzielnica** = tylko percepcja → 8 gmin bez danych.
+  Odrzucone: sąsiedzi mają być pokazani.
+- Jedna miara **wspólna i drobna** = dochód INE → nie mierzy bezpieczeństwa.
+  Odrzucone: to nie jest mapa zamożności.
+
+Dwie miary **o tym samym temacie**, każda w swojej jednostce, są jedynym
+wariantem bez utraty czegokolwiek istotnego.
+
+### Jak to nie wprowadza w błąd
+
+- **Osobne skale, osobne legendy.** Percepcja 0–10 (wyżej = bezpieczniej) i
+  przestępczość ‰ (wyżej = gorzej) mają własne paski w legendzie, opisane
+  jednostką i kierunkiem. Ten sam zielony nigdy nie znaczy dwóch rzeczy.
+- **Każdy obszar ma na mapie swoją liczbę z jednostką** — „Deusto 5,83/10",
+  „Barakaldo 52,2‰". Nie da się pomylić skal.
+- **Panel obszaru podaje źródło i poziom pomiaru** oraz komplet statystyk
+  wiktymizacyjnych dla Bilbao.
+
+## Warunek uproszczenia do jednej miary
+
+Gdy Bilbao wdroży rekomendację EHU i zacznie publikować przestępczość per
+dzielnica, mapa przechodzi na jedną miarę bez przebudowy: wartości dopisuje się
+do `etl/safety-data.json`, a `src/config.ts` przełącza pole metryki.
 
 ## Źródła
 
-- Udalmap, *Índice de delitos (‰ habitantes)* — [strona](https://www.euskadi.eus/indicadores-municipales-de-sostenibilidad-indice-de-delitos-x2030-habitantes/web01-a2nekabe/es/) · [API](https://api.euskadi.eus/udalmap/indicators/110)
-- Eustat/Ertzaintza, kwartalne infracciones penales — [tabela I/2026](https://es.eustat.eus/elementos/ele0025700/ti_infracciones-penales-conocidas-por-la-ertzaintza-en-la-cade-euskadi-por-tipos-segun-municipios-de-mas-de-20000-habitantes-i2026/tbl0025729_c.html)
-- INE, granice dystryktów i sekcji — [OGC API Features](https://www.ine.es/geoserver/ogc/features/v1/collections)
-- INE, *Atlas de Distribución de Renta de los Hogares* — [metodologia](https://www.ine.es/metodologia/metodologia_adrh.pdf)
+- Ikerfel dla Ratusza Bilbao, *Estudio de Percepción de Seguridad y Victimización 2025* — [Deia](https://www.deia.eus/bilbao/2026/02/17/aprueba-seguridad-bilbao-10712595.html) · [Radio Nervión (wiktymizacja)](https://www.radionervion.com/2026/02/17/seguridad-en-bilbao-2025-la-ciudadania-aprueba-con-un-558-y-senala-las-estafas-digitales-como-principal-amenaza/)
+- Badanie 2024 (rok porównawczy) — [Onda Vasca](https://www.ondavasca.com/la-percepcion-de-la-seguridad-ciudadana-en-bilbao-de-5-73-sobre-10/)
+- Udalmap, *Índice de delitos (‰ habitantes)* — [strona](https://www.euskadi.eus/indicadores-municipales-de-sostenibilidad-indice-de-delitos-x2030-habitantes/web01-a2nekabe/es/)
+- Eustat/Ertzaintza, kontrola rzędu wielkości — [tabela I/2026](https://es.eustat.eus/elementos/ele0025700/ti_infracciones-penales-conocidas-por-la-ertzaintza-en-la-cade-euskadi-por-tipos-segun-municipios-de-mas-de-20000-habitantes-i2026/tbl0025729_c.html)
 - UPV/EHU, *Bilbao Hiri Segurua* (2026) — [omówienie](https://www.bizkaiagaur.com/2026/02/19/el-ayuntamiento-de-bilbao-ha-presentado-el-informe-bilbao-hiri-segurua/)

@@ -7,7 +7,8 @@
       "method": "8580 wywiadów telefonicznych, osoby 16+, wszystkie dzielnice; praca terenowa III–XII 2025",
       "published": "2026-02-17",
       "url": "https://www.deia.eus/bilbao/2026/02/17/aprueba-seguridad-bilbao-10712595.html",
-      "scale": "0–10, gdzie 10 = najbezpieczniej (subiektywna percepcja mieszkańców)"
+      "scale": "0–10, gdzie 10 = najbezpieczniej (subiektywna percepcja mieszkańców)",
+      "victimisation_url": "https://www.radionervion.com/2026/02/17/seguridad-en-bilbao-2025-la-ciudadania-aprueba-con-un-558-y-senala-las-estafas-digitales-como-principal-amenaza/"
     },
     "ikerfel2024": {
       "title": "Estudio de Percepción de Seguridad y Victimización 2024",
@@ -128,5 +129,38 @@
         "prev": 29.39
       }
     }
+  },
+  "victimisation": {
+    "_source": "ikerfel2025",
+    "_scope": "Całe Bilbao. Badanie nie publikuje rozbicia na dzielnice.",
+    "_year": 2025,
+    "_prevYear": 2024,
+    "items": [
+      {
+        "label": "Kradzież",
+        "value": 9.3,
+        "prev": 9.2
+      },
+      {
+        "label": "Rozbój z przemocą",
+        "value": 2.5,
+        "prev": 2.7
+      },
+      {
+        "label": "Napaść na tle seksualnym",
+        "value": 2.5,
+        "prev": 3.2
+      },
+      {
+        "label": "Zniszczenie mienia",
+        "value": 8.1,
+        "prev": 9.8
+      },
+      {
+        "label": "Oszustwo (głównie online)",
+        "value": 53.0,
+        "prev": null
+      }
+    ]
   }
 }

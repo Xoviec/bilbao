@@ -1,4 +1,4 @@
-import { CATEGORY_COLORS, CATEGORY_LABELS, METRICS, DEFAULT_METRIC } from "../config";
+import { CATEGORY_COLORS, CATEGORY_LABELS, METRICS, type MetricId } from "../config";
 import { rampStops } from "../layers/safety";
 
 export interface LegendNotes {
@@ -19,36 +19,23 @@ export function renderLegend(
   categories: string[],
   notes: LegendNotes,
 ): void {
-  const metric = METRICS[DEFAULT_METRIC];
-
-  // Choropleth istnieje TYLKO dla przestępczości. Percepcja ma rozpiętość
-  // 0,39 pkt na skali 0–10 — gradient udawałby różnicę, której nie ma, więc
-  // pokazujemy ją jako liczby na dzielnicach i mówimy o tym wprost.
-  // Obie metryki mają teraz gradient, ale o RÓŻNYM znaczeniu: przestępczość to
-  // skala bezwzględna, percepcja — odchylenie od średniej miasta. Legenda musi
-  // rozróżnić te dwa przypadki, inaczej ten sam zielony znaczy raz co innego.
-  const stops = rampStops(metric);
-  const [lo, hi] = metric.domain;
-  const gradient = stops
-    .map(([v, c]) => `${c} ${(((v - lo) / (hi - lo)) * 100).toFixed(0)}%`)
-    .join(", ");
-  const [loLabel, hiLabel] = metric.ends ?? ["", ""];
-
-  const scaleHtml = `
-    <div class="legend-bar" style="background: linear-gradient(90deg, ${gradient});"></div>
-    <div class="legend-scale">
-      <span>${loLabel}</span>
-      <span>${lo}–${hi}${metric.unit}</span>
-      <span>${hiLabel}</span>
-    </div>
-    <p class="legend-note">Jeden wskaźnik na jednej jednostce — <strong>dystrykcie
-       INE</strong>. Bilbao dzieli się na 8 dzielnic, sąsiednie gminy na swoje
-       dystrykty; razem 31 obszarów, 31 niezależnych pomiarów.</p>
-    <p class="legend-note legend-caveat">⚠ To wskaźnik <strong>dochodowy</strong>,
-       nie pomiar przestępczości. Jest jedyną statystyką publikowaną w tej samej
-       jednostce dla Bilbao i wszystkich sąsiadów. Przestępczość (mierzona per
-       gmina) i percepcja są w panelu obszaru.</p>
-  `;
+  // DWIE skale, bo dwie metryki mierzone na różnych poziomach. Każda ma własny
+  // pasek, jednostkę i kierunek — ten sam zielony nigdy nie znaczy dwóch rzeczy.
+  const scale = (id: MetricId) => {
+    const m = METRICS[id];
+    const [lo, hi] = m.domain;
+    const gradient = rampStops(m)
+      .map(([v, c]) => `${c} ${(((v - lo) / (hi - lo)) * 100).toFixed(0)}%`)
+      .join(", ");
+    return `
+      <div class="legend-title legend-sub">${m.label} <small>· per ${m.level}</small></div>
+      <div class="legend-bar" style="background: linear-gradient(90deg, ${gradient});"></div>
+      <div class="legend-scale">
+        <span>${m.ends[0]}</span>
+        <span>${String(lo).replace(".", ",")}–${String(hi).replace(".", ",")}${m.unit}</span>
+        <span>${m.ends[1]}</span>
+      </div>`;
+  };
 
   const catRows = categories
     .map(
@@ -59,17 +46,20 @@ export function renderLegend(
     )
     .join("");
 
-  const missingRow =
-    notes.missing
-      ? `<div class="legend-cat legend-missing">
-           <span class="dot" style="background:#cccccc"></span>
-           <span>Brak danych (${notes.missing} z ${notes.total})</span>
-         </div>`
-      : "";
+  const missingRow = notes.missing
+    ? `<div class="legend-cat legend-missing">
+         <span class="dot" style="background:#cccccc"></span>
+         <span>Brak danych (${notes.missing} z ${notes.total})</span>
+       </div>`
+    : "";
 
   container.innerHTML = `
-    <div class="legend-title">${metric.label}</div>
-    ${scaleHtml}
+    <div class="legend-title">Bezpieczeństwo</div>
+    ${scale("perception")}
+    ${scale("crime_rate")}
+    <p class="legend-note">Każdy obszar pokazuje statystykę mierzoną na JEGO
+       poziomie i nosi swoją liczbę z jednostką. Przestępczości w podziale na
+       dzielnice nikt nie publikuje — dlatego dzielnice Bilbao mają percepcję.</p>
     ${missingRow}
     <button id="methodology-btn" class="link-btn" type="button">ⓘ Skąd te dane?</button>
     ${catRows ? `<div class="legend-title legend-sep">Kategorie miejsc</div>${catRows}` : ""}

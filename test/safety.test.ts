@@ -6,16 +6,23 @@ describe("safetyFillColor", () => {
   it("obszary bez danych dostają kolor neutralny", () => {
     const expr = safetyFillColor() as unknown[];
     expect(expr[0]).toBe("case");
-    expect((expr[1] as unknown[])[1]).toEqual(["get", "income"]);
+    expect((expr[1] as unknown[])[1]).toEqual(["get", "perception"]);
     expect(expr[2]).toBe("#cccccc"); // kolor braku danych
   });
 });
 
 describe("rampStops", () => {
-  it("dochód: wyżej = zieleń", () => {
-    const stops = rampStops(METRICS.income);
-    expect(stops[0][1]).toBe(RAMP[0]); // niski dochód = czerwień
-    expect(stops[stops.length - 1][1]).toBe(RAMP[RAMP.length - 1]); // wysoki = zieleń
+  it("percepcja: wyżej = zieleń", () => {
+    const stops = rampStops(METRICS.perception);
+    expect(stops[0][1]).toBe(RAMP[0]);
+    expect(stops[stops.length - 1][1]).toBe(RAMP[RAMP.length - 1]);
+  });
+
+  it("przestępczość: skala ODWRÓCONA, bo wyżej = gorzej", () => {
+    // Dwie skale na jednej mapie: ten sam zielony nie może znaczyć dwóch rzeczy.
+    const stops = rampStops(METRICS.crime_rate);
+    expect(stops[0][1]).toBe(RAMP[RAMP.length - 1]);
+    expect(stops[stops.length - 1][1]).toBe(RAMP[0]);
   });
 
   it("skala pokrywa zadeklarowany zakres metryki", () => {
@@ -28,11 +35,15 @@ describe("rampStops", () => {
 });
 
 describe("konfiguracja metryk", () => {
-  it("jest DOKŁADNIE jedna metryka", () => {
-    // Sedno decyzji z docs/METRIC_DECISION.md: jeden wskaźnik na jednej
-    // jednostce. Druga metryka na innym poziomie pomiaru zawsze prowadziła do
-    // szarych plam albo do tej samej liczby powtórzonej na wielu kształtach.
-    expect(Object.keys(METRICS)).toEqual(["income"]);
-    expect(DEFAULT_METRIC).toBe("income");
+  it("obie metryki dotyczą BEZPIECZEŃSTWA i mają podany poziom pomiaru", () => {
+    // Mapa bezpieczeństwa pokazuje wyłącznie bezpieczeństwo — dochód był błędem
+    // (docs/METRIC_DECISION.md v2 → v3).
+    expect(Object.keys(METRICS).sort()).toEqual(["crime_rate", "perception"]);
+    expect(DEFAULT_METRIC).toBe("perception");
+    expect(METRICS.perception.level).toBe("dzielnica");
+    expect(METRICS.crime_rate.level).toBe("gmina");
+    // Kierunki są przeciwne — legenda musi je rozróżniać.
+    expect(METRICS.perception.higherIsBetter).toBe(true);
+    expect(METRICS.crime_rate.higherIsBetter).toBe(false);
   });
 });

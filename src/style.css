@@ -57,7 +57,7 @@ body { color: var(--text); background: var(--bg); }
   box-shadow: var(--shadow);
   font-size: 0.82rem;
 }
-#legend { bottom: 16px; left: 12px; width: 220px; }
+#legend { bottom: 16px; left: 12px; width: 236px; max-height: 78vh; overflow-y: auto; }
 #filters { top: 12px; right: 56px; }
 
 .legend-title, .filters-title { font-weight: 600; margin-bottom: 8px; }
@@ -71,6 +71,8 @@ body { color: var(--text); background: var(--bg); }
   color: #2b7bba; font: inherit; font-size: 0.76rem; cursor: pointer; text-decoration: underline;
 }
 .legend-sep { margin-top: 12px; }
+.legend-sub { margin-top: 10px; font-size: 0.78rem; font-weight: 600; }
+.legend-sub small { font-weight: 400; color: var(--muted); }
 .legend-cat { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
 .legend-missing { margin-top: 8px; }
 .legend-note {

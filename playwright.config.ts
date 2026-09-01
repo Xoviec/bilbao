@@ -9,6 +9,10 @@ export default defineConfig({
   testDir: "./e2e",
   timeout: 30000,
   fullyParallel: true,
+  // Każdy worker renderuje pełną mapę WebGL przez SwiftShader (programowo).
+  // Przy czterech naraz przeglądarka potrafi paść na wyczerpaniu zasobów —
+  // objawiało się to "Target page has been closed" w losowym teście.
+  workers: 2,
   reporter: "list",
   webServer: {
     command: "npm run preview -- --port 4173 --strictPort",

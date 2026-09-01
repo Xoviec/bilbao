@@ -51,6 +51,19 @@ export interface Reference {
   prev: number;
 }
 
+export interface VictimItem {
+  label: string;
+  value: number;
+  prev: number | null;
+}
+
+export interface Victimisation {
+  _scope: string;
+  _year: number;
+  _prevYear: number;
+  items: VictimItem[];
+}
+
 export interface CityWide {
   perception: number;
   perceptionNight: number;
@@ -76,12 +89,11 @@ interface SafetyFile {
   _cityWide: Record<string, CityWide>;
   _reference?: Reference;
   _municipalities: Record<string, MunicipalityRecord>;
+  _victimisation?: Victimisation;
   _units: SafetyMap;
 }
 
 export interface LoadedData {
-  /** Dystrykty INE — warstwa niosąca choropleth (31 obszarów). */
-  ineDistricts: GeoJSON.FeatureCollection;
   /** Poligony gmin — kontekst (stopa przestępczości mierzona na tym poziomie). */
   municipalities: GeoJSON.FeatureCollection;
   districts: GeoJSON.FeatureCollection;
@@ -90,6 +102,8 @@ export interface LoadedData {
   cityWide: Record<string, CityWide>;
   /** Odniesienie (średnia prowincji) — sama stopa niewiele mówi bez punktu odniesienia. */
   reference: Reference | null;
+  /** Twarde statystyki wiktymizacyjne (kradzieże, rozboje) — zbiorczo dla Bilbao. */
+  victimisation: Victimisation | null;
   activities: GeoJSON.FeatureCollection;
   poi: GeoJSON.FeatureCollection;
   /** Czy GEOMETRIA obszarów to placeholder (znika po `npm run etl`). */
@@ -107,10 +121,9 @@ async function fetchJSON<T>(url: string): Promise<T> {
  * obszarów (join po polu `code`).
  */
 export async function loadAllData(): Promise<LoadedData> {
-  const [districts, municipalities, ineDistricts, safetyFile, activities, poi] = await Promise.all([
+  const [districts, municipalities, safetyFile, activities, poi] = await Promise.all([
     fetchJSON<GeoJSON.FeatureCollection>(DATA.districts),
     fetchJSON<GeoJSON.FeatureCollection>(DATA.municipalities),
-    fetchJSON<GeoJSON.FeatureCollection>(DATA.ineDistricts),
     fetchJSON<SafetyFile>(DATA.safety),
     fetchJSON<GeoJSON.FeatureCollection>(DATA.activities),
     fetchJSON<GeoJSON.FeatureCollection>(DATA.poi),
@@ -123,13 +136,13 @@ export async function loadAllData(): Promise<LoadedData> {
   );
 
   return {
-    ineDistricts,
     municipalities: joinCrime(municipalities, safetyFile._municipalities ?? {}),
     districts: joinSafety(districts, safety),
     safety,
     sources: safetyFile._sources ?? {},
     cityWide: safetyFile._cityWide ?? {},
     reference: safetyFile._reference ?? null,
+    victimisation: safetyFile._victimisation ?? null,
     activities,
     poi,
     geometryPlaceholder,

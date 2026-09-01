@@ -34,21 +34,18 @@ npm run etl      # pobranie realnych danych z OSM (wymaga sieci → Overpass)
 ## Zasady
 - **Dane bezpieczeństwa są wrażliwe** — trzymaj się `docs/SAFETY_METHODOLOGY.md`
   (jawność, neutralny język, oznaczanie danych szacunkowych).
-- **JEDEN wskaźnik, JEDNA jednostka: dystrykt INE (31 obszarów).** Miernik to
-  dochód netto na osobę (INE ADRH). Decyzja: `docs/METRIC_DECISION.md`.
-  Nie dodawaj drugiej metryki na innym poziomie pomiaru — kończyło się to albo
-  szarymi plamami, albo tą samą liczbą powtórzoną na wielu kształtach.
-- **Bilbao MUSI być podzielone na 8 dzielnic.** To twarde wymaganie. Dystrykty INE
-  są jedyną jednostką, w której Bilbao i sąsiedzi mają wspólny podział i wspólny
-  pomiar — OSM ma podział poniżej gminy tylko dla Bilbao.
-- **Miernik mapy to dochód, nie przestępczość** — i legenda oraz panel metodologii
-  muszą to mówić wprost. Przestępczość (per gmina) i percepcja (8 dzielnic Bilbao)
-  są kontekstem w panelu obszaru, jawnie podpisanym poziomem pomiaru.
-- Wszystkie dane są **realne i mają cytowane źródło**. Granice i POI: OSM
-  (`npm run etl`). Bezpieczeństwo: `etl/safety-data.json` → `npm run safety`
-  → `public/data/safety.json` (generowane, nie edytuj ręcznie).
-- **Nie wpisuj liczby bez źródła.** Pilnuje tego test „każda liczba pochodzi
-  z zadeklarowanego źródła".
+- **Mapa pokazuje WYŁĄCZNIE bezpieczeństwo.** Dochód/demografia to nie jest to —
+  wersja 2 dokumentu decyzji popełniła ten błąd i została cofnięta.
+- **Bilbao MUSI być podzielone na 8 dzielnic.** Twarde wymaganie.
+- **Dwie metryki, obie o bezpieczeństwie, każda w jednostce swojego pomiaru:**
+  `perception` (0–10, ankieta, 8 dzielnic Bilbao — jedyny pomiar per dzielnica)
+  i `crime_rate` (‰, Udalmap, 8 gmin sąsiednich). Skale ROZDZIELNE, każda
+  z własną legendą; każdy obszar nosi na mapie liczbę z jednostką. Nie łącz ich
+  w jeden indeks i nie przenoś jednej na poziom drugiej.
+- Statystyki wiktymizacyjne (kradzieże, rozboje, napaści) są w
+  `etl/safety-data.json` → `victimisation` i lądują w panelu dzielnicy. To dane
+  zbiorcze dla Bilbao — nie udawaj, że są per dzielnica.
+- Wszystkie dane mają **cytowane źródło**; pilnuje tego test.
 - Gminy są przypięte po **ID relacji** w `etl/cities.json`. Nie wracaj do
   wyszukiwania po nazwie — `name="Bilbao"` dopasowuje też Ekwador i Kolumbię.
 - **Dwie rozdzielczości są zamierzone.** W całej Bizkaia tylko Bilbao ma w OSM

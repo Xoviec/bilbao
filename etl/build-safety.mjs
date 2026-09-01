@@ -41,6 +41,10 @@ const main = async () => {
     _sources: src.sources,
     _cityWide: src.cityWide,
     _reference: src.crime._reference,
+    // Twarde statystyki "ilu ludzi padło ofiarą czego". Publikowane zbiorczo dla
+    // Bilbao — nie da się ich rozbić na dzielnice, więc panel podaje je jako
+    // kontekst miejski, jawnie podpisany zasięgiem.
+    _victimisation: src.victimisation,
     // Przestępczość jest mierzona NA POZIOMIE GMINY i tak też jest rysowana.
     // Dzielnice dostają ją tylko do panelu (z adnotacją `crime_scope`).
     _municipalities: {},

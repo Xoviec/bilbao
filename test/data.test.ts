@@ -11,14 +11,16 @@ const safety = read("safety.json");
 const poi = read("poi.geojson");
 const activities = read("activities.geojson");
 const municipalities = read("municipalities.geojson");
-const ine = read("ine-districts.geojson");
 const registry = JSON.parse(
   readFileSync(resolve(__dirname, "../etl/cities.json"), "utf8"),
 ).cities as Array<{ slug: string; name: string; unit: string; minUnits: number }>;
 
-// JEDNA jednostka mapy: gmina (docs/METRIC_DECISION.md). Dzielnice zostają
-// w danych — ich percepcja trafia do panelu gminy — ale nie są obszarami mapy.
-const areas = municipalities.features;
+// Obszary mapy: 8 dzielnic Bilbao (percepcja) + 8 gmin sąsiednich (przestępczość).
+// Gmina Bilbao nie jest obszarem — reprezentują ją dzielnice.
+const areas = [
+  ...districts.features,
+  ...municipalities.features.filter((f: any) => f.properties.code !== "bilbao"),
+];
 const codes = new Set<string>(areas.map((f: any) => f.properties.code));
 const safetyUnits = safety._units as Record<string, any>;
 const safetyKeys = Object.keys(safetyUnits);
@@ -42,18 +44,6 @@ describe("Integralność danych (public/data)", () => {
     ]);
     for (const k of safetyKeys) expect(all.has(k), `safety ma nieznany kod: ${k}`).toBe(true);
     for (const c of all) expect(safetyKeys.includes(c), `brak safety dla: ${c}`).toBe(true);
-  });
-
-  it("każdy obszar mapy ma wartość miernika", () => {
-    // Sedno: jeden wskaźnik, wszędzie obecny. Żadnej szarej plamy.
-    for (const f of areas) {
-      expect(safetyUnits[f.properties.code].crime_rate, f.properties.code).not.toBeNull();
-    }
-  });
-
-  it("obszary mapy mają RÓŻNE wartości — geometria niesie informację", () => {
-    const vals = areas.map((f: any) => safetyUnits[f.properties.code].crime_rate);
-    expect(new Set(vals).size).toBe(vals.length);
   });
 
   it("wskaźniki mieszczą się w zakresie swojej skali (lub są null)", () => {
@@ -82,14 +72,6 @@ describe("Integralność danych (public/data)", () => {
     for (const f of places) {
       expect(cities.has(f.properties.city), `miejsce ${f.properties.name}`).toBe(true);
     }
-  });
-
-  it("każda gmina z rejestru jest obszarem mapy", () => {
-    const codesOnMap = new Set(areas.map((f: any) => f.properties.code));
-    for (const city of registry) {
-      expect(codesOnMap.has(city.slug), `${city.name}: brak na mapie`).toBe(true);
-    }
-    expect(areas.length).toBe(registry.length);
   });
 
   it("kody są przestrzeniowane nazwą gminy", () => {
@@ -258,47 +240,57 @@ describe("Warstwa gmin (choropleth przestępczości)", () => {
   });
 });
 
-describe("Dystrykty INE (jednostka mapy)", () => {
-  it("Bilbao jest podzielone na 8 nazwanych dzielnic", () => {
-    // Twarde wymaganie: Bilbao MUSI być podzielone.
-    const bil = ine.features.filter((f: any) => f.properties.city === "bilbao");
-    expect(bil.length).toBe(8);
-    const names = bil.map((f: any) => f.properties.name).sort();
+describe("Obszary mapy: 8 dzielnic Bilbao + 8 gmin sąsiednich", () => {
+  const neighbours = municipalities.features.filter((f: any) => f.properties.code !== "bilbao");
+
+  it("Bilbao JEST podzielone na 8 dzielnic", () => {
+    expect(districts.features.length).toBe(8);
+    const names = districts.features.map((f: any) => f.properties.name).sort();
     expect(names).toEqual([
       "Abando", "Basurtu-Zorrotza", "Begoña", "Deusto",
       "Errekalde", "Ibaiondo", "Otxarkoaga-Txurdinaga", "Uribarri",
     ]);
   });
 
-  it("sąsiedzi też są podzieleni na swoje dystrykty", () => {
-    const counts: Record<string, number> = {};
-    for (const f of ine.features) counts[f.properties.city] = (counts[f.properties.city] ?? 0) + 1;
-    expect(counts.barakaldo).toBe(9);
-    expect(counts.basauri).toBe(5);
-    expect(counts.erandio).toBe(3);
-    expect(counts.arrigorriaga).toBe(2);
-    expect(ine.features.length).toBe(31);
-  });
-
-  it("każdy dystrykt ma wartość miernika", () => {
-    for (const f of ine.features) {
-      expect(f.properties.income, f.properties.code).not.toBeNull();
-      expect(typeof f.properties.income).toBe("number");
+  it("każda dzielnica ma percepcję — metrykę mierzoną NA JEJ poziomie", () => {
+    for (const f of districts.features) {
+      const v = safetyUnits[f.properties.code].perception;
+      expect(v, f.properties.code).not.toBeNull();
+      expect(v).toBeGreaterThan(0);
+      expect(v).toBeLessThanOrEqual(10);
     }
   });
 
-  it("wartości są RÓŻNE — żadnych powtórzeń", () => {
-    // Regresja, która wracała wielokrotnie: ta sama liczba na wielu kształtach.
-    const vals = ine.features.map((f: any) => f.properties.income);
-    expect(new Set(vals).size).toBe(vals.length);
+  it("każda gmina sąsiednia ma stopę przestępczości", () => {
+    expect(neighbours.length).toBe(8);
+    for (const f of neighbours) {
+      expect(safetyUnits[f.properties.code].crime_rate, f.properties.code).not.toBeNull();
+    }
   });
 
-  it("geometrie to realne poligony", () => {
-    for (const f of ine.features) {
-      const ring = f.geometry.type === "Polygon"
-        ? f.geometry.coordinates[0]
-        : f.geometry.coordinates[0][0];
-      expect(ring.length, f.properties.code).toBeGreaterThan(10);
+  it("wartości w obrębie każdej skali są RÓŻNE", () => {
+    // Regresja wracała wielokrotnie: ta sama liczba na wielu kształtach.
+    const per = districts.features.map((f: any) => safetyUnits[f.properties.code].perception);
+    expect(new Set(per).size).toBe(per.length);
+    const cr = neighbours.map((f: any) => safetyUnits[f.properties.code].crime_rate);
+    expect(new Set(cr).size).toBe(cr.length);
+  });
+
+  it("statystyki wiktymizacyjne są obecne i mają rok porównawczy", () => {
+    // To są dane, o które pyta się najczęściej: kradzieże, rozboje, napaści.
+    const v = safety._victimisation;
+    expect(v, "brak bloku wiktymizacji").toBeTruthy();
+    expect(v.items.length).toBeGreaterThanOrEqual(4);
+    const labels = v.items.map((i: any) => i.label);
+    expect(labels).toContain("Kradzież");
+    expect(labels).toContain("Rozbój z przemocą");
+    for (const it of v.items) expect(typeof it.value).toBe("number");
+  });
+
+  it("dane o bezpieczeństwie nie są zastąpione niczym innym", () => {
+    // Wersja 2 pokazywała dochód — to był błąd. Żaden obszar nie ma pola income.
+    for (const f of [...districts.features, ...municipalities.features]) {
+      expect(f.properties.income, `${f.properties.code} ma pole dochodowe`).toBeUndefined();
     }
   });
 });

@@ -10,7 +10,7 @@ kątem wydajności renderowania i czytelności danych.
 
 ## ✨ Co pokazuje mapa
 
-- **Choropleth jednego wskaźnika na 31 dystryktach** — Bilbao podzielone na 8 dzielnic.
+- **Choropleth bezpieczeństwa** — 8 dzielnic Bilbao (percepcja) + 8 gmin (przestępczość).
 - **Panel obszaru** — wartość, trend r/r, odniesienie do prowincji, źródło.
 - **Aktywności** — sport, kultura, nocne życie, tereny zielone (ikony kategorii).
 - **POI / miejsca warte zobaczenia** — atrakcje, punkty widokowe, zabytki (clustering).
@@ -70,42 +70,44 @@ bilbao-safety-map/
 Granice i miejsca pochodzą z **OpenStreetMap** (`npm run etl`). Mapa obejmuje
 **Bilbao i 8 gmin z nim graniczących**.
 
-### Jeden wskaźnik, jedna jednostka: 31 dystryktów INE
+### Co pokazuje mapa
 
-**Bilbao dzieli się na 8 dzielnic, sąsiednie gminy na swoje dystrykty.** To jedyna
-jednostka, w której cała aglomeracja ma ten sam podział i ten sam pomiar.
+**Wyłącznie dane o bezpieczeństwie.** 16 obszarów: **8 dzielnic Bilbao** i 8 gmin
+sąsiednich. Każdy pokolorowany statystyką mierzoną **na jego poziomie** — bo
+przestępczości w podziale na dzielnice nikt nie publikuje.
 Uzasadnienie: [`docs/METRIC_DECISION.md`](docs/METRIC_DECISION.md).
 
-| Gmina | Dystryktów |
-|---|---|
-| Bilbao | 8 (Deusto, Uribarri, Otxarkoaga-Txurdinaga, Begoña, Ibaiondo, Abando, Errekalde, Basurtu-Zorrotza) |
-| Barakaldo | 9 |
-| Basauri | 5 |
-| Erandio | 3 |
-| Arrigorriaga | 2 |
-| Etxebarri, Sondika, Zamudio, Alonsotegi | po 1 |
-| **Razem** | **31** |
+**Dzielnice Bilbao — percepcja bezpieczeństwa (0–10).**
+[Badanie Ratusza Bilbao](https://www.deia.eus/bilbao/2026/02/17/aprueba-seguridad-bilbao-10712595.html)
+(Ikerfel, 8580 wywiadów, 2025). Jedyny pomiar bezpieczeństwa robiony per dzielnica.
 
-Miernik: **dochód netto na osobę**, [INE ADRH](https://www.ine.es/metodologia/metodologia_adrh.pdf) 2023.
-Zakres 15 034 – 30 762 € — wewnątrz samego Bilbao od Otxarkoaga-Txurdinaga
-(15 771 €) po Abando (30 762 €). **31 obszarów, 31 różnych wartości.**
+| Dzielnica | 2025 | 2024 |
+|---|---|---|
+| Deusto | 5,83 | 6,02 |
+| Uribarri | 5,79 | 5,77 |
+| Otxarkoaga-Txurdinaga | 5,66 | 5,76 |
+| Errekalde | 5,56 | 5,52 |
+| Basurtu-Zorrotza | 5,50 | 5,72 |
+| Ibaiondo | 5,48 | 5,65 |
+| Begoña | 5,47 | 5,72 |
+| Abando | 5,44 | 5,72 |
 
-> ⚠️ **To wskaźnik dochodowy, nie pomiar przestępczości.** Wybrany, bo jest jedyną
-> statystyką publikowaną w tej samej jednostce dla Bilbao i wszystkich sąsiadów.
-> Mapa mówi o tym wprost w legendzie i panelu metodologii.
+Miasto ogółem 5,58; **nocą 5,24**.
 
-### Bezpieczeństwo — w panelu obszaru
+**Ofiary przestępstw — Bilbao 2025** (z tego samego badania, w nawiasie 2024):
+kradzież **9,3 %** (9,2 %) · rozbój z przemocą **2,5 %** (2,7 %) · napaść na tle
+seksualnym **2,5 %** (3,2 %) · zniszczenie mienia **8,1 %** (9,8 %) · oszustwo
+online **53 %**. Publikowane zbiorczo dla miasta.
 
-- **Przestępstwa na 1000 mieszkańców** ([Udalmap](https://www.euskadi.eus/indicadores-municipales-de-sostenibilidad-indice-de-delitos-x2030-habitantes/web01-a2nekabe/es/), 2024) — mierzone **per gmina**,
-  więc podpisane nazwą gminy: Zamudio 74,8 · Bilbao 66,6 · Erandio 60,1 ·
-  Barakaldo 52,2 · Alonsotegi 50,6 · Sondika 48,2 · Basauri 46,7 ·
-  Arrigorriaga 37,3 · Etxebarri 28,7 (Bizkaia 49,6).
-- **Percepcja bezpieczeństwa** ([Ikerfel dla Ratusza Bilbao](https://www.deia.eus/bilbao/2026/02/17/aprueba-seguridad-bilbao-10712595.html), 2025) —
-  osiem dzielnic Bilbao: Deusto 5,83 … Abando 5,44.
+**Gminy sąsiednie — przestępstwa na 1000 mieszkańców.**
+[Udalmap](https://www.euskadi.eus/indicadores-municipales-de-sostenibilidad-indice-de-delitos-x2030-habitantes/web01-a2nekabe/es/), 2024:
+Zamudio 74,8 · Erandio 60,1 · Barakaldo 52,2 · Alonsotegi 50,6 · Sondika 48,2 ·
+Basauri 46,7 · Arrigorriaga 37,3 · Etxebarri 28,7 (Bizkaia 49,6; Bilbao 66,6).
 
-> **Dlaczego przestępczość nie jest miernikiem mapy:** nikt nie publikuje jej
-> poniżej poziomu gminy. Użycie jej oznaczałoby jedną liczbę powtórzoną na ośmiu
-> dzielnicach Bilbao. Sprawdzone trzykrotnie — szczegóły w dokumencie decyzji.
+> **Dlaczego dwie miary:** jedna miara wszędzie oznacza przestępczość per gmina,
+> czyli Bilbao jako jedną plamę. Jedna miara per dzielnica istnieje tylko
+> w Bilbao. Skale są rozdzielne, każda z własną legendą, a każdy obszar nosi na
+> mapie swoją liczbę z jednostką.
 
 ### Odświeżenie danych
 

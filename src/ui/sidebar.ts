@@ -1,4 +1,4 @@
-import type { SafetyMap, SourceRef, Reference, CityWide } from "../data/loader";
+import type { Reference, CityWide, Victimisation } from "../data/loader";
 import { CATEGORY_COLORS, CATEGORY_LABELS } from "../config";
 
 const TREND_ICON: Record<string, string> = { up: "▲", flat: "▬", down: "▼" };
@@ -20,69 +20,94 @@ const fmt = (n: number | null, digits = 2): string =>
 
 export interface AreaView {
   name: string;
-  /** Miernik mapy: dochód netto na osobę (dystrykt INE). */
-  income: number | null;
-  incomePrev: number | null;
-  incomeYear: number | null;
-  /** Kontekst: stopa przestępczości gminy, w której leży dystrykt. */
-  cityName: string;
-  crimeRate: number | null;
-  crimePeriod: string | null;
-  crimeChangePct: number | null;
-  /** Kontekst: percepcja tej dzielnicy, jeśli badana (tylko Bilbao). */
+  /** Dzielnica Bilbao (percepcja) czy gmina sąsiednia (przestępczość). */
+  isDistrict: boolean;
   perception: number | null;
-  perceptionYear: number | null;
+  perceptionPrev: number | null;
+  crimeRate: number | null;
+  crimePrev: number | null;
+  crimeChangePct: number | null;
+  crimePeriod: string | null;
+  cityName: string;
+  /** Stopa gminy, w której leży dzielnica — kontekst, nie jej własny pomiar. */
+  cityCrimeRate: number | null;
 }
 
-const money = (n: number | null) =>
-  n == null ? "—" : `${n.toLocaleString("pl-PL")} €`;
+const trendOf = (now: number | null, prev: number | null, higherBetter: boolean) => {
+  if (now == null || prev == null || now === prev) return "flat";
+  return (higherBetter ? now > prev : now < prev) ? "up" : "down";
+};
 
-/** Renderuje panel szczegółów wybranego obszaru (miernik + kontekst + miejsca). */
+/**
+ * Panel obszaru. Metryka mierzona NA JEGO POZIOMIE jest główna, reszta danych
+ * o bezpieczeństwie idzie jako jawnie podpisany kontekst.
+ */
 export function showArea(
   sidebar: HTMLElement,
   view: AreaView,
   places: PlaceItem[] = [],
   reference: Reference | null = null,
+  victimisation: Victimisation | null = null,
+  cityWide: CityWide | null = null,
 ): void {
   sidebar.classList.remove("hidden");
 
-  const trend =
-    view.income != null && view.incomePrev != null
-      ? view.income > view.incomePrev
-        ? "up"
-        : view.income < view.incomePrev
-          ? "down"
-          : "flat"
-      : "flat";
+  const main = view.isDistrict
+    ? `<div class="metric">
+         <div class="metric-head">
+           <span class="metric-label">Percepcja bezpieczeństwa</span>
+           <span class="metric-value">${fmt(view.perception)}<small>/10</small>
+             ${TREND_ICON[trendOf(view.perception, view.perceptionPrev, true)]}</span>
+         </div>
+         <p class="metric-meta">Ankieta mieszkańców 2025 · rok wcześniej
+            ${fmt(view.perceptionPrev)}${
+              cityWide
+                ? ` · miasto ogółem ${fmt(cityWide.perception)}, nocą ${fmt(cityWide.perceptionNight)}`
+                : ""
+            }</p>
+         <p class="metric-src">Ratusz Bilbao / Ikerfel · 8580 wywiadów · pomiar per dzielnica</p>
+       </div>`
+    : `<div class="metric">
+         <div class="metric-head">
+           <span class="metric-label">Przestępstwa / 1000 mieszk.</span>
+           <span class="metric-value">${fmt(view.crimeRate, 1)}
+             ${TREND_ICON[trendOf(view.crimeRate, view.crimePrev, false)]}</span>
+         </div>
+         <p class="metric-meta">${esc(view.crimePeriod ?? "")}${
+           view.crimeChangePct == null
+             ? ""
+             : ` · ${view.crimeChangePct > 0 ? "+" : ""}${fmt(view.crimeChangePct, 1)}% r/r`
+         }${reference ? ` · ${esc(reference.name)}: ${fmt(reference.rate, 1)}‰` : ""}</p>
+         <p class="metric-src">Udalmap (Rząd Kraju Basków) · pomiar per gmina</p>
+       </div>`;
 
-  const metricHtml = `
-    <div class="metric">
-      <div class="metric-head">
-        <span class="metric-label">Dochód netto na osobę</span>
-        <span class="metric-value">${money(view.income)} ${TREND_ICON[trend] ?? ""}</span>
-      </div>
-      <p class="metric-meta">${view.incomeYear ?? ""} · rok wcześniej ${money(view.incomePrev)}</p>
-      <p class="metric-src">INE — Atlas de Distribución de Renta de los Hogares</p>
-    </div>`;
-
-  // Kontekst: przestępczość mierzona jest per GMINA, nie per dystrykt — dlatego
-  // stoi osobno i jest podpisana nazwą gminy, a nie tego obszaru.
-  const pct = view.crimeChangePct;
-  const crimeHtml =
-    view.crimeRate != null
+  // Dzielnica nie ma własnej stopy przestępczości — nikt jej w tym rozbiciu nie
+  // publikuje. Stopa gminy stoi obok, podpisana nazwą gminy.
+  const cityCrime =
+    view.isDistrict && view.cityCrimeRate != null
       ? `<p class="metric-context">Przestępczość mierzona jest dla całej gminy
-           <strong>${esc(view.cityName)}</strong>: ${fmt(view.crimeRate, 1)}‰
-           (${esc(view.crimePeriod ?? "")}${
-             pct == null ? "" : `, ${pct > 0 ? "+" : ""}${fmt(pct, 1)}% r/r`
-           })${reference ? ` · ${esc(reference.name)}: ${fmt(reference.rate, 1)}‰` : ""}.
+           <strong>${esc(view.cityName)}</strong>: ${fmt(view.cityCrimeRate, 1)}‰
+           (2024)${reference ? ` · ${esc(reference.name)}: ${fmt(reference.rate, 1)}‰` : ""}.
            W podziale na dzielnice nikt jej nie publikuje.</p>`
       : "";
 
-  const percHtml =
-    view.perception != null
-      ? `<p class="metric-context">Percepcja bezpieczeństwa tej dzielnicy:
-           <strong>${fmt(view.perception)}/10</strong> (ankieta Ratusza Bilbao,
-           ${view.perceptionYear ?? ""}). Badana wyłącznie w Bilbao.</p>`
+  // Twarde statystyki „ilu ludzi padło ofiarą czego".
+  const victims =
+    victimisation && victimisation.items.length
+      ? `<div class="extra">
+           <h3 class="extra-title">Ofiary przestępstw — Bilbao ${victimisation._year}</h3>
+           <p class="extra-note">Odsetek mieszkańców, którzy padli ofiarą (w nawiasie
+              ${victimisation._prevYear}). ${esc(victimisation._scope)}</p>
+           <ul class="perc-list">
+             ${victimisation.items
+               .map(
+                 (v) => `<li><span>${esc(v.label)}</span><strong>${fmt(v.value, 1)}%${
+                   v.prev == null ? "" : ` <small>(${fmt(v.prev, 1)}%)</small>`
+                 }</strong></li>`,
+               )
+               .join("")}
+           </ul>
+         </div>`
       : "";
 
   const placesHtml = places.length
@@ -103,11 +128,11 @@ export function showArea(
   sidebar.innerHTML = `
     <button class="close" aria-label="Zamknij">×</button>
     <h2 tabindex="-1">${esc(view.name)}</h2>
-    ${metricHtml}
-    ${crimeHtml}
-    ${percHtml}
+    ${main}
+    ${cityCrime}
+    ${victims}
     ${placesHtml}
-    <p class="source muted">Granice i miejsca: OpenStreetMap · dystrykty: INE</p>
+    <p class="source muted">Granice i miejsca: OpenStreetMap</p>
   `;
 
   const close = () => {
@@ -119,113 +144,5 @@ export function showArea(
   };
   sidebar.querySelector(".close")?.addEventListener("click", close);
   document.addEventListener("keydown", onKey);
-  (sidebar.querySelector("h2") as HTMLElement)?.focus();
-}
-
-/** Renderuje panel szczegółów wybranego obszaru (metryki + miejsca). */
-export function showDistrict(
-  sidebar: HTMLElement,
-  code: string,
-  name: string,
-  safety: SafetyMap,
-  places: PlaceItem[] = [],
-  sources: Record<string, SourceRef> = {},
-  reference: Reference | null = null,
-  cityWide: Record<string, CityWide> = {},
-  districtPerception: Array<{ name: string; value: number }> = [],
-): void {
-  const rec = safety[code];
-  const city = cityWide[code];
-  sidebar.classList.remove("hidden");
-
-  const blocks: string[] = [];
-
-  // Percepcja NIE jest wskaźnikiem mapy — istnieje tylko dla Bilbao, więc nie może
-  // być jednolita (docs/METRIC_DECISION.md). Dane nie przepadają: pokazujemy je
-  // w panelu Bilbao jako listę ośmiu dzielnic, jawnie oddzieloną od miernika mapy.
-  if (rec?.crime_rate != null) {
-    const src = rec.crime_source ? sources[rec.crime_source] : undefined;
-    const pct = rec.crime_change_pct;
-    const pctTxt = pct == null ? "" : `${pct > 0 ? "+" : ""}${fmt(pct, 1)}% r/r`;
-    // Przy przestępczości "up" znaczy WIĘCEJ przestępstw — czyli gorzej.
-    blocks.push(`
-      <div class="metric">
-        <div class="metric-head">
-          <span class="metric-label">Przestępstwa / 1000 mieszk.</span>
-          <span class="metric-value">${fmt(rec.crime_rate, 1)}
-            ${TREND_ICON[rec.crime_trend] ?? ""}</span>
-        </div>
-        <p class="metric-meta">${esc(rec.crime_period ?? "")} ${pctTxt ? `· ${pctTxt}` : ""}${
-          reference ? ` · ${esc(reference.name)}: ${fmt(reference.rate, 1)}` : ""
-        }</p>
-        ${src ? `<p class="metric-src">${esc(src.publisher)}</p>` : ""}
-      </div>`);
-  }
-
-  // Dzielnica NIE ma własnej stopy przestępczości — nikt jej nie publikuje w tym
-  // podziale. Pokazujemy wartość gminy jako kontekst, wyraźnie oddzielony od
-  // metryk tego obszaru, zamiast powtarzać tę samą liczbę na ośmiu dzielnicach.
-  const safetyHtml = blocks.length
-    ? blocks.join("")
-    : `<p class="muted">Brak danych o bezpieczeństwie dla tego obszaru.
-         ${esc(rec?.no_data_reason ?? "")}</p>`;
-
-  const perceptionHtml = districtPerception.length
-    ? `<div class="extra">
-         <h3 class="extra-title">Percepcja bezpieczeństwa wg dzielnic (0–10)</h3>
-         <p class="extra-note">Badanie ankietowe Ratusza Bilbao (Ikerfel, 2025).
-            Osobny wskaźnik — nie miernik mapy, bo istnieje tylko w Bilbao.${
-              city ? ` Miasto ogółem ${fmt(city.perception)}, nocą ${fmt(city.perceptionNight)}.` : ""
-            }</p>
-         <ul class="perc-list">
-           ${districtPerception
-             .map(
-               (d) => `<li><span>${esc(d.name)}</span><strong>${fmt(d.value)}</strong></li>`,
-             )
-             .join("")}
-         </ul>
-       </div>`
-    : "";
-
-  const placesHtml = places.length
-    ? `<h3 class="places-title">Miejsca w tym obszarze (${places.length})</h3>
-       <ul class="places-list">
-         ${places
-           .map(
-             (p) => `<li>
-               <span class="dot" style="background:${CATEGORY_COLORS[p.category] ?? "#666"}"></span>
-               <span class="place-name">${esc(p.name)}</span>
-               <span class="place-cat">${esc(CATEGORY_LABELS[p.category] ?? p.category)}</span>
-             </li>`,
-           )
-           .join("")}
-       </ul>`
-    : `<p class="muted">Brak miejsc w danych dla tego obszaru.</p>`;
-
-  const sourceHtml = blocks.length
-    ? `<p class="source muted">Miejsca i granice: OpenStreetMap</p>`
-    : `<p class="source muted">Brak wskaźników dla tego obszaru · miejsca i granice: OpenStreetMap</p>`;
-
-  sidebar.innerHTML = `
-    <button class="close" aria-label="Zamknij">×</button>
-    <h2 tabindex="-1">${esc(name)}</h2>
-    ${safetyHtml}
-    ${perceptionHtml}
-    ${placesHtml}
-    ${sourceHtml}
-  `;
-
-  const close = () => {
-    sidebar.classList.add("hidden");
-    document.removeEventListener("keydown", onKey);
-  };
-  const onKey = (e: KeyboardEvent) => {
-    if (e.key === "Escape") close();
-  };
-
-  sidebar.querySelector(".close")?.addEventListener("click", close);
-  document.addEventListener("keydown", onKey);
-
-  // Focus na nagłówku — czytniki ekranu ogłoszą otwarty panel.
   (sidebar.querySelector("h2") as HTMLElement)?.focus();
 }

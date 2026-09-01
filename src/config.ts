@@ -39,7 +39,6 @@ export const FALLBACK_STYLE = {
 export const DATA = {
   districts: "data/districts.geojson",
   municipalities: "data/municipalities.geojson",
-  ineDistricts: "data/ine-districts.geojson",
   safety: "data/safety.json",
   activities: "data/activities.geojson",
   poi: "data/poi.geojson",
@@ -50,7 +49,7 @@ export const DATA = {
 // Diverging, bezpieczna dla daltonistów.
 export const RAMP = ["#d73027", "#fc8d59", "#fee08b", "#91cf60", "#1a9850"];
 
-export type MetricId = "income";
+export type MetricId = "perception" | "crime_rate";
 
 export interface Metric {
   id: MetricId;
@@ -60,28 +59,45 @@ export interface Metric {
   domain: [number, number];
   higherIsBetter: boolean;
   short: string;
-  ends?: [string, string];
+  ends: [string, string];
+  /** Na jakim poziomie ta statystyka jest mierzona. */
+  level: string;
 }
 
-// JEDEN wskaźnik, JEDNA jednostka — dystrykt INE (patrz docs/METRIC_DECISION.md).
-// To jedyna jednostka, w której Bilbao i wszyscy sąsiedzi mają ten sam podział
-// i ten sam pomiar: 31 obszarów, 31 różnych wartości, zero powtórzeń i zero
-// szarych plam.
+// DWA wskaźniki, oba o BEZPIECZEŃSTWIE, każdy w jednostce, w której jest
+// mierzony (docs/METRIC_DECISION.md). Nie ma trzeciej możliwości: jedna miara
+// wszędzie oznacza Bilbao jako jedną plamę, jedna miara per dzielnica zostawia
+// gminy bez danych, a jedyna wspólna i drobna statystyka (dochód INE) nie mierzy
+// bezpieczeństwa. Skale są ROZDZIELNE — ten sam zielony nigdy nie znaczy dwóch
+// rzeczy, bo każdy obszar ma na mapie swoją liczbę z jednostką.
 export const METRICS: Record<MetricId, Metric> = {
-  income: {
-    id: "income",
-    field: "income",
-    label: "Dochód netto na osobę",
-    unit: " €",
-    // Obejmuje wszystkie 31 dystryktów (15 034 – 30 762 €).
-    domain: [15000, 31000],
+  perception: {
+    id: "perception",
+    field: "perception",
+    label: "Percepcja bezpieczeństwa",
+    unit: "/10",
+    // Ustalony zakres — rozpiętość między dzielnicami to 0,39 pkt i skala nie
+    // ma jej wyolbrzymiać.
+    domain: [5.3, 6.0],
     higherIsBetter: true,
-    short: "Dochód",
-    ends: ["niższy", "wyższy"],
+    short: "Percepcja",
+    ends: ["mniej bezpiecznie", "bezpieczniej"],
+    level: "dzielnica",
+  },
+  crime_rate: {
+    id: "crime_rate",
+    field: "crime_rate",
+    label: "Przestępstwa / 1000 mieszk.",
+    unit: "‰",
+    domain: [20, 80],
+    higherIsBetter: false,
+    short: "Przestępczość",
+    ends: ["mniej", "więcej"],
+    level: "gmina",
   },
 };
 
-export const DEFAULT_METRIC: MetricId = "income";
+export const DEFAULT_METRIC: MetricId = "perception";
 
 // Kolory kategorii aktywności / POI.
 export const CATEGORY_COLORS: Record<string, string> = {

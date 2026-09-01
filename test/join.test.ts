@@ -16,13 +16,16 @@ const record: SafetyRecord = {
   perception_trend: "down",
   perception_source: "ikerfel2025",
   perception_year: 2025,
-  crime_rate: 16.3,
-  crime_prev: 16.3,
+  // Dzielnica nie ma własnej stopy przestępczości — dostaje ją jako kontekst gminy.
+  crime_rate: null,
+  crime_prev: null,
   crime_trend: "flat",
-  crime_change_pct: 0.5,
-  crime_scope: "municipality",
-  crime_source: "eustat2026q1",
-  crime_period: "I kw. 2026",
+  crime_change_pct: null,
+  crime_source: null,
+  crime_period: null,
+  city_name: "Bilbao",
+  city_crime_rate: 66.58,
+  city_crime_period: "2024",
   no_data_reason: null,
 };
 
@@ -33,8 +36,10 @@ describe("joinSafety", () => {
     const p = joinSafety(districts, safety).features[0].properties!;
     expect(p.perception).toBe(5.44);
     expect(p.perception_trend).toBe("down");
-    expect(p.crime_rate).toBe(16.3);
-    expect(p.crime_scope).toBe("municipality");
+    // Własnej stopy nie ma; kontekst gminy owszem, pod osobną nazwą.
+    expect(p.crime_rate).toBeNull();
+    expect(p.city_crime_rate).toBe(66.58);
+    expect(p.city_name).toBe("Bilbao");
   });
 
   it("obszar bez danych dostaje null, nie zero", () => {

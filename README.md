@@ -119,10 +119,16 @@ dzielnicami to 0,39 pkt; skala kolorów jest stała, żeby jej nie wyolbrzymiać
 | Etxebarri | 28,7 | 29,4 | −2,4% |
 | *Bizkaia (odniesienie)* | *49,6* | *49,9* | *−0,7%* |
 
-Wartość dotyczy całej gminy; dzielnice Bilbao dziedziczą liczbę miejską z jawnym
-ostrzeżeniem w panelu, bo rozbicia na dzielnice nikt nie publikuje. Rząd wielkości
-potwierdzony niezależnie kwartalnymi danymi Eustat/Ertzaintza (Bilbao 16,3‰ za
-I kw. 2026 ≈ 66,6‰ rocznie).
+Wartość dotyczy **całej gminy i tylko tam jest przypisana**. Dzielnice Bilbao
+**nie mają własnej stopy przestępczości** — nikt jej w tym podziale nie publikuje,
+a raport [*Bilbao Hiri Segurua*](https://www.bizkaiagaur.com/2026/02/19/el-ayuntamiento-de-bilbao-ha-presentado-el-informe-bilbao-hiri-segurua/)
+(UPV/EHU, 2026) dopiero **rekomenduje** miastu wprowadzenie kwartalnych biuletynów
+w podziale na dzielnice. Panel dzielnicy pokazuje stopę gminy jako podpisany
+kontekst, a nie jako metrykę tej dzielnicy — powtarzanie tej samej liczby na
+ośmiu dzielnicach wyglądało jak zepsute dane.
+
+Rząd wielkości potwierdzony niezależnie kwartalnymi danymi Eustat/Ertzaintza
+(Bilbao 16,3‰ za I kw. 2026 ≈ 66,6‰ rocznie).
 
 > **Uwaga interpretacyjna:** to przestępstwa *zgłoszone*, dzielone przez liczbę
 > *mieszkańców*. Gminy z dużym ruchem przyjezdnych — Zamudio ma park technologiczny,

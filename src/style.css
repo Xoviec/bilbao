@@ -121,6 +121,13 @@ body { color: var(--text); background: var(--bg); }
 .metric-src { margin: 2px 0 0; font-size: 0.72rem; color: var(--muted); font-style: italic; }
 .metric-warn { margin: 6px 0 0; font-size: 0.72rem; line-height: 1.35; color: #a8580a; }
 
+.metric-context {
+  margin: 10px 0 0; padding: 8px 10px; border-radius: 8px;
+  background: rgba(43, 123, 186, 0.08);
+  font-size: 0.74rem; line-height: 1.4; color: var(--muted);
+}
+.metric-context strong { color: var(--text); }
+
 .summary { line-height: 1.5; }
 
 .places-title { font-size: 0.9rem; margin: 16px 0 8px; }

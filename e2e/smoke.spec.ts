@@ -24,18 +24,26 @@ test.describe("Bilbao Safety Map — smoke", () => {
     await expect(sidebar.locator("h2")).toContainText("Abando");
     // Wartość z badania Ikerfel 2025 dla Abando.
     await expect(sidebar.locator(".metric-value").first()).toContainText("5,44");
+    // Żadna dzielnica nie ma bloku przestępczości jako własnej metryki.
+    await expect(sidebar.locator(".metric")).toHaveCount(1);
     await expect(sidebar.locator(".metric-src").first()).toContainText("Ikerfel");
     await expect(sidebar.locator(".places-list li")).not.toHaveCount(0);
     await page.keyboard.press("Escape");
     await expect(sidebar).toBeHidden();
   });
 
-  test("dzielnica oznacza przestępczość jako wartość gminną", async ({ page }) => {
-    // Bilbao ma jedną miejską stopę przestępczości — dzielnica musi to przyznać.
+  test("dzielnica nie udaje własnej przestępczości", async ({ page }) => {
+    // Osiem dzielnic Bilbao pokazywało tę samą liczbę 66,58 jako swoją —
+    // wyglądało to jak zepsute dane. Teraz jest tylko metryka percepcji,
+    // a stopa gminy stoi obok jako podpisany kontekst.
     await page.selectOption("#district-search", "bilbao-deusto");
     const sidebar = page.locator("#sidebar");
     await expect(sidebar).toBeVisible();
-    await expect(sidebar.locator(".metric-warn")).toContainText("całej gminy");
+    await expect(sidebar.locator(".metric")).toHaveCount(1);
+    await expect(sidebar.locator(".metric-label")).toContainText("Percepcja");
+    await expect(sidebar.locator(".metric-context")).toContainText("dla całej gminy");
+    await expect(sidebar.locator(".metric-context")).toContainText("Bilbao 66,6‰");
+    await expect(sidebar.locator(".metric-context")).toContainText("nikt jej nie publikuje");
   });
 
   test("najmniejsza gmina też ma przestępczość, ale nie percepcję", async ({ page }) => {

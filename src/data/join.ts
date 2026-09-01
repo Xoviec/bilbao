@@ -26,7 +26,9 @@ export function joinSafety(
           perception_trend: rec?.perception_trend ?? "flat",
           crime_rate: rec?.crime_rate ?? null,
           crime_trend: rec?.crime_trend ?? "flat",
-          crime_scope: rec?.crime_scope ?? null,
+          // Kontekst do tooltipa — jawnie oddzielony od wartości obszaru.
+          city_name: rec?.city_name ?? null,
+          city_crime_rate: rec?.city_crime_rate ?? null,
         },
       };
     }),

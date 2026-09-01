@@ -21,10 +21,17 @@ export interface SafetyRecord {
   crime_prev: number | null;
   crime_trend: Trend;
   crime_change_pct: number | null;
-  /** "unit" = pomiar dla tego obszaru; "municipality" = wartość całej gminy. */
-  crime_scope: "unit" | "municipality" | null;
   crime_source: string | null;
   crime_period: string | null;
+
+  /**
+   * KONTEKST, nie metryka tego obszaru: stopa całej gminy, w której leży
+   * dzielnica. Osobne pole, bo wpisywanie ośmiu dzielnicom Bilbao tej samej
+   * liczby jako ich własnej wyglądało jak zepsute dane.
+   */
+  city_name: string | null;
+  city_crime_rate: number | null;
+  city_crime_period: string | null;
 
   no_data_reason: string | null;
 }

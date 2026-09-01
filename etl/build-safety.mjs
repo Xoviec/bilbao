@@ -80,10 +80,16 @@ const main = async () => {
 
     // Percepcja jest mierzona per dzielnica; gminy bez badania mają null.
     const perception = p ? p.value : null;
-    // Przestępczość jest mierzona per GMINA. Dzielnica dziedziczy wartość swojej
-    // gminy, ale z jawnym `crime_scope`, żeby UI mogło powiedzieć, że to nie jest
-    // pomiar dla tej konkretnej dzielnicy.
-    const crime = c ? c.rate : null;
+    // Przestępczość jest mierzona WYŁĄCZNIE per gmina. Dzielnica NIE dostaje jej
+    // jako własnej wartości — wpisanie ośmiu dzielnicom Bilbao tej samej liczby
+    // wyglądało jak zepsute dane, mimo dopisku o zasięgu. Wartość gminy trafia do
+    // osobnego pola `city_crime_*`, które UI pokazuje jako kontekst, nie jako
+    // metrykę tego obszaru.
+    // (Raport "Bilbao Hiri Segurua" UPV/EHU z 2026 dopiero REKOMENDUJE miastu
+    //  publikowanie biuletynów bezpieczeństwa w podziale na dzielnice — takich
+    //  danych po prostu jeszcze nie ma.)
+    const isDistrict = level === "district";
+    const crime = isDistrict ? null : c ? c.rate : null;
 
     if (perception != null) stats.perception++;
     if (crime != null) stats.crime++;
@@ -97,14 +103,20 @@ const main = async () => {
       perception_year: perception != null ? src.perception._year : null,
 
       crime_rate: crime,
-      crime_prev: c ? c.prev : null,
+      crime_prev: crime != null ? c.prev : null,
       // Dla przestępczości "up" znaczy WIĘCEJ przestępstw, czyli gorzej.
-      crime_trend: c ? trendOf(c.rate, c.prev) : "flat",
+      crime_trend: crime != null ? trendOf(c.rate, c.prev) : "flat",
       // Liczone tutaj, nie przepisywane — dwie liczby ze źródła są jedyną prawdą.
-      crime_change_pct: c ? Number((((c.rate - c.prev) / c.prev) * 100).toFixed(1)) : null,
-      crime_scope: crime == null ? null : level === "district" ? "municipality" : "unit",
+      crime_change_pct:
+        crime != null ? Number((((c.rate - c.prev) / c.prev) * 100).toFixed(1)) : null,
       crime_source: crime != null ? src.crime._source : null,
       crime_period: crime != null ? src.crime._period : null,
+
+      // Kontekst, nie metryka tego obszaru: stopa CAŁEJ gminy, w której leży
+      // dzielnica. Wypełniane tylko dla dzielnic — gmina ma to w `crime_rate`.
+      city_name: isDistrict && c ? f.properties.cityName ?? city : null,
+      city_crime_rate: isDistrict && c ? c.rate : null,
+      city_crime_period: isDistrict && c ? src.crime._period : null,
 
       // Percepcję bada tylko Ratusz Bilbao i tylko u siebie.
       no_data_reason:

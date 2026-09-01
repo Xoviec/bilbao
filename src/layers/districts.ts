@@ -226,12 +226,22 @@ function wireInteractions(map: maplibregl.Map, onSelect: (code: string) => void)
     const p = feature.properties ?? {};
     const src = feature.layer.id === "districts-fill" ? SRC : MUNI;
 
+    // Dzielnica nie ma własnej stopy przestępczości — pokazujemy wartość gminy
+    // podpisaną jej nazwą, żeby nie wyglądała na pomiar tej dzielnicy.
+    const crimeLine =
+      p.crime_rate != null
+        ? `${METRICS.crime_rate.short}: ${fmt(p.crime_rate, "‰")}`
+        : p.city_crime_rate != null
+          ? `${METRICS.crime_rate.short} (cała gmina ${p.city_name ?? ""}): ` +
+            `${fmt(p.city_crime_rate, "‰")}`
+          : `${METRICS.crime_rate.short}: brak danych`;
+
     tooltip
       .setLngLat(e.lngLat)
       .setHTML(
         `<strong>${p.name ?? "—"}</strong><br/>` +
           `${METRICS.perception.short}: ${fmt(p.perception, "/10")}<br/>` +
-          `${METRICS.crime_rate.short}: ${fmt(p.crime_rate, "‰")}`,
+          crimeLine,
       )
       .addTo(map);
 

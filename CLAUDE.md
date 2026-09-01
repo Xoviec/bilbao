@@ -47,6 +47,10 @@ npm run etl      # pobranie realnych danych z OSM (wymaga sieci → Overpass)
   percepcją (przestępczość jest tam stałą), a poza Bilbao redukuje się do samej
   przestępczości. Jeden wskaźnik znaczyłby więc dwie różne rzeczy zależnie od
   miejsca na mapie.
+- **Dzielnica NIE MA własnej stopy przestępczości** (`crime_rate: null`). Wartość
+  gminy trafia do osobnych pól `city_crime_*` i UI pokazuje ją jako podpisany
+  kontekst. Nie wracaj do dziedziczenia — ta sama liczba na ośmiu dzielnicach
+  czyta się jak zepsute dane, choćby pod spodem stało wyjaśnienie.
 - **JEDNOSTKA RYSOWANIA = JEDNOSTKA POMIARU.** Dwie warstwy:
   `municipalities.geojson` (9 gmin) niesie choropleth przestępczości, bo tam jest
   ona mierzona; `districts.geojson` (16 jednostek, filtrowane do `level=district`)

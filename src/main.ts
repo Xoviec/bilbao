@@ -11,7 +11,7 @@ import { showDistrict, type PlaceItem } from "./ui/sidebar";
 import { renderFilters, type FilterItem } from "./ui/filters";
 import { renderControls } from "./ui/controls";
 import { openMethodology } from "./ui/methodology";
-import { CATEGORY_COLORS, CATEGORY_LABELS, VIEW, METRICS, DEFAULT_METRIC, type MetricId } from "./config";
+import { CATEGORY_COLORS, CATEGORY_LABELS, VIEW, DEFAULT_METRIC, type MetricId } from "./config";
 
 const el = (id: string) => document.getElementById(id) as HTMLElement;
 
@@ -95,14 +95,25 @@ async function bootstrap(): Promise<void> {
   else map.once("load", addLayers);
 
   // --- UI renderujemy NATYCHMIAST po danych (niezależnie od gotowości mapy) ---
-  // Braki liczymy na WSZYSTKICH obszarach wybieralnych, nie na jednej warstwie.
-  // Percepcji brakuje ośmiu gminom, które leżą na warstwie gmin — liczenie po
-  // samych dzielnicach dawało zero, bo każda zbadana dzielnica dane ma.
-  const missingFor = (metric: MetricId) =>
-    areas.filter((f) => {
-      const rec = data.safety[f.properties?.code as string];
-      return rec?.[METRICS[metric].field as "perception" | "crime_rate"] == null;
-    }).length;
+  // Braki liczymy na warstwie, która NIESIE KOLOR danej metryki — inaczej licznik
+  // rozjeżdża się z tym, co widać. Przestępczość koloruje gminy (9), więc dzielnice
+  // bez własnej stopy nie są dziurą. Percepcja koloruje dzielnice, a niezbadane
+  // gminy zostają szare, więc liczymy po wszystkich 16 obszarach.
+  const coverage = (metric: MetricId) =>
+    metric === "crime_rate"
+      ? // Warstwa gmin ma już dołączoną stopę w properties. Czytanie jej z
+        // `safety` gubiłoby Bilbao, którego gmina nie jest obszarem wybieralnym
+        // (reprezentują ją dzielnice), więc nie ma wpisu w `_units`.
+        { items: data.municipalities.features, get: (f: GeoJSON.Feature) => f.properties?.crime_rate }
+      : {
+          items: areas,
+          get: (f: GeoJSON.Feature) => data.safety[f.properties?.code as string]?.perception,
+        };
+
+  const missingFor = (metric: MetricId) => {
+    const { items, get } = coverage(metric);
+    return items.filter((f) => get(f) == null).length;
+  };
 
   // Legenda zależy od aktywnej metryki: inna jednostka, inny kierunek skali
   // i inna liczba obszarów bez danych.
@@ -110,7 +121,7 @@ async function bootstrap(): Promise<void> {
     renderLegend(el("legend"), categories, {
       metric,
       missing: missingFor(metric),
-      total: areas.length,
+      total: coverage(metric).items.length,
     });
     el("legend").querySelector("#methodology-btn")?.addEventListener("click", openMethodology);
   };

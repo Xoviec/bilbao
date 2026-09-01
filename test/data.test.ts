@@ -117,24 +117,14 @@ describe("Integralność danych (public/data)", () => {
       expect(safetyUnits[code]?.perception, `${code}`).toBe((v as any).value);
     }
     for (const [city, v] of Object.entries(sourceData.crime.byMunicipality)) {
-      const units = areas.filter((f: any) => f.properties.city === city);
-      for (const u of units) {
-        expect(safetyUnits[u.properties.code].crime_rate, u.properties.code).toBe((v as any).rate);
-      }
+      expect(muniCrime[city].crime_rate, city).toBe((v as any).rate);
     }
   });
 
-  it("każda gmina z rejestru ma dane o przestępczości", () => {
-    // Udalmap obejmuje wszystkie 251 gmin Kraju Basków, bez progu ludnościowego —
-    // więc żaden obszar nie może zostać bez tej metryki.
+  it("każda gmina z rejestru ma stopę przestępczości na warstwie gmin", () => {
+    // Udalmap obejmuje wszystkie 251 gmin Kraju Basków, bez progu ludnościowego.
     for (const city of registry) {
-      const units = areas.filter((f: any) => f.properties.city === city.slug);
-      for (const u of units) {
-        expect(
-          safetyUnits[u.properties.code].crime_rate,
-          `${u.properties.code}: brak przestępczości`,
-        ).not.toBeNull();
-      }
+      expect(muniCrime[city.slug]?.crime_rate, `${city.name}: brak przestępczości`).not.toBeNull();
     }
   });
 
@@ -153,22 +143,42 @@ describe("Integralność danych (public/data)", () => {
   });
 
   it("zmiana procentowa zgadza się z dwiema liczbami ze źródła", () => {
-    for (const f of areas) {
-      const rec = safetyUnits[f.properties.code];
+    for (const rec of Object.values(muniCrime)) {
       if (rec.crime_rate == null) continue;
       const expected = ((rec.crime_rate - rec.crime_prev) / rec.crime_prev) * 100;
-      expect(rec.crime_change_pct, f.properties.code).toBeCloseTo(expected, 1);
+      expect(rec.crime_change_pct, rec.name).toBeCloseTo(expected, 1);
     }
   });
 
-  it("wartość gminna przypisana dzielnicy jest oznaczona jako gminna", () => {
-    // Bilbao ma jedną miejską stopę przestępczości i osiem dzielnic. Dziedziczenie
-    // jest w porządku, ale UI musi móc powiedzieć, że to nie pomiar dzielnicy.
+  it("dzielnica nie ma WŁASNEJ stopy przestępczości", () => {
+    // Nikt nie publikuje przestępczości w podziale na dzielnice (raport
+    // "Bilbao Hiri Segurua" UPV/EHU dopiero to miastu rekomenduje). Wpisanie
+    // ośmiu dzielnicom tej samej liczby miejskiej wyglądało jak zepsute dane.
     for (const f of areas) {
       const rec = safetyUnits[f.properties.code];
-      if (rec.crime_rate === null) continue;
-      const expected = f.properties.level === "district" ? "municipality" : "unit";
-      expect(rec.crime_scope, f.properties.code).toBe(expected);
+      if (f.properties.level !== "district") continue;
+      expect(rec.crime_rate, `${f.properties.code} ma własną przestępczość`).toBeNull();
+      expect(rec.crime_source, `${f.properties.code}`).toBeNull();
+    }
+  });
+
+  it("dzielnica dostaje stopę gminy jako jawnie podpisany kontekst", () => {
+    for (const f of areas) {
+      const rec = safetyUnits[f.properties.code];
+      if (f.properties.level !== "district") continue;
+      expect(rec.city_crime_rate, `${f.properties.code}: brak kontekstu`).not.toBeNull();
+      expect(rec.city_name, `${f.properties.code}: kontekst bez nazwy gminy`).toBeTruthy();
+      // Kontekst musi zgadzać się ze stopą gminy, w której dzielnica leży.
+      expect(rec.city_crime_rate).toBe(muniCrime[f.properties.city].crime_rate);
+    }
+  });
+
+  it("gmina ma własną stopę i nie ma pola kontekstowego", () => {
+    for (const f of areas) {
+      const rec = safetyUnits[f.properties.code];
+      if (f.properties.level === "district") continue;
+      expect(rec.crime_rate, `${f.properties.code}`).not.toBeNull();
+      expect(rec.city_crime_rate, `${f.properties.code}: zbędny kontekst`).toBeNull();
     }
   });
 

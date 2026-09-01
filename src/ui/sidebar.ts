@@ -59,14 +59,8 @@ export function showDistrict(
   if (rec?.crime_rate != null) {
     const src = rec.crime_source ? sources[rec.crime_source] : undefined;
     const pct = rec.crime_change_pct;
-    const pctTxt =
-      pct == null ? "" : `${pct > 0 ? "+" : ""}${fmt(pct, 1)}% r/r`;
+    const pctTxt = pct == null ? "" : `${pct > 0 ? "+" : ""}${fmt(pct, 1)}% r/r`;
     // Przy przestępczości "up" znaczy WIĘCEJ przestępstw — czyli gorzej.
-    const scopeNote =
-      rec.crime_scope === "municipality"
-        ? `<p class="metric-warn">⚠ Wartość dotyczy całej gminy — statystyk
-             w rozbiciu na dzielnice nikt nie publikuje.</p>`
-        : "";
     blocks.push(`
       <div class="metric">
         <div class="metric-head">
@@ -75,14 +69,22 @@ export function showDistrict(
             ${TREND_ICON[rec.crime_trend] ?? ""}</span>
         </div>
         <p class="metric-meta">${esc(rec.crime_period ?? "")} ${pctTxt ? `· ${pctTxt}` : ""}${
-          reference
-            ? ` · ${esc(reference.name)}: ${fmt(reference.rate, 1)}`
-            : ""
+          reference ? ` · ${esc(reference.name)}: ${fmt(reference.rate, 1)}` : ""
         }</p>
-        ${scopeNote}
         ${src ? `<p class="metric-src">${esc(src.publisher)}</p>` : ""}
       </div>`);
   }
+
+  // Dzielnica NIE ma własnej stopy przestępczości — nikt jej nie publikuje w tym
+  // podziale. Pokazujemy wartość gminy jako kontekst, wyraźnie oddzielony od
+  // metryk tego obszaru, zamiast powtarzać tę samą liczbę na ośmiu dzielnicach.
+  const contextHtml =
+    rec?.city_crime_rate != null
+      ? `<p class="metric-context">Przestępczość mierzona jest dla całej gminy:
+           <strong>${esc(rec.city_name ?? "")} ${fmt(rec.city_crime_rate, 1)}‰</strong>
+           (${esc(rec.city_crime_period ?? "")}). W podziale na dzielnice nikt jej
+           nie publikuje.</p>`
+      : "";
 
   const safetyHtml = blocks.length
     ? blocks.join("")
@@ -112,6 +114,7 @@ export function showDistrict(
     <button class="close" aria-label="Zamknij">×</button>
     <h2 tabindex="-1">${esc(name)}</h2>
     ${safetyHtml}
+    ${contextHtml}
     ${placesHtml}
     ${sourceHtml}
   `;

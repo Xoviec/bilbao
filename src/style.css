@@ -76,6 +76,7 @@ body { color: var(--text); background: var(--bg); }
 .legend-note {
   margin: 8px 0 0; color: var(--muted); font-size: 0.7rem; line-height: 1.35;
 }
+.legend-caveat { color: #a8580a; }
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 
 .filter-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; }
@@ -191,7 +192,7 @@ body { color: var(--text); background: var(--bg); }
     --text: #e7e9ee; --muted: #9aa3b2;
   }
   .metrics li, .places-list li, .metric { border-bottom-color: #2a2e36; }
-  .metric-warn { color: #e0a266; }
+  .metric-warn, .legend-caveat { color: #e0a266; }
   #district-search, .ctrl-modes, .mode-btn { border-color: #2a2e36; }
 }
 

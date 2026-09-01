@@ -95,12 +95,14 @@ async function bootstrap(): Promise<void> {
   else map.once("load", addLayers);
 
   // --- UI renderujemy NATYCHMIAST po danych (niezależnie od gotowości mapy) ---
-  // Braki liczymy na warstwie, na której metryka JEST rysowana: przestępczość
-  // na gminach, percepcja na dzielnicach Bilbao.
-  const layerFor = (metric: MetricId) =>
-    metric === "crime_rate" ? data.municipalities : data.districts;
+  // Braki liczymy na WSZYSTKICH obszarach wybieralnych, nie na jednej warstwie.
+  // Percepcji brakuje ośmiu gminom, które leżą na warstwie gmin — liczenie po
+  // samych dzielnicach dawało zero, bo każda zbadana dzielnica dane ma.
   const missingFor = (metric: MetricId) =>
-    layerFor(metric).features.filter((f) => f.properties?.[METRICS[metric].field] == null).length;
+    areas.filter((f) => {
+      const rec = data.safety[f.properties?.code as string];
+      return rec?.[METRICS[metric].field as "perception" | "crime_rate"] == null;
+    }).length;
 
   // Legenda zależy od aktywnej metryki: inna jednostka, inny kierunek skali
   // i inna liczba obszarów bez danych.
@@ -108,7 +110,7 @@ async function bootstrap(): Promise<void> {
     renderLegend(el("legend"), categories, {
       metric,
       missing: missingFor(metric),
-      total: layerFor(metric).features.length,
+      total: areas.length,
     });
     el("legend").querySelector("#methodology-btn")?.addEventListener("click", openMethodology);
   };

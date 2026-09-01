@@ -26,31 +26,33 @@ export function renderLegend(
   // Choropleth istnieje TYLKO dla przestępczości. Percepcja ma rozpiętość
   // 0,39 pkt na skali 0–10 — gradient udawałby różnicę, której nie ma, więc
   // pokazujemy ją jako liczby na dzielnicach i mówimy o tym wprost.
-  let scaleHtml: string;
-  if (notes.metric === "crime_rate") {
-    const stops = rampStops(metric);
-    const [lo, hi] = metric.domain;
-    const gradient = stops
-      .map(([v, c]) => `${c} ${(((v - lo) / (hi - lo)) * 100).toFixed(0)}%`)
-      .join(", ");
-    scaleHtml = `
-      <div class="legend-bar" style="background: linear-gradient(90deg, ${gradient});"></div>
-      <div class="legend-scale">
-        <span>${lo}${metric.unit}</span>
-        <span>wyżej = gorzej</span>
-        <span>${hi}${metric.unit}</span>
-      </div>
-      <p class="legend-note">Kolor na poziomie <strong>gminy</strong> — tam ta
-         statystyka jest mierzona. Granice dzielnic Bilbao są przerywane, bo nie
-         mają własnej wartości.</p>`;
-  } else {
-    scaleHtml = `
-      <p class="legend-note">Pokazana jako <strong>liczba na dzielnicy</strong>, nie kolorem.
-         Rozpiętość między dzielnicami Bilbao to 0,39 pkt na skali 0–10
-         (5,44–5,83) — gradient sugerowałby różnicę, której nie ma.</p>
-      <p class="legend-note">Badana wyłącznie w Bilbao. Pozostałe gminy nie
-         prowadzą takiego badania.</p>`;
-  }
+  // Obie metryki mają teraz gradient, ale o RÓŻNYM znaczeniu: przestępczość to
+  // skala bezwzględna, percepcja — odchylenie od średniej miasta. Legenda musi
+  // rozróżnić te dwa przypadki, inaczej ten sam zielony znaczy raz co innego.
+  const stops = rampStops(metric);
+  const [lo, hi] = metric.domain;
+  const gradient = stops
+    .map(([v, c]) => `${c} ${(((v - lo) / (hi - lo)) * 100).toFixed(0)}%`)
+    .join(", ");
+  const [loLabel, hiLabel] = metric.ends ?? ["", ""];
+
+  const scaleHtml = `
+    <div class="legend-bar" style="background: linear-gradient(90deg, ${gradient});"></div>
+    <div class="legend-scale">
+      <span>${loLabel}</span>
+      ${metric.center != null
+        ? `<span>śr. ${String(metric.center).replace(".", ",")}</span>`
+        : `<span>${lo}–${hi}${metric.unit}</span>`}
+      <span>${hiLabel}</span>
+    </div>
+    ${metric.caveat ? `<p class="legend-note legend-caveat">⚠ ${metric.caveat}</p>` : ""}
+    ${notes.metric === "crime_rate"
+      ? `<p class="legend-note">Kolor na poziomie <strong>gminy</strong> — tam ta
+           statystyka jest mierzona. Granice dzielnic Bilbao są przerywane, bo nie
+           mają własnej wartości.</p>`
+      : `<p class="legend-note">Kolor na poziomie <strong>dzielnicy</strong>.
+           Badana wyłącznie w Bilbao — pozostałe gminy pozostają szare.</p>`}
+  `;
 
   const catRows = categories
     .map(
@@ -62,10 +64,10 @@ export function renderLegend(
     .join("");
 
   const missingRow =
-    notes.metric === "crime_rate" && notes.missing
+    notes.missing
       ? `<div class="legend-cat legend-missing">
            <span class="dot" style="background:#cccccc"></span>
-           <span>Brak danych (${notes.missing} z ${notes.total})</span>
+           <span>${notes.metric === "perception" ? "Nie badano" : "Brak danych"} (${notes.missing} z ${notes.total})</span>
          </div>`
       : "";
 

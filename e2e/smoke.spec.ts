@@ -74,7 +74,7 @@ test.describe("Bilbao Safety Map — smoke", () => {
   test("zmiana metryki przestawia legendę i jej kierunek", async ({ page }) => {
     const legendTitle = page.locator("#legend .legend-title").first();
     await expect(legendTitle).toContainText("Percepcja");
-    await expect(page.locator("#legend .legend-bar")).toHaveCount(0);
+    await expect(page.locator("#legend .legend-caveat")).toBeVisible();
 
     const crime = page.locator('.mode-btn[data-field="crime_rate"]');
     await crime.click();
@@ -83,18 +83,21 @@ test.describe("Bilbao Safety Map — smoke", () => {
     await expect(legendTitle).toContainText("Przestępstwa");
     // Dopiero przestępczość ma prawdziwy gradient — i to na poziomie gminy.
     await expect(page.locator("#legend .legend-bar")).toBeVisible();
-    await expect(page.locator("#legend .legend-scale")).toContainText("gorzej");
-    await expect(page.locator("#legend .legend-note").first()).toContainText("gminy");
+    await expect(page.locator("#legend .legend-scale")).toContainText("20–80‰");
+    // Przestępczość to skala bezwzględna — bez ostrzeżenia o rozciągnięciu.
+    await expect(page.locator("#legend .legend-caveat")).toHaveCount(0);
     // Udalmap pokrywa wszystkie gminy — brak szarych obszarów.
     await expect(page.locator("#legend .legend-missing")).toHaveCount(0);
   });
 
-  test("legenda percepcji nie udaje gradientu", async ({ page }) => {
-    // Rozpiętość 0,39 pkt na skali 0–10 nie nadaje się na skalę kolorów —
-    // legenda musi to powiedzieć, zamiast pokazywać pasek.
-    await expect(page.locator("#legend .legend-bar")).toHaveCount(0);
-    await expect(page.locator("#legend .legend-note").first()).toContainText("liczba na dzielnicy");
-    await expect(page.locator("#legend").first()).toContainText("Badana wyłącznie w Bilbao");
+  test("legenda percepcji ostrzega, że skala jest rozciągnięta", async ({ page }) => {
+    // Kolor pokazuje ODCHYLENIE od średniej miasta, bo cała rozpiętość to
+    // 0,39 pkt. Gradient jest, ale nie wolno mu udawać skali bezwzględnej.
+    await expect(page.locator("#legend .legend-bar")).toBeVisible();
+    await expect(page.locator("#legend .legend-scale")).toContainText("śr. 5,58");
+    await expect(page.locator("#legend .legend-caveat")).toContainText("ODCHYLENIE");
+    await expect(page.locator("#legend .legend-caveat")).toContainText("0,39 pkt");
+    await expect(page.locator("#legend .legend-missing")).toContainText("Nie badano (8 z 16)");
   });
 
   test("klik w pinezkę miejsca nie przestawia panelu obszaru", async ({ page }) => {

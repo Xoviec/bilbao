@@ -67,6 +67,12 @@ export interface Metric {
   /** Czy wyższa wartość znaczy bezpieczniej. */
   higherIsBetter: boolean;
   short: string;
+  /** Punkt odniesienia skali (np. średnia miasta) — środek palety. */
+  center?: number;
+  /** Ostrzeżenie o skali, pokazywane w legendzie. */
+  caveat?: string;
+  /** Etykiety krańców skali; gdy brak, legenda pokazuje same liczby. */
+  ends?: [string, string];
 }
 
 export const METRICS: Record<MetricId, Metric> = {
@@ -75,9 +81,18 @@ export const METRICS: Record<MetricId, Metric> = {
     field: "perception",
     label: "Percepcja bezpieczeństwa",
     unit: "/10",
-    domain: [4, 8],
+    // Skala ODCHYLENIA od średniej miasta (5,58), nie skala bezwzględna.
+    // Rozpiętość między dzielnicami to 0,39 pkt na skali 0–10, więc paleta
+    // rozciągnięta na 0–10 dałaby jeden kolor dla wszystkich. Zamiast rezygnować
+    // z koloru, pokazujemy odchylenie — i mówimy o tym wprost w legendzie.
+    domain: [5.33, 5.83],
+    center: 5.58,
     higherIsBetter: true,
     short: "Percepcja",
+    ends: ["poniżej średniej", "powyżej średniej"],
+    caveat:
+      "Skala pokazuje ODCHYLENIE od średniej Bilbao (5,58). Cała różnica między " +
+      "dzielnicami to 0,39 pkt na skali 0–10 — kolor ją powiększa, żeby była widoczna.",
   },
   crime_rate: {
     id: "crime_rate",
@@ -88,6 +103,7 @@ export const METRICS: Record<MetricId, Metric> = {
     domain: [20, 80],
     higherIsBetter: false,
     short: "Przestępczość",
+    ends: ["mniej", "więcej"],
   },
 };
 

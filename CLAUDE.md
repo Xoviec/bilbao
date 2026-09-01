@@ -53,10 +53,12 @@ npm run etl      # pobranie realnych danych z OSM (wymaga sieci → Overpass)
   niesie granice i liczby percepcji dla 8 dzielnic Bilbao. Nie przenoś
   przestępczości na dzielnice jako kolor — wszystkie osiem dostałoby tę samą
   wartość i geometria udawałaby informację.
-- **Percepcja nie jest kolorem.** Rozpiętość 0,39 pkt na skali 0–10 (1,07×);
-  gradient sugerowałby różnicę, której nie ma. Pokazujemy liczbę na dzielnicy.
-  Przestępczość ma rozpiętość 2,61× i tylko ona zasługuje na gradient
-  (odwrócony, bo wyżej = gorzej).
+- **Skale mają różne znaczenie i legenda MUSI je rozróżniać.** Przestępczość to
+  skala bezwzględna (20–80‰, odwrócona, bo wyżej = gorzej). Percepcja to
+  ODCHYLENIE od średniej Bilbao (`center: 5.58`), bo cała rozpiętość między
+  dzielnicami to 0,39 pkt na skali 0–10 i na skali bezwzględnej wszystkie
+  wyglądałyby tak samo. Skala odchylenia powiększa różnicę — dlatego metryka ma
+  pole `caveat`, które legenda pokazuje na pomarańczowo. Nie usuwaj go.
 - Percepcja nocna istnieje tylko zbiorczo dla Bilbao — nie rób z niej trybu
   „noc" per obszar.
 - Gminy są przypięte po **ID relacji** w `etl/cities.json`. Nie wracaj do

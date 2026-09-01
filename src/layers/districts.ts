@@ -39,12 +39,13 @@ const districtLabel = (withValue: boolean): maplibregl.ExpressionSpecification =
     : ["get", "name"]) as maplibregl.ExpressionSpecification;
 
 /**
- * Przełącza metrykę.
+ * Przełącza metrykę. Każda jest rysowana na swoim poziomie pomiaru:
+ *   - przestępczość → gminy (tam jest mierzona), dzielnice przezroczyste,
+ *   - percepcja     → dzielnice Bilbao, gminy neutralnie szare (nie badano).
  *
- * Choropleth rysowany jest WYŁĄCZNIE na gminach, bo tylko tam przestępczość jest
- * mierzona. Percepcja nie jest kolorem: jej rozpiętość między dzielnicami to
- * 0,39 pkt na skali 0–10 (1,07×), więc gradient udawałby różnicę, której nie ma.
- * Zamiast tego dopisujemy ją do etykiety dzielnicy.
+ * Skala percepcji pokazuje ODCHYLENIE od średniej miasta, bo cała rozpiętość
+ * między dzielnicami to 0,39 pkt na skali 0–10 — na skali bezwzględnej wszystkie
+ * miałyby ten sam kolor. Legenda musi o tym mówić wprost (patrz `caveat`).
  */
 export function setSafetyField(map: maplibregl.Map, field: SafetyField): void {
   if (!map.getLayer("municipalities-fill")) return; // warstwy jeszcze nie dodane
@@ -58,6 +59,20 @@ export function setSafetyField(map: maplibregl.Map, field: SafetyField): void {
       : "#e8eaed",
   );
   map.setPaintProperty("municipalities-fill", "fill-opacity", crime ? 0.72 : 0.35);
+
+  // W trybie percepcji dzielnice DOSTAJĄ kolor (odchylenie od średniej miasta).
+  // W trybie przestępczości muszą być przezroczyste, żeby było widać kolor gminy.
+  map.setPaintProperty(
+    "districts-fill",
+    "fill-color",
+    crime ? "#000000" : (safetyFillColor("perception") as maplibregl.ExpressionSpecification),
+  );
+  map.setPaintProperty("districts-fill", "fill-opacity", [
+    "case",
+    ["boolean", ["feature-state", "hover"], false],
+    crime ? 0.06 : 0.92,
+    crime ? 0 : 0.78,
+  ] as maplibregl.ExpressionSpecification);
 
   // Wartość percepcji jest częścią etykiety, a nie osobną warstwą symboli —
   // dwie warstwy konkurowały o miejsce i MapLibre wyrzucał nazwy dzielnic.
@@ -101,16 +116,17 @@ export function addDistrictLayers(
     id: "districts-fill",
     type: "fill",
     filter: ONLY_DISTRICTS,
-    // Przezroczysta warstwa trafień: dzielnice muszą być klikalne w obu trybach,
-    // ale nie mogą nieść własnego koloru — nie mają własnej wartości.
+    // W trybie percepcji niesie kolor (odchylenie od średniej miasta); w trybie
+    // przestępczości staje się przezroczystą warstwą trafień, bo dzielnica nie ma
+    // własnej stopy przestępczości.
     source: SRC,
     paint: {
-      "fill-color": "#000000",
+      "fill-color": safetyFillColor("perception") as maplibregl.ExpressionSpecification,
       "fill-opacity": [
         "case",
         ["boolean", ["feature-state", "hover"], false],
-        0.06,
-        0,
+        0.92,
+        0.78,
       ],
     },
   });
@@ -148,7 +164,7 @@ export function addDistrictLayers(
     paint: {
       "text-color": "#14324f",
       "text-halo-color": "#ffffff",
-      "text-halo-width": 1.8,
+      "text-halo-width": 2.2,
     },
   });
 

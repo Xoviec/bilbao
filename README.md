@@ -11,7 +11,7 @@ kątem wydajności renderowania i czytelności danych.
 ## ✨ Co pokazuje mapa
 
 - **Choropleth przestępczości na 9 gminach** — tam, gdzie ta statystyka jest mierzona.
-- **Percepcja jako liczby na 8 dzielnicach Bilbao** — nie kolorem, bo rozpiętość to 0,39 pkt.
+- **Percepcja na 8 dzielnicach Bilbao** — kolor jako odchylenie od średniej + liczba na dzielnicy.
 - **Aktywności** — sport, kultura, nocne życie, tereny zielone (ikony kategorii).
 - **POI / miejsca warte zobaczenia** — atrakcje, punkty widokowe, zabytki (clustering).
 - **Panel obszaru** — po kliknięciu: metryki bezpieczeństwa (lub jawne „brak danych"), miejsca.

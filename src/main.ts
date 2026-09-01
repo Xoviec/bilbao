@@ -90,6 +90,7 @@ async function bootstrap(): Promise<void> {
     // Etykiety dzielnic na sam wierzch: klastry miejsc są nieprzezroczystymi
     // kołami rysowanymi później i zasłaniały nazwy trzech dzielnic.
     map.moveLayer("districts-label");
+    map.moveLayer("municipalities-label");
   };
   if (map.isStyleLoaded()) addLayers();
   else map.once("load", addLayers);

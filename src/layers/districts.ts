@@ -20,6 +20,16 @@ const outlineWidth = (base: number): maplibregl.ExpressionSpecification =>
     base,
   ] as maplibregl.ExpressionSpecification;
 
+/** Etykieta z nazwą i wartością metryki (polski separator dziesiętny). */
+const valueLabel = (field: string, suffix: string): maplibregl.ExpressionSpecification =>
+  [
+    "concat",
+    ["get", "name"],
+    "\n",
+    ["number-format", ["get", field], { locale: "pl-PL", "min-fraction-digits": 1, "max-fraction-digits": 1 }],
+    suffix,
+  ] as maplibregl.ExpressionSpecification;
+
 /** Etykieta dzielnicy: sama nazwa albo nazwa + zmierzona percepcja. */
 const districtLabel = (withValue: boolean): maplibregl.ExpressionSpecification =>
   (withValue
@@ -58,7 +68,7 @@ export function setSafetyField(map: maplibregl.Map, field: SafetyField): void {
       ? (safetyFillColor("crime_rate") as maplibregl.ExpressionSpecification)
       : "#e8eaed",
   );
-  map.setPaintProperty("municipalities-fill", "fill-opacity", crime ? 0.72 : 0.35);
+  map.setPaintProperty("municipalities-fill", "fill-opacity", crime ? 0.48 : 0.22);
 
   // W trybie percepcji dzielnice DOSTAJĄ kolor (odchylenie od średniej miasta).
   // W trybie przestępczości muszą być przezroczyste, żeby było widać kolor gminy.
@@ -70,17 +80,21 @@ export function setSafetyField(map: maplibregl.Map, field: SafetyField): void {
   map.setPaintProperty("districts-fill", "fill-opacity", [
     "case",
     ["boolean", ["feature-state", "hover"], false],
-    crime ? 0.06 : 0.92,
-    crime ? 0 : 0.78,
+    crime ? 0.06 : 0.62,
+    crime ? 0 : 0.48,
   ] as maplibregl.ExpressionSpecification);
 
-  // Wartość percepcji jest częścią etykiety, a nie osobną warstwą symboli —
-  // dwie warstwy konkurowały o miejsce i MapLibre wyrzucał nazwy dzielnic.
   map.setLayoutProperty("districts-label", "text-field", districtLabel(!crime));
-  // W trybie przestępczości granice dzielnic zostają cienką kreską — nadal można
-  // je kliknąć (grupują miejsca), ale nie sugerują własnej wartości.
-  map.setPaintProperty("districts-outline", "line-width", outlineWidth(crime ? 0.6 : 1.4));
-  map.setPaintProperty("districts-outline", "line-dasharray", crime ? [2, 2] : [1, 0]);
+
+  // W trybie przestępczości granice i nazwy dzielnic ZNIKAJĄ. Rysowanie ich nad
+  // jednolicie pokolorowanym Bilbao obiecywało zróżnicowanie, którego w danych
+  // nie ma — mapa wyglądała na zepsutą. Widok przestępczości to 9 gmin i tyle;
+  // dzielnice zostają tylko jako niewidoczna warstwa trafień (klik nadal działa).
+  const show = (id: string, on: boolean) =>
+    map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+  show("districts-outline", !crime);
+  show("districts-label", !crime);
+  show("municipalities-label", crime);
 }
 
 /**
@@ -100,7 +114,7 @@ export function addDistrictLayers(
     id: "municipalities-fill",
     type: "fill",
     source: MUNI,
-    paint: { "fill-color": "#e8eaed", "fill-opacity": 0.35 },
+    paint: { "fill-color": "#e8eaed", "fill-opacity": 0.22 },
   });
 
   map.addLayer({
@@ -125,8 +139,8 @@ export function addDistrictLayers(
       "fill-opacity": [
         "case",
         ["boolean", ["feature-state", "hover"], false],
-        0.92,
-        0.78,
+        0.62,
+        0.48,
       ],
     },
   });
@@ -163,6 +177,28 @@ export function addDistrictLayers(
     },
     paint: {
       "text-color": "#14324f",
+      "text-halo-color": "#ffffff",
+      "text-halo-width": 2.2,
+    },
+  });
+
+  // Nazwa gminy + jej stopa przestępczości. Widoczna tylko w trybie przestępczości,
+  // gdzie gmina JEST jednostką — wtedy widać dziewięć różnych wartości zamiast
+  // jednej rozmazanej po dzielnicach.
+  map.addLayer({
+    id: "municipalities-label",
+    type: "symbol",
+    source: MUNI,
+    layout: {
+      "text-field": valueLabel("crime_rate", "‰"),
+      "text-size": 13,
+      "text-font": LABEL_FONT,
+      "text-line-height": 1.3,
+      "text-padding": 6,
+      visibility: "none",
+    },
+    paint: {
+      "text-color": "#1b1b1b",
       "text-halo-color": "#ffffff",
       "text-halo-width": 2.2,
     },

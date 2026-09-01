@@ -47,9 +47,9 @@ export function renderLegend(
     </div>
     ${metric.caveat ? `<p class="legend-note legend-caveat">⚠ ${metric.caveat}</p>` : ""}
     ${notes.metric === "crime_rate"
-      ? `<p class="legend-note">Kolor na poziomie <strong>gminy</strong> — tam ta
-           statystyka jest mierzona. Granice dzielnic Bilbao są przerywane, bo nie
-           mają własnej wartości.</p>`
+      ? `<p class="legend-note">Kolor i etykiety na poziomie <strong>gminy</strong> —
+           tam ta statystyka jest mierzona. Podział Bilbao na dzielnice jest w tym
+           widoku ukryty, bo nikt nie publikuje przestępczości w tym rozbiciu.</p>`
       : `<p class="legend-note">Kolor na poziomie <strong>dzielnicy</strong>.
            Badana wyłącznie w Bilbao — pozostałe gminy pozostają szare.</p>`}
   `;

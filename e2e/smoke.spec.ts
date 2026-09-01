@@ -97,6 +97,40 @@ test.describe("Bilbao Safety Map — smoke", () => {
     await expect(page.locator("#legend").first()).toContainText("Badana wyłącznie w Bilbao");
   });
 
+  test("klik w pinezkę miejsca nie przestawia panelu obszaru", async ({ page }) => {
+    // Regresja: gdy handler obszarów stał się globalny, jeden klik otwierał
+    // JEDNOCZEŚNIE popup miejsca i panel obszaru.
+    await page.selectOption("#district-search", "bilbao-abando");
+    await page.waitForTimeout(1500);
+    await page.keyboard.press("Escape");
+    const box = (await page.locator("#map").boundingBox())!;
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    for (let i = 0; i < 5; i++) {
+      await page.mouse.move(cx, cy);
+      await page.mouse.wheel(0, -500);
+      await page.waitForTimeout(400);
+    }
+    await page.waitForTimeout(2000);
+
+    const placePopup = page.locator(".maplibregl-popup:not(.district-tooltip)");
+    let hit = false;
+    for (let gx = 1; gx < 14 && !hit; gx++) {
+      for (let gy = 1; gy < 9 && !hit; gy++) {
+        await page.keyboard.press("Escape");
+        await page.evaluate(() =>
+          document
+            .querySelectorAll(".maplibregl-popup:not(.district-tooltip)")
+            .forEach((p) => p.remove()));
+        await page.mouse.click(box.x + (box.width * gx) / 14, box.y + (box.height * gy) / 9);
+        await page.waitForTimeout(250);
+        if ((await placePopup.count()) > 0) hit = true;
+      }
+    }
+    expect(hit, "nie udało się trafić w pinezkę miejsca").toBe(true);
+    await expect(page.locator("#sidebar:not(.hidden)")).toHaveCount(0);
+  });
+
   test("filtr kategorii można odznaczyć", async ({ page }) => {
     const first = page.locator("#filters .filter-row input").first();
     await expect(first).toBeChecked();

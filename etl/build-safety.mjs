@@ -63,7 +63,16 @@ const main = async () => {
 
   const stats = { perception: 0, crime: 0, empty: 0 };
 
-  for (const f of districts.features) {
+  // Obszary wybieralne w UI: dzielnice + te gminy, które nie mają podziału.
+  // districts.geojson trzyma już tylko realne dzielnice, więc gminy bez podziału
+  // dokładamy z warstwy gmin — inaczej wypadłyby z safety.json.
+  const districtCities = new Set(districts.features.map((f) => f.properties.city));
+  const areas = [
+    ...districts.features,
+    ...municipalities.features.filter((f) => !districtCities.has(f.properties.code)),
+  ];
+
+  for (const f of areas) {
     const { code, city, level } = f.properties;
 
     const p = src.perception[code];
@@ -107,8 +116,7 @@ const main = async () => {
 
   await writeFile(`${DATA}/safety.json`, JSON.stringify(out, null, 2));
 
-  const total = districts.features.length;
-  console.log(`✓ safety.json: ${total} jednostek`);
+  console.log(`✓ safety.json: ${areas.length} obszarów`);
   console.log(`  percepcja (per dzielnica): ${stats.perception}`);
   console.log(`  gmin z przestępczością:    ${Object.values(out._municipalities).filter((m) => m.crime_rate != null).length}/${municipalities.features.length}`);
   console.log(`  bez żadnych danych:        ${stats.empty}`);

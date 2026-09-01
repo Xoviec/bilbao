@@ -22,15 +22,23 @@ async function bootstrap(): Promise<void> {
 
   // Kadr wynika z danych, nie ze stałej: zbiór gmin bywa różny (patrz
   // etl/cities.json), a zaszyty bbox Bilbao ucinałby sąsiadów.
-  const dataBounds = collectionBounds(data.districts);
+  // Zakres z warstwy GMIN — districts.geojson trzyma już tylko dzielnice Bilbao,
+  // więc sam by kadrował mapę na jedno miasto.
+  const dataBounds = collectionBounds(data.municipalities);
   const map = createMap("map", style, {
     bounds: dataBounds,
     maxBounds: padBounds(dataBounds, VIEW.boundsPadding),
   });
 
-  const districtByCode = new Map(
-    data.districts.features.map((f) => [f.properties?.code as string, f]),
-  );
+  // Obszary wybieralne: dzielnice + gminy bez podziału. Gmina Bilbao jest
+  // reprezentowana przez swoje dzielnice, więc nie dublujemy jej na liście.
+  const districtCities = new Set(data.districts.features.map((f) => f.properties?.city));
+  const areas = [
+    ...data.districts.features,
+    ...data.municipalities.features.filter((f) => !districtCities.has(f.properties?.code)),
+  ];
+
+  const districtByCode = new Map(areas.map((f) => [f.properties?.code as string, f]));
   // Etykieta jednostki. Dzielnicę poprzedzamy nazwą gminy, bo lista miesza dwa
   // poziomy (dzielnice Bilbao + całe gminy) i samo "Abando" nie mówi, gdzie to jest.
   const labelOf = (f: GeoJSON.Feature): string => {
@@ -39,9 +47,7 @@ async function bootstrap(): Promise<void> {
     return f.properties?.level === "district" && cityName ? `${cityName} — ${name}` : name;
   };
 
-  const nameByCode = new Map(
-    data.districts.features.map((f) => [f.properties?.code as string, labelOf(f)]),
-  );
+  const nameByCode = new Map(areas.map((f) => [f.properties?.code as string, labelOf(f)]));
 
   // Wspólne źródło miejsc: POI + aktywności.
   const places: GeoJSON.FeatureCollection = {
@@ -68,6 +74,7 @@ async function bootstrap(): Promise<void> {
       placesByDistrict.get(code) ?? [],
       data.sources,
       data.reference,
+      data.cityWide,
     );
 
   const categories = [
@@ -80,6 +87,9 @@ async function bootstrap(): Promise<void> {
   const addLayers = () => {
     addDistrictLayers(map, data.municipalities, data.districts, openDistrict);
     setCategories = addPlacesLayer(map, places).setActiveCategories;
+    // Etykiety dzielnic na sam wierzch: klastry miejsc są nieprzezroczystymi
+    // kołami rysowanymi później i zasłaniały nazwy trzech dzielnic.
+    map.moveLayer("districts-label");
   };
   if (map.isStyleLoaded()) addLayers();
   else map.once("load", addLayers);
@@ -99,7 +109,6 @@ async function bootstrap(): Promise<void> {
       metric,
       missing: missingFor(metric),
       total: layerFor(metric).features.length,
-      mixedResolution: true,
     });
     el("legend").querySelector("#methodology-btn")?.addEventListener("click", openMethodology);
   };
@@ -142,7 +151,7 @@ async function bootstrap(): Promise<void> {
 
   renderControls(
     el("controls"),
-    data.districts.features.map((f) => ({
+    areas.map((f) => ({
       code: f.properties?.code as string,
       name: labelOf(f),
     })),

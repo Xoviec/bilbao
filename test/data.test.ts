@@ -15,7 +15,15 @@ const registry = JSON.parse(
   readFileSync(resolve(__dirname, "../etl/cities.json"), "utf8"),
 ).cities as Array<{ slug: string; name: string; unit: string; minUnits: number }>;
 
-const codes = new Set<string>(districts.features.map((f: any) => f.properties.code));
+// Obszary wybieralne w UI = dzielnice + gminy bez podziału. Ta sama reguła co
+// w main.ts i build-safety.mjs: districts.geojson trzyma tylko realne dzielnice,
+// żeby nie duplikować geometrii gmin.
+const districtCities = new Set(districts.features.map((f: any) => f.properties.city));
+const areas = [
+  ...districts.features,
+  ...municipalities.features.filter((f: any) => !districtCities.has(f.properties.code)),
+];
+const codes = new Set<string>(areas.map((f: any) => f.properties.code));
 const safetyUnits = safety._units as Record<string, any>;
 const safetyKeys = Object.keys(safetyUnits);
 const muniCrime = safety._municipalities as Record<string, any>;
@@ -27,7 +35,7 @@ const places = [...poi.features, ...activities.features];
 
 describe("Integralność danych (public/data)", () => {
   it("każda dzielnica ma unikalny kod", () => {
-    expect(codes.size).toBe(districts.features.length);
+    expect(codes.size).toBe(areas.length);
   });
 
   it("klucze safety.json = kody obszarów (1:1)", () => {
@@ -65,7 +73,7 @@ describe("Integralność danych (public/data)", () => {
 
   it("każda gmina z rejestru ma swoje jednostki", () => {
     for (const city of registry) {
-      const units = districts.features.filter((f: any) => f.properties.city === city.slug);
+      const units = areas.filter((f: any) => f.properties.city === city.slug);
       expect(units.length, `${city.name}: brak jednostek`).toBeGreaterThanOrEqual(city.minUnits);
       for (const u of units) {
         expect(u.properties.level, `${city.name}: zły poziom`).toBe(
@@ -78,7 +86,7 @@ describe("Integralność danych (public/data)", () => {
   it("kody są przestrzeniowane nazwą gminy", () => {
     // Bez prefiksu kody kolidują: Bilbao ma dzielnicę i barrio "Abando", a nazwy
     // typu "Centro" powtarzają się między gminami.
-    for (const f of districts.features) {
+    for (const f of areas) {
       const { code, city, level } = f.properties;
       if (level === "municipality") expect(code).toBe(city);
       else expect(code.startsWith(`${city}-`), `kod bez prefiksu gminy: ${code}`).toBe(true);
@@ -109,7 +117,7 @@ describe("Integralność danych (public/data)", () => {
       expect(safetyUnits[code]?.perception, `${code}`).toBe((v as any).value);
     }
     for (const [city, v] of Object.entries(sourceData.crime.byMunicipality)) {
-      const units = districts.features.filter((f: any) => f.properties.city === city);
+      const units = areas.filter((f: any) => f.properties.city === city);
       for (const u of units) {
         expect(safetyUnits[u.properties.code].crime_rate, u.properties.code).toBe((v as any).rate);
       }
@@ -120,7 +128,7 @@ describe("Integralność danych (public/data)", () => {
     // Udalmap obejmuje wszystkie 251 gmin Kraju Basków, bez progu ludnościowego —
     // więc żaden obszar nie może zostać bez tej metryki.
     for (const city of registry) {
-      const units = districts.features.filter((f: any) => f.properties.city === city.slug);
+      const units = areas.filter((f: any) => f.properties.city === city.slug);
       for (const u of units) {
         expect(
           safetyUnits[u.properties.code].crime_rate,
@@ -133,7 +141,7 @@ describe("Integralność danych (public/data)", () => {
   it("percepcja istnieje tylko tam, gdzie ją zbadano", () => {
     // Ratusz Bilbao bada percepcję u siebie. Poza Bilbao nikt tego nie robi,
     // więc jedyną uczciwą wartością jest null + podany powód.
-    for (const f of districts.features) {
+    for (const f of areas) {
       const rec = safetyUnits[f.properties.code];
       if (f.properties.city === "bilbao") {
         expect(rec.perception, `${f.properties.code}: brak percepcji`).not.toBeNull();
@@ -145,7 +153,7 @@ describe("Integralność danych (public/data)", () => {
   });
 
   it("zmiana procentowa zgadza się z dwiema liczbami ze źródła", () => {
-    for (const f of districts.features) {
+    for (const f of areas) {
       const rec = safetyUnits[f.properties.code];
       if (rec.crime_rate == null) continue;
       const expected = ((rec.crime_rate - rec.crime_prev) / rec.crime_prev) * 100;
@@ -156,7 +164,7 @@ describe("Integralność danych (public/data)", () => {
   it("wartość gminna przypisana dzielnicy jest oznaczona jako gminna", () => {
     // Bilbao ma jedną miejską stopę przestępczości i osiem dzielnic. Dziedziczenie
     // jest w porządku, ale UI musi móc powiedzieć, że to nie pomiar dzielnicy.
-    for (const f of districts.features) {
+    for (const f of areas) {
       const rec = safetyUnits[f.properties.code];
       if (rec.crime_rate === null) continue;
       const expected = f.properties.level === "district" ? "municipality" : "unit";
@@ -167,7 +175,7 @@ describe("Integralność danych (public/data)", () => {
   it("granice dzielnic to realne poligony, nie prostokąty", () => {
     // Placeholdery miały po 5 punktów (4 rogi + domknięcie) i były zwykłym bboxem.
     // Realna granica administracyjna z OSM ma ich dziesiątki.
-    for (const f of districts.features) {
+    for (const f of areas) {
       const ring = f.geometry.type === "Polygon"
         ? f.geometry.coordinates[0]
         : f.geometry.coordinates[0][0];

@@ -229,7 +229,13 @@ async function main() {
     });
   }
 
-  const districts = { type: "FeatureCollection", features: allUnits };
+  // districts.geojson trzyma WYŁĄCZNIE realne dzielnice. Jednostki gminne to ta
+  // sama geometria co municipalities.geojson — trzymanie jej dwa razy dokładało
+  // 63 KB (64% pliku), a warstwy dzielnic i tak filtrują je przez level=district.
+  const districts = {
+    type: "FeatureCollection",
+    features: allUnits.filter((f) => f.properties.level === "district"),
+  };
   const poi = allPlaces.filter((f) => f.properties.category === "sight");
   const activities = allPlaces.filter((f) => f.properties.category !== "sight");
 
@@ -256,7 +262,10 @@ async function main() {
   await writeFile(`${OUT}/cities.json`, JSON.stringify(manifest, null, 2));
   await writeFile(`${OUT}/safety.template.json`, JSON.stringify(safetyTemplate, null, 2));
 
-  console.log(`\n✓ ${allMunicipalities.length} gmin, ${allUnits.length} jednostek, ${poi.length} POI, ${activities.length} aktywności.`);
+  console.log(
+    `\n✓ ${allMunicipalities.length} gmin, ${districts.features.length} dzielnic, ` +
+      `${poi.length} POI, ${activities.length} aktywności.`,
+  );
   console.log("  Zapisano do public/data/. Uzupełnij safety.template.json → safety.json.");
 }
 

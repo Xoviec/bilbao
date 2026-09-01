@@ -1,4 +1,4 @@
-import type { SafetyMap, SourceRef, Reference } from "../data/loader";
+import type { SafetyMap, SourceRef, Reference, CityWide } from "../data/loader";
 import { CATEGORY_COLORS, CATEGORY_LABELS } from "../config";
 
 const TREND_ICON: Record<string, string> = { up: "▲", flat: "▬", down: "▼" };
@@ -27,8 +27,13 @@ export function showDistrict(
   places: PlaceItem[] = [],
   sources: Record<string, SourceRef> = {},
   reference: Reference | null = null,
+  cityWide: Record<string, CityWide> = {},
 ): void {
   const rec = safety[code];
+  // Percepcja nocna jest publikowana tylko zbiorczo dla miasta, nie per dzielnica.
+  // To jedyne miejsce, gdzie da się ją uczciwie pokazać — jako kontekst, nie
+  // jako wartość tej dzielnicy.
+  const city = cityWide[code.split("-")[0]];
   sidebar.classList.remove("hidden");
 
   const blocks: string[] = [];
@@ -44,7 +49,9 @@ export function showDistrict(
             ${TREND_ICON[rec.perception_trend] ?? ""}</span>
         </div>
         <p class="metric-meta">Badanie ankietowe ${rec.perception_year ?? ""} ·
-          rok wcześniej ${fmt(rec.perception_prev)}</p>
+          rok wcześniej ${fmt(rec.perception_prev)}${
+            city ? ` · miasto ogółem ${fmt(city.perception)}, nocą ${fmt(city.perceptionNight)}` : ""
+          }</p>
         ${src ? `<p class="metric-src">${esc(src.publisher)}</p>` : ""}
       </div>`);
   }

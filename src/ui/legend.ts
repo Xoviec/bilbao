@@ -5,8 +5,6 @@ export interface LegendNotes {
   /** Ile obszarów nie ma danych dla AKTYWNEJ metryki (rysowane na szaro). */
   missing: number;
   total: number;
-  /** Czy dane mieszają dzielnice z całymi gminami. */
-  mixedResolution: boolean;
   /** Aktywna metryka. */
   metric: MetricId;
 }

@@ -13,7 +13,8 @@ test.describe("Bilbao Safety Map — smoke", () => {
     // Dwa tryby: percepcja i przestępczość. Nie ma "dzień/noc" — percepcji
     // nocnej nie publikuje się per obszar.
     await expect(page.locator(".mode-btn")).toHaveCount(2);
-    await expect(page.locator(".demo-badge")).toBeVisible();
+    // Pasek mówi wprost, na jakim poziomie działa każda metryka.
+    await expect(page.locator(".demo-badge")).toContainText("Percepcja: tylko Bilbao");
   });
 
   test("dzielnica Bilbao pokazuje realną percepcję ze źródłem", async ({ page }) => {
@@ -73,24 +74,27 @@ test.describe("Bilbao Safety Map — smoke", () => {
   test("zmiana metryki przestawia legendę i jej kierunek", async ({ page }) => {
     const legendTitle = page.locator("#legend .legend-title").first();
     await expect(legendTitle).toContainText("Percepcja");
-    await expect(page.locator("#legend .legend-scale")).toContainText("bezpieczniej");
+    await expect(page.locator("#legend .legend-bar")).toHaveCount(0);
 
     const crime = page.locator('.mode-btn[data-field="crime_rate"]');
     await crime.click();
     await expect(crime).toHaveClass(/active/);
     await expect(crime).toHaveAttribute("aria-pressed", "true");
     await expect(legendTitle).toContainText("Przestępstwa");
-    // Przy przestępczości kierunek skali jest odwrotny.
+    // Dopiero przestępczość ma prawdziwy gradient — i to na poziomie gminy.
+    await expect(page.locator("#legend .legend-bar")).toBeVisible();
     await expect(page.locator("#legend .legend-scale")).toContainText("gorzej");
-    // Udalmap pokrywa wszystkie gminy — w tym trybie nie ma szarych obszarów.
+    await expect(page.locator("#legend .legend-note").first()).toContainText("gminy");
+    // Udalmap pokrywa wszystkie gminy — brak szarych obszarów.
     await expect(page.locator("#legend .legend-missing")).toHaveCount(0);
   });
 
-  test("legenda tłumaczy szare obszary i mieszaną rozdzielczość", async ({ page }) => {
-    await expect(page.locator("#legend .legend-missing")).toBeVisible();
-    await expect(page.locator("#legend .legend-note").last()).toContainText(
-      "brak danych szczegółowych, a nie jednorodność terenu",
-    );
+  test("legenda percepcji nie udaje gradientu", async ({ page }) => {
+    // Rozpiętość 0,39 pkt na skali 0–10 nie nadaje się na skalę kolorów —
+    // legenda musi to powiedzieć, zamiast pokazywać pasek.
+    await expect(page.locator("#legend .legend-bar")).toHaveCount(0);
+    await expect(page.locator("#legend .legend-note").first()).toContainText("liczba na dzielnicy");
+    await expect(page.locator("#legend").first()).toContainText("Badana wyłącznie w Bilbao");
   });
 
   test("filtr kategorii można odznaczyć", async ({ page }) => {

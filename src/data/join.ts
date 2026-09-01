@@ -1,4 +1,4 @@
-import type { SafetyMap } from "./loader";
+import type { SafetyMap, MunicipalityRecord } from "./loader";
 
 /**
  * Czysta funkcja: dołącza metryki bezpieczeństwa do właściwości featerów
@@ -27,6 +27,33 @@ export function joinSafety(
           crime_rate: rec?.crime_rate ?? null,
           crime_trend: rec?.crime_trend ?? "flat",
           crime_scope: rec?.crime_scope ?? null,
+        },
+      };
+    }),
+  };
+}
+
+/**
+ * Dołącza stopę przestępczości do poligonów gmin. To jedyna warstwa, na której
+ * ta metryka jest rysowana — bo tylko na poziomie gminy jest mierzona.
+ */
+export function joinCrime(
+  municipalities: GeoJSON.FeatureCollection,
+  byCity: Record<string, MunicipalityRecord>,
+): GeoJSON.FeatureCollection {
+  return {
+    ...municipalities,
+    features: municipalities.features.map((f) => {
+      const code = f.properties?.code as string | undefined;
+      const rec = code ? byCity[code] : undefined;
+      return {
+        ...f,
+        properties: {
+          ...f.properties,
+          crime_rate: rec?.crime_rate ?? null,
+          crime_trend: rec?.crime_trend ?? "flat",
+          // Gmina nie ma własnej percepcji — badanie jest per dzielnica.
+          perception: null,
         },
       };
     }),

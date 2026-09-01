@@ -10,6 +10,7 @@ const districts = read("districts.geojson");
 const safety = read("safety.json");
 const poi = read("poi.geojson");
 const activities = read("activities.geojson");
+const municipalities = read("municipalities.geojson");
 const registry = JSON.parse(
   readFileSync(resolve(__dirname, "../etl/cities.json"), "utf8"),
 ).cities as Array<{ slug: string; name: string; unit: string; minUnits: number }>;
@@ -17,6 +18,7 @@ const registry = JSON.parse(
 const codes = new Set<string>(districts.features.map((f: any) => f.properties.code));
 const safetyUnits = safety._units as Record<string, any>;
 const safetyKeys = Object.keys(safetyUnits);
+const muniCrime = safety._municipalities as Record<string, any>;
 const sourceData = JSON.parse(
   readFileSync(resolve(__dirname, "../etl/safety-data.json"), "utf8"),
 );
@@ -190,6 +192,44 @@ describe("Integralność danych (public/data)", () => {
       expect(lng).toBeLessThan(-2.7);
       expect(lat).toBeGreaterThan(43.1);
       expect(lat).toBeLessThan(43.4);
+    }
+  });
+});
+
+describe("Warstwa gmin (choropleth przestępczości)", () => {
+  it("jest jedna gmina na wpis w rejestrze", () => {
+    expect(municipalities.features.length).toBe(registry.length);
+    const codes = municipalities.features.map((f: any) => f.properties.code).sort();
+    expect(codes).toEqual(registry.map((c) => c.slug).sort());
+  });
+
+  it("każda gmina ma stopę przestępczości", () => {
+    // To jedyna warstwa niosąca ten choropleth — brak wartości = dziura w mapie.
+    for (const f of municipalities.features) {
+      expect(muniCrime[f.properties.code]?.crime_rate, f.properties.code).not.toBeNull();
+    }
+  });
+
+  it("stopy gmin są różne — geometria niesie informację", () => {
+    // Sedno przebudowy: wcześniej 8 dzielnic Bilbao dzieliło jedną wartość,
+    // więc ich kształty udawały informację. Na warstwie gmin każda ma swoją.
+    const rates = municipalities.features.map((f: any) => muniCrime[f.properties.code].crime_rate);
+    expect(new Set(rates).size).toBe(rates.length);
+  });
+
+  it("gmina Bilbao pokrywa się z sumą swoich dzielnic", () => {
+    // Bez tego choropleth gminy i granice dzielnic rozjechałyby się wizualnie.
+    const bilbao = municipalities.features.find((f: any) => f.properties.code === "bilbao");
+    expect(bilbao, "brak poligonu gminy Bilbao").toBeTruthy();
+    const districtsOfBilbao = districts.features.filter((f: any) => f.properties.city === "bilbao");
+    expect(districtsOfBilbao.length).toBe(8);
+  });
+
+  it("percepcja nie jest przypisana gminom", () => {
+    // Badanie jest per dzielnica. Gmina nie ma własnej wartości i nie wolno jej
+    // udawać, bo warstwa gmin nie rysuje percepcji.
+    for (const f of municipalities.features) {
+      expect(muniCrime[f.properties.code].perception).toBeUndefined();
     }
   });
 });

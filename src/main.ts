@@ -78,16 +78,19 @@ async function bootstrap(): Promise<void> {
   // Kontroler filtra kategorii jest dostępny dopiero po dodaniu warstwy.
   let setCategories: ((active: Set<string>) => void) | undefined;
   const addLayers = () => {
-    addDistrictLayers(map, data.districts, openDistrict);
+    addDistrictLayers(map, data.municipalities, data.districts, openDistrict);
     setCategories = addPlacesLayer(map, places).setActiveCategories;
   };
   if (map.isStyleLoaded()) addLayers();
   else map.once("load", addLayers);
 
   // --- UI renderujemy NATYCHMIAST po danych (niezależnie od gotowości mapy) ---
-  const levels = new Set(data.districts.features.map((f) => f.properties?.level));
+  // Braki liczymy na warstwie, na której metryka JEST rysowana: przestępczość
+  // na gminach, percepcja na dzielnicach Bilbao.
+  const layerFor = (metric: MetricId) =>
+    metric === "crime_rate" ? data.municipalities : data.districts;
   const missingFor = (metric: MetricId) =>
-    data.districts.features.filter((f) => f.properties?.[METRICS[metric].field] == null).length;
+    layerFor(metric).features.filter((f) => f.properties?.[METRICS[metric].field] == null).length;
 
   // Legenda zależy od aktywnej metryki: inna jednostka, inny kierunek skali
   // i inna liczba obszarów bez danych.
@@ -95,8 +98,8 @@ async function bootstrap(): Promise<void> {
     renderLegend(el("legend"), categories, {
       metric,
       missing: missingFor(metric),
-      total: data.districts.features.length,
-      mixedResolution: levels.size > 1,
+      total: layerFor(metric).features.length,
+      mixedResolution: true,
     });
     el("legend").querySelector("#methodology-btn")?.addEventListener("click", openMethodology);
   };
@@ -118,17 +121,22 @@ async function bootstrap(): Promise<void> {
 
   // Badge mówi, ILE obszarów nie ma danych dla domyślnej metryki. Brak pomiaru
   // musi być widoczny od razu, a nie dopiero po kliknięciu w obszar.
-  const badgeMissing = missingFor(DEFAULT_METRIC);
-  if (data.geometryPlaceholder || badgeMissing) {
+  if (data.geometryPlaceholder) {
     const badge = document.createElement("div");
     badge.className = "demo-badge";
-    badge.textContent = data.geometryPlaceholder
-      ? "⚠ Dane demonstracyjne (placeholder)"
-      : `⚠ ${badgeMissing} z ${data.districts.features.length} obszarów bez danych`;
-    badge.title = data.geometryPlaceholder
-      ? "Uruchom `npm run etl`, aby wgrać realne dane z OpenStreetMap"
-      : "Percepcja bezpieczeństwa jest badana tylko w Bilbao; statystyki " +
-        "przestępczości tylko dla gmin powyżej 20 000 mieszkańców. Szczegóły w panelu „Skąd te dane?”.";
+    badge.textContent = "⚠ Dane demonstracyjne (placeholder)";
+    badge.title = "Uruchom `npm run etl`, aby wgrać realne dane z OpenStreetMap";
+    document.getElementById("app")?.appendChild(badge);
+  } else {
+    // Każda metryka jest rysowana na swoim poziomie pomiaru, więc nie ma już
+    // szarych plam. Zostaje jedna rzecz warta powiedzenia od razu: percepcję
+    // bada tylko Bilbao.
+    const badge = document.createElement("div");
+    badge.className = "demo-badge";
+    badge.textContent = "ⓘ Percepcja: tylko Bilbao · Przestępczość: wszystkie gminy";
+    badge.title =
+      "Każdy wskaźnik jest pokazany na poziomie, na którym go zmierzono. " +
+      "Szczegóły w panelu „Skąd te dane?”.";
     document.getElementById("app")?.appendChild(badge);
   }
 

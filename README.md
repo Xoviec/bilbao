@@ -10,8 +10,8 @@ kątem wydajności renderowania i czytelności danych.
 
 ## ✨ Co pokazuje mapa
 
-- **Choropleth dwóch metryk** — percepcja bezpieczeństwa albo przestępczość; szary = brak danych.
-- **Przełącznik metryki** — skala i jej kierunek zmieniają się razem z danymi.
+- **Choropleth przestępczości na 9 gminach** — tam, gdzie ta statystyka jest mierzona.
+- **Percepcja jako liczby na 8 dzielnicach Bilbao** — nie kolorem, bo rozpiętość to 0,39 pkt.
 - **Aktywności** — sport, kultura, nocne życie, tereny zielone (ikony kategorii).
 - **POI / miejsca warte zobaczenia** — atrakcje, punkty widokowe, zabytki (clustering).
 - **Panel obszaru** — po kliknięciu: metryki bezpieczeństwa (lub jawne „brak danych"), miejsca.

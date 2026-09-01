@@ -47,6 +47,89 @@
     "rate": 49.56,
     "prev": 49.89
   },
+  "_municipalities": {
+    "bilbao": {
+      "name": "Bilbao",
+      "crime_rate": 66.58,
+      "crime_prev": 65.58,
+      "crime_trend": "up",
+      "crime_change_pct": 1.5,
+      "crime_source": "udalmap2024",
+      "crime_period": "2024"
+    },
+    "barakaldo": {
+      "name": "Barakaldo",
+      "crime_rate": 52.15,
+      "crime_prev": 55.59,
+      "crime_trend": "down",
+      "crime_change_pct": -6.2,
+      "crime_source": "udalmap2024",
+      "crime_period": "2024"
+    },
+    "basauri": {
+      "name": "Basauri",
+      "crime_rate": 46.65,
+      "crime_prev": 49.3,
+      "crime_trend": "down",
+      "crime_change_pct": -5.4,
+      "crime_source": "udalmap2024",
+      "crime_period": "2024"
+    },
+    "erandio": {
+      "name": "Erandio",
+      "crime_rate": 60.08,
+      "crime_prev": 58.27,
+      "crime_trend": "up",
+      "crime_change_pct": 3.1,
+      "crime_source": "udalmap2024",
+      "crime_period": "2024"
+    },
+    "arrigorriaga": {
+      "name": "Arrigorriaga",
+      "crime_rate": 37.27,
+      "crime_prev": 36.11,
+      "crime_trend": "up",
+      "crime_change_pct": 3.2,
+      "crime_source": "udalmap2024",
+      "crime_period": "2024"
+    },
+    "etxebarri": {
+      "name": "Etxebarri",
+      "crime_rate": 28.67,
+      "crime_prev": 29.39,
+      "crime_trend": "down",
+      "crime_change_pct": -2.4,
+      "crime_source": "udalmap2024",
+      "crime_period": "2024"
+    },
+    "sondika": {
+      "name": "Sondika",
+      "crime_rate": 48.23,
+      "crime_prev": 61.24,
+      "crime_trend": "down",
+      "crime_change_pct": -21.2,
+      "crime_source": "udalmap2024",
+      "crime_period": "2024"
+    },
+    "zamudio": {
+      "name": "Zamudio",
+      "crime_rate": 74.79,
+      "crime_prev": 67.39,
+      "crime_trend": "up",
+      "crime_change_pct": 11,
+      "crime_source": "udalmap2024",
+      "crime_period": "2024"
+    },
+    "alonsotegi": {
+      "name": "Alonsotegi",
+      "crime_rate": 50.62,
+      "crime_prev": 47.03,
+      "crime_trend": "up",
+      "crime_change_pct": 7.6,
+      "crime_source": "udalmap2024",
+      "crime_period": "2024"
+    }
+  },
   "_units": {
     "bilbao-otxarkoaga-txurdinaga": {
       "perception": 5.66,

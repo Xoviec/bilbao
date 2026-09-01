@@ -1,5 +1,5 @@
 import { DATA } from "../config";
-import { joinSafety } from "./join";
+import { joinSafety, joinCrime } from "./join";
 
 export type Trend = "up" | "flat" | "down";
 
@@ -52,16 +52,29 @@ export interface CityWide {
   note: string;
 }
 
+export interface MunicipalityRecord {
+  name: string;
+  crime_rate: number | null;
+  crime_prev: number | null;
+  crime_trend: Trend;
+  crime_change_pct: number | null;
+  crime_source: string | null;
+  crime_period: string | null;
+}
+
 export type SafetyMap = Record<string, SafetyRecord>;
 
 interface SafetyFile {
   _sources: Record<string, SourceRef>;
   _cityWide: Record<string, CityWide>;
   _reference?: Reference;
+  _municipalities: Record<string, MunicipalityRecord>;
   _units: SafetyMap;
 }
 
 export interface LoadedData {
+  /** Poligony gmin — jedyna warstwa niosąca choropleth przestępczości. */
+  municipalities: GeoJSON.FeatureCollection;
   districts: GeoJSON.FeatureCollection;
   safety: SafetyMap;
   sources: Record<string, SourceRef>;
@@ -85,8 +98,9 @@ async function fetchJSON<T>(url: string): Promise<T> {
  * obszarów (join po polu `code`).
  */
 export async function loadAllData(): Promise<LoadedData> {
-  const [districts, safetyFile, activities, poi] = await Promise.all([
+  const [districts, municipalities, safetyFile, activities, poi] = await Promise.all([
     fetchJSON<GeoJSON.FeatureCollection>(DATA.districts),
+    fetchJSON<GeoJSON.FeatureCollection>(DATA.municipalities),
     fetchJSON<SafetyFile>(DATA.safety),
     fetchJSON<GeoJSON.FeatureCollection>(DATA.activities),
     fetchJSON<GeoJSON.FeatureCollection>(DATA.poi),
@@ -98,6 +112,7 @@ export async function loadAllData(): Promise<LoadedData> {
   );
 
   return {
+    municipalities: joinCrime(municipalities, safetyFile._municipalities ?? {}),
     districts: joinSafety(districts, safety),
     safety,
     sources: safetyFile._sources ?? {},

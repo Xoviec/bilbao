@@ -32,6 +32,7 @@ const trendOf = (now, prev) => {
 const main = async () => {
   const src = JSON.parse(await readFile(resolve(__dirname, "safety-data.json"), "utf8"));
   const districts = JSON.parse(await readFile(`${DATA}/districts.geojson`, "utf8"));
+  const municipalities = JSON.parse(await readFile(`${DATA}/municipalities.geojson`, "utf8"));
 
   const out = {
     _README:
@@ -40,8 +41,25 @@ const main = async () => {
     _sources: src.sources,
     _cityWide: src.cityWide,
     _reference: src.crime._reference,
+    // Przestępczość jest mierzona NA POZIOMIE GMINY i tak też jest rysowana.
+    // Dzielnice dostają ją tylko do panelu (z adnotacją `crime_scope`).
+    _municipalities: {},
     _units: {},
   };
+
+  for (const f of municipalities.features) {
+    const city = f.properties.code;
+    const c = src.crime.byMunicipality[city];
+    out._municipalities[city] = {
+      name: f.properties.name,
+      crime_rate: c ? c.rate : null,
+      crime_prev: c ? c.prev : null,
+      crime_trend: c ? trendOf(c.rate, c.prev) : "flat",
+      crime_change_pct: c ? Number((((c.rate - c.prev) / c.prev) * 100).toFixed(1)) : null,
+      crime_source: c ? src.crime._source : null,
+      crime_period: c ? src.crime._period : null,
+    };
+  }
 
   const stats = { perception: 0, crime: 0, empty: 0 };
 
@@ -92,7 +110,7 @@ const main = async () => {
   const total = districts.features.length;
   console.log(`✓ safety.json: ${total} jednostek`);
   console.log(`  percepcja (per dzielnica): ${stats.perception}`);
-  console.log(`  przestępczość (per gmina): ${stats.crime}`);
+  console.log(`  gmin z przestępczością:    ${Object.values(out._municipalities).filter((m) => m.crime_rate != null).length}/${municipalities.features.length}`);
   console.log(`  bez żadnych danych:        ${stats.empty}`);
 };
 

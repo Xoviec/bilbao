@@ -24,11 +24,35 @@ export function renderLegend(
   notes: LegendNotes,
 ): void {
   const metric = METRICS[notes.metric];
-  const stops = rampStops(metric);
-  const [lo, hi] = metric.domain;
-  const gradient = stops
-    .map(([v, c]) => `${c} ${(((v - lo) / (hi - lo)) * 100).toFixed(0)}%`)
-    .join(", ");
+
+  // Choropleth istnieje TYLKO dla przestępczości. Percepcja ma rozpiętość
+  // 0,39 pkt na skali 0–10 — gradient udawałby różnicę, której nie ma, więc
+  // pokazujemy ją jako liczby na dzielnicach i mówimy o tym wprost.
+  let scaleHtml: string;
+  if (notes.metric === "crime_rate") {
+    const stops = rampStops(metric);
+    const [lo, hi] = metric.domain;
+    const gradient = stops
+      .map(([v, c]) => `${c} ${(((v - lo) / (hi - lo)) * 100).toFixed(0)}%`)
+      .join(", ");
+    scaleHtml = `
+      <div class="legend-bar" style="background: linear-gradient(90deg, ${gradient});"></div>
+      <div class="legend-scale">
+        <span>${lo}${metric.unit}</span>
+        <span>wyżej = gorzej</span>
+        <span>${hi}${metric.unit}</span>
+      </div>
+      <p class="legend-note">Kolor na poziomie <strong>gminy</strong> — tam ta
+         statystyka jest mierzona. Granice dzielnic Bilbao są przerywane, bo nie
+         mają własnej wartości.</p>`;
+  } else {
+    scaleHtml = `
+      <p class="legend-note">Pokazana jako <strong>liczba na dzielnicy</strong>, nie kolorem.
+         Rozpiętość między dzielnicami Bilbao to 0,39 pkt na skali 0–10
+         (5,44–5,83) — gradient sugerowałby różnicę, której nie ma.</p>
+      <p class="legend-note">Badana wyłącznie w Bilbao. Pozostałe gminy nie
+         prowadzą takiego badania.</p>`;
+  }
 
   const catRows = categories
     .map(
@@ -39,39 +63,18 @@ export function renderLegend(
     )
     .join("");
 
-  const missingRow = notes.missing
-    ? `<div class="legend-cat legend-missing">
-         <span class="dot" style="background:#cccccc"></span>
-         <span>Brak danych (${notes.missing} z ${notes.total})</span>
-       </div>`
-    : "";
-
-  const mixedNote = notes.mixedResolution
-    ? `<p class="legend-note">Tylko Bilbao ma w OpenStreetMap podział na dzielnice;
-       pozostałe gminy pokazane są w całości. Jednolity kolor gminy oznacza brak
-       danych szczegółowych, a nie jednorodność terenu.</p>`
-    : "";
-
-  // Uczciwość skali: przy percepcji rozpiętość między dzielnicami Bilbao to
-  // 0,39 pkt na skali 0–10. Skala jest stała, więc obszary wyglądają podobnie —
-  // bo podobne są. Warto to powiedzieć, żeby nikt nie szukał różnic, których nie ma.
-  const spreadNote =
-    notes.metric === "perception"
-      ? `<p class="legend-note">Różnice między dzielnicami Bilbao są minimalne
-         (5,44–5,83). Skala jest stała, żeby ich sztucznie nie wyolbrzymiać.</p>`
+  const missingRow =
+    notes.metric === "crime_rate" && notes.missing
+      ? `<div class="legend-cat legend-missing">
+           <span class="dot" style="background:#cccccc"></span>
+           <span>Brak danych (${notes.missing} z ${notes.total})</span>
+         </div>`
       : "";
 
   container.innerHTML = `
     <div class="legend-title">${metric.label}</div>
-    <div class="legend-bar" style="background: linear-gradient(90deg, ${gradient});"></div>
-    <div class="legend-scale">
-      <span>${lo}${metric.unit}</span>
-      <span>${metric.higherIsBetter ? "wyżej = bezpieczniej" : "wyżej = gorzej"}</span>
-      <span>${hi}${metric.unit}</span>
-    </div>
+    ${scaleHtml}
     ${missingRow}
-    ${spreadNote}
-    ${mixedNote}
     <button id="methodology-btn" class="link-btn" type="button">ⓘ Skąd te dane?</button>
     ${catRows ? `<div class="legend-title legend-sep">Kategorie miejsc</div>${catRows}` : ""}
   `;

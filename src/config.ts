@@ -38,6 +38,7 @@ export const FALLBACK_STYLE = {
 
 export const DATA = {
   districts: "data/districts.geojson",
+  municipalities: "data/municipalities.geojson",
   safety: "data/safety.json",
   activities: "data/activities.geojson",
   poi: "data/poi.geojson",

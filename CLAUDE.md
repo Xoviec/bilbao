@@ -43,7 +43,20 @@ npm run etl      # pobranie realnych danych z OSM (wymaga sieci → Overpass)
 - **Dwie metryki, nigdy nie łączone w jeden indeks**: `perception` (0–10,
   ankieta, tylko 8 dzielnic Bilbao) i `crime_rate` (na 1000 mieszk., policja,
   wszystkie gminy, Udalmap). Mierzą co innego — zważenie ich byłoby wymysłem.
-  Mają też przeciwne kierunki, więc skala kolorów `crime_rate` jest odwrócona.
+  Sprawdzone liczbowo: kompozyt daje wewnątrz Bilbao ranking identyczny z samą
+  percepcją (przestępczość jest tam stałą), a poza Bilbao redukuje się do samej
+  przestępczości. Jeden wskaźnik znaczyłby więc dwie różne rzeczy zależnie od
+  miejsca na mapie.
+- **JEDNOSTKA RYSOWANIA = JEDNOSTKA POMIARU.** Dwie warstwy:
+  `municipalities.geojson` (9 gmin) niesie choropleth przestępczości, bo tam jest
+  ona mierzona; `districts.geojson` (16 jednostek, filtrowane do `level=district`)
+  niesie granice i liczby percepcji dla 8 dzielnic Bilbao. Nie przenoś
+  przestępczości na dzielnice jako kolor — wszystkie osiem dostałoby tę samą
+  wartość i geometria udawałaby informację.
+- **Percepcja nie jest kolorem.** Rozpiętość 0,39 pkt na skali 0–10 (1,07×);
+  gradient sugerowałby różnicę, której nie ma. Pokazujemy liczbę na dzielnicy.
+  Przestępczość ma rozpiętość 2,61× i tylko ona zasługuje na gradient
+  (odwrócony, bo wyżej = gorzej).
 - Percepcja nocna istnieje tylko zbiorczo dla Bilbao — nie rób z niej trybu
   „noc" per obszar.
 - Gminy są przypięte po **ID relacji** w `etl/cities.json`. Nie wracaj do

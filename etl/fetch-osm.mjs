@@ -76,28 +76,31 @@ async function cached(key, produce) {
   return value;
 }
 
+/** Poligon całej gminy (relacja OSM). */
+async function fetchMunicipality(city) {
+  const q = `[out:json][timeout:180];relation(${city.relation});out geom;`;
+  const geo = osmtogeojson(await overpass(q, ENDPOINT, { log: console.log, minElements: 1 }));
+  const poly = geo.features.find((f) => /Polygon/.test(f.geometry?.type || ""));
+  if (!poly) throw new Error(`${city.name}: relacja ${city.relation} nie dała poligonu`);
+  return {
+    type: "Feature",
+    properties: { code: city.slug, name: city.name, city: city.slug, level: "municipality" },
+    geometry: poly.geometry,
+  };
+}
+
 /**
  * Jednostki choroplethu dla jednej gminy.
  * Kod jest przestrzeniowany nazwą gminy (`bilbao-abando`, `barakaldo`), bo same
  * slugi nazw kolidują — Bilbao ma dzielnicę i barrio "Abando", a nazwy typu
  * "Centro" powtarzają się między gminami.
  */
-async function fetchUnits(city) {
+async function fetchUnits(city, municipality) {
   if (city.unit === "municipality") {
-    const q = `[out:json][timeout:180];relation(${city.relation});out geom;`;
-    const geo = osmtogeojson(await overpass(q, ENDPOINT, { log: console.log, minElements: 1 }));
-    const poly = geo.features.find((f) => /Polygon/.test(f.geometry?.type || ""));
-    if (!poly) throw new Error(`${city.name}: relacja ${city.relation} nie dała poligonu`);
+    // Gmina bez podziału JEST swoją jednostką — nie pobieramy jej drugi raz.
     return [{
-      type: "Feature",
-      properties: {
-        code: city.slug,
-        name: city.name,
-        city: city.slug,
-        cityName: city.name,
-        level: "municipality",
-      },
-      geometry: poly.geometry,
+      ...municipality,
+      properties: { ...municipality.properties, cityName: city.name },
     }];
   }
 
@@ -183,12 +186,18 @@ async function main() {
 
   const allUnits = [];
   const allPlaces = [];
+  const allMunicipalities = [];
   const manifest = [];
 
   for (const city of cities) {
     console.log(`→ ${city.name} (${city.unit})`);
+    const municipality = await cached(`${city.slug}-muni`, async () => {
+      const m = await fetchMunicipality(city);
+      await sleep(PAUSE_MS);
+      return m;
+    });
     const units = await cached(`${city.slug}-units`, async () => {
-      const u = await fetchUnits(city);
+      const u = await fetchUnits(city, municipality);
       await sleep(PAUSE_MS);
       return u;
     });
@@ -203,6 +212,7 @@ async function main() {
 
     allUnits.push(...units);
     allPlaces.push(...places);
+    allMunicipalities.push(municipality);
     manifest.push({
       slug: city.slug,
       name: city.name,
@@ -233,13 +243,20 @@ async function main() {
     };
   }
 
+  // Osobna warstwa gmin. Przestępczość jest mierzona NA POZIOMIE GMINY, więc
+  // choropleth musi być rysowany na gminach — inaczej osiem dzielnic Bilbao
+  // dostaje jedną i tę samą wartość i geometria dzielnic udaje informację.
+  await writeFile(
+    `${OUT}/municipalities.geojson`,
+    JSON.stringify({ type: "FeatureCollection", features: allMunicipalities }),
+  );
   await writeFile(`${OUT}/districts.geojson`, JSON.stringify(districts));
   await writeFile(`${OUT}/poi.geojson`, JSON.stringify({ type: "FeatureCollection", features: poi }));
   await writeFile(`${OUT}/activities.geojson`, JSON.stringify({ type: "FeatureCollection", features: activities }));
   await writeFile(`${OUT}/cities.json`, JSON.stringify(manifest, null, 2));
   await writeFile(`${OUT}/safety.template.json`, JSON.stringify(safetyTemplate, null, 2));
 
-  console.log(`\n✓ ${allUnits.length} jednostek, ${poi.length} POI, ${activities.length} aktywności.`);
+  console.log(`\n✓ ${allMunicipalities.length} gmin, ${allUnits.length} jednostek, ${poi.length} POI, ${activities.length} aktywności.`);
   console.log("  Zapisano do public/data/. Uzupełnij safety.template.json → safety.json.");
 }
 
